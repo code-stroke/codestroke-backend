@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 app = Flask(__name__)
 
-@app.route('/patients', methods=(['GET']))jj
+@app.route('/patients', methods=(['GET']))
 def get_patients():
     """Get list of patients.
 
