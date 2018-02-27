@@ -1,5 +1,79 @@
 from flask import Flask, jsonify, request
+from flask_mysqldb import MySQL, MySQLdb
+import getpass
+
 app = Flask(__name__)
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = getpass.getpass('DB Password:')
+app.config['MYSQL_HOST'] = 'localhost'
+mysql = MySQL(app)
+
+@app.route('/create_db')
+def create_db():
+    """ Create the database by parsing this file for API 
+    calls that add objects and getting the Required and Optional
+    lines.
+    
+    This API should only be called locally.
+    """
+    if request.remote_addr != "127.0.0.1":
+        return jsonify({"status":"error", "message":"local only"})
+    cursor = mysql.connection.cursor()
+    cursor.execute("create database codestroke")
+    cursor.execute("use codestroke")
+    with open (__file__, 'r') as f:
+        contents = f.read()
+        funcs = contents.split('@app.route')
+        lis = [x for x in funcs if ('add_' in x and 'contents.split' not in x)]
+
+        for l in lis:
+            lines = []
+            final_line = ""
+            for line in l.splitlines():
+                if line.endswith(","):
+                    final_line += line 
+                elif line.endswith("."):
+                    final_line += line
+                    lines.append(final_line)
+                    final_line = ""
+                elif line.startswith("def"):
+                    lines.append(line)
+
+            buf = [x for x in lines if "Required" or "Optional" in x]
+                    
+            func = [t for t in buf if "add_" in t][0].replace("def add_","").replace("():","")
+
+            creates = ""
+
+            req = [y for y in buf if "Required" in y]
+            reqs = ("{}_id INT AUTO_INCREMENT PRIMARY KEY, ".format(func) +
+                    req[0].replace("Required: ", "").replace(".","").strip()).split(", ")
+            reqs1 = [r + " NOT NULL" for r in reqs if "LIST" not in r]
+            creates = reqs1
+
+            opt  = [z for z in buf if "Optional" in z]
+            if opt:
+                opts = opt[0].replace("Optional: ", "").replace(".","").strip().split(", ")
+                opts1 = [j for j in opts if "LIST" not in j]
+                creates+= opts1
+
+            query = "create table {}s ({})".format(func, ",".join(creates))
+            print(query)
+            cursor.execute(query)
+
+    return jsonify({"message":"created database"})
+
+@app.route('/delete_db')
+def delete_db():
+    """ Remove the database.
+
+    Must be called locally.
+    """
+    if request.remote_addr != "127.0.0.1":
+        return jsonify({"status":"error", "message":"local only"})
+    cursor = mysql.connection.cursor()
+    cursor.execute("drop database codestroke")
+    return jsonify({"message":"deleted database"})
 
 @app.route('/patients', methods=(['GET']))
 def get_patients():
@@ -17,17 +91,71 @@ def get_patient(patient_id):
 
     Required: patient_id.
     """
-    pass
+    json = request.get_json()
+    try:
+        patient_id = json['patient_id']
+    except KeyError as e:
+        return jsonify({"status":"error",
+                        "message":"missing {}".format(e)}), 400
+
+    query = "select * from patients where patient_id = (?)", (patient_id,) 
+    result = cursor.execute(query)
+    if result:
+        return jsonify({"status":"success", "result":result})
+
+    return jsonify({"status":"error", "message":"no results"})
 
 @app.route('/patients', methods=(['POST']))
 def add_patient():
     """Add a patient.
 
-    Required: name, dob, address, city, state, postcode
+    Required: first_name VARCHAR(20), last_name VARCHAR(20),
+    dob DATE, address VARCHAR(40), city VARCHAR(30),
+    state VARCHAR(20), postcode VARCHAR(20), phone VARCHAR(20).
 
-    Optional: primary_hospital_name
+    Optional: hospital_id INT(8).
     """
-    pass
+    json = request.get_json()
+    try:
+        first_name = json['first_name']
+        last_name = json['last_name']
+        dob = json['dob']
+        address = json['address']
+        city = json['city ']
+        state = json['state']
+        postcode = json['postcode']
+        phone = json['phone']
+        hospital_id = None
+    except KeyError as e:
+        return jsonify({"status":"error",
+                        "message":"missing {}".format(e)}), 400
+
+    if json['hospital_id']:
+        hospital_id = json['hospital_id']
+        
+    query = ("insert into patients (first_name, last_name, dob, 
+    address, city, state, postcode, phone, hospital_id) 
+    values (
+    json['first_name'],
+    json['last_name'],
+    json['dob'],
+    json['address'],
+    json['city'],
+    json['state'],
+    json['postcode'],
+    json['phone'],
+    json['hospital_id'] 
+    )")
+
+    try:
+        cursor.execute("create database codestroke")
+        cursor.execute(query)
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
 
 @app.route('/patients/<int:patient_id>', methods=(['PUT']))
 def edit_patient(patient_id):
@@ -35,7 +163,8 @@ def edit_patient(patient_id):
 
     Required: patient_id.
 
-    Optional: name, dob, address, city, state, postcode, primary_hospital_name
+    Optional: first_name, last_name, dob, address, city, 
+    state, postcode, primary_hospital_name.
     """
     pass
 
@@ -43,7 +172,7 @@ def edit_patient(patient_id):
 def remove_patient(patient_id):
     """Remove a patient specified by id.
 
-    Required: patient_id
+    Required: patient_id.
     """
     pass
 
@@ -51,7 +180,8 @@ def remove_patient(patient_id):
 def get_clinicians():
     """Get list of clinicians.
 
-    The query paramater can filter by name, hospital, group.
+    The query paramater can filter by first_name, last_name, 
+    hospital, group.
 
     Optional: query.
     """
@@ -69,7 +199,8 @@ def get_clinician(clinician_id):
 def add_clinician():
     """Add a clinician.
 
-    Required: name, hospitals, groups.
+    Required: first_name VARCHAR(30), last_name VARCHAR(30),
+    hospitals LIST, groups LIST.
     """
     pass
 
@@ -116,7 +247,8 @@ def get_hospital(hospital_id):
 def add_hospital():
     """Add a hospital.
 
-    Required: name, city, state, postcode.
+    Required: name VARCHAR(30), city VARCHAR(30),
+    state VARCHAR(30), postcode VARCHAR(10).
     """
     pass
 
@@ -159,7 +291,7 @@ def get_case(case_id):
 def add_case():
     """Add a case.
 
-    Required: patient_id, hospital_id.
+    Required: patient_id INT(8), hospital_id INT(8).
     """
     pass
 
@@ -201,7 +333,7 @@ def get_event_type(event_type_id):
 def add_event_type():
     """Add an event type.
 
-    Required: name, description.
+    Required: name VARCHAR(50), description VARCHAR(200).
     """
     pass
 
@@ -227,8 +359,9 @@ def remove_event_type(event_type_id):
 def get_events():
     """Get list of events.
 
-    The query parameter can filter by name, event_type_id, hospital_id,
-    patient_id, sender_clinician_id, receiver_clinician_ids, date range (date1,date2).
+    The query parameter can filter by name, event_type_id, 
+    hospital_id, patient_id, sender_clinician_id, receiver_clinician_ids, 
+    date range (date1,date2).
 
     Optional: query.
     """
@@ -249,7 +382,7 @@ def add_event():
     When an event is added, it is broadcasted to all clinicians
     that belong to groups with the given event_type_id.
 
-    Required: event_type_id, sender_clinician_id.
+    Required: event_type_id INT(8), clinician_id INT(8).
     """
     pass
 
@@ -257,7 +390,8 @@ def add_event():
 def get_messages():
     """Get messages.
 
-    The query parameter can filter by group_id, sender_clinician_id, receiver_clinician_id.
+    The query parameter can filter by group_id, sender_clinician_id, 
+    receiver_clinician_id.
 
     Optional: query.
     """
@@ -275,7 +409,7 @@ def add_message():
     """Add (post) a message.
     The message is broadcasted to the groups that are subscribed.
 
-    Required: sender_clinician_id, body
+    Required: clinician_id INT(8), body TEXT.
     """
     pass
 
@@ -317,7 +451,7 @@ def get_group(group_id):
 def add_group():
     """Add a group.
 
-    Required: name.
+    Required: name VARCHAR(30).
     """
     pass
 
@@ -336,6 +470,50 @@ def remove_group(group_id):
     """Remove a group specified by id.
 
     Required: group_id.
+    """
+    pass
+
+@app.route('/vitals', methods=(['GET']))
+def get_vitals():
+    """Get list of vitals.
+
+    The query parameter can filter by name.
+
+    Optional: query.
+    """
+    pass
+
+@app.route('/vitals/<int:vital_id>', methods=(['GET']))
+def get_vital(vital_id):
+    """Get vital specified by id.
+
+    Required: vital_id.
+    """
+    pass
+
+@app.route('/vitals', methods=(['POST']))
+def add_vital():
+    """Add a vital.
+
+    Required: name VARCHAR(30).
+    """
+    pass
+
+
+@app.route('/vitals/<int:vital_id>', methods=(['PUT']))
+def edit_vital(vital_id):
+    """Edit a vital.
+
+    Required: vital_id.
+    Optional: name.
+    """
+    pass
+
+@app.route('/vitals/<int:vital_id>', methods=(['DELETE']))
+def remove_vital(vital_id):
+    """Remove a vital specified by id.
+
+    Required: vital_id.
     """
     pass
 
