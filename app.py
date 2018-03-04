@@ -79,11 +79,27 @@ def delete_db():
 def get_patients():
     """Get list of patients.
 
-    The query parameter can filter by name.
+    The query parameter can filter by first_name, last_name, city.
 
     Optional: query.
     """
-    pass
+    qargs = {}
+
+    if request.args.get('first_name'):
+        qargs['first_name'] = request.args.get('first_name') 
+    if request.args.get('last_name'):
+        qargs['last_name'] = request.args.get('last_name') 
+    if request.args.get('city'):
+        qargs['city'] = request.args.get('city') 
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = select(qargs)
+    cursor.execute("select * from patients" + query[0], query[1])
+    result = cursor.fetchall()
+    if result:
+        return jsonify({"result":result})
+    return jsonify({"result":"no results"})
 
 @app.route('/patients/<int:patient_id>', methods=(['GET']))
 def get_patient(patient_id):
@@ -91,19 +107,16 @@ def get_patient(patient_id):
 
     Required: patient_id.
     """
-    json = request.get_json()
-    try:
-        patient_id = json['patient_id']
-    except KeyError as e:
-        return jsonify({"status":"error",
-                        "message":"missing {}".format(e)}), 400
-
-    query = "select * from patients where patient_id = (?)", (patient_id,) 
-    result = cursor.execute(query)
+    query = """select * from patients where 
+    patient_id = %s"""
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    cursor.execute(query, (patient_id,))
+    result = cursor.fetchall()
     if result:
-        return jsonify({"status":"success", "result":result})
+        return jsonify({"result":result})
 
-    return jsonify({"status":"error", "message":"no results"})
+    return jsonify({"message":"no results"}), 400
 
 @app.route('/patients', methods=(['POST']))
 def add_patient():
@@ -115,13 +128,15 @@ def add_patient():
 
     Optional: hospital_id INT(8).
     """
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke;")
     json = request.get_json()
     try:
         first_name = json['first_name']
         last_name = json['last_name']
         dob = json['dob']
         address = json['address']
-        city = json['city ']
+        city = json['city']
         state = json['state']
         postcode = json['postcode']
         phone = json['phone']
@@ -129,27 +144,25 @@ def add_patient():
     except KeyError as e:
         return jsonify({"status":"error",
                         "message":"missing {}".format(e)}), 400
-
     if json['hospital_id']:
         hospital_id = json['hospital_id']
         
-    query = ("insert into patients (first_name, last_name, dob, 
+    query = ("""insert into patients (first_name, last_name, dob, 
     address, city, state, postcode, phone, hospital_id) 
-    values (
-    json['first_name'],
-    json['last_name'],
-    json['dob'],
-    json['address'],
-    json['city'],
-    json['state'],
-    json['postcode'],
-    json['phone'],
-    json['hospital_id'] 
-    )")
-
+    values (%s, %s, %s, %s, %s, %s, %s, %s, %s)""")
+    
+    args = (first_name,
+            last_name,
+            dob,
+            address,
+            city,
+            state,
+            postcode,
+            phone,
+            hospital_id,)
     try:
-        cursor.execute("create database codestroke")
-        cursor.execute(query)
+        cursor.execute(query, args)
+        mysql.connection.commit()
     except MySQLdb.Error as e:
         return jsonify({"status":"error",
                         "message":e}), 400
@@ -499,7 +512,6 @@ def add_vital():
     """
     pass
 
-
 @app.route('/vitals/<int:vital_id>', methods=(['PUT']))
 def edit_vital(vital_id):
     """Edit a vital.
@@ -524,6 +536,22 @@ def create_token():
     TODO: Required
     """
     pass
+
+def select(d):
+    """ Generates a MySQL select statement from a query dictionary. 
+    """
+    clause = ""
+    l = []
+    where_done = False
+    for k,v in d.items():
+        if not where_done:
+            clause += " where `{}` = %s".format(k)
+            where_done = True
+        else:
+            clause += " and `{}` = %s".format(k)  
+        l.append(v)
+    print(clause, tuple(l,))
+    return clause, tuple(l,)
 
 if __name__ == '__main__':
     app.run(debug = True)
