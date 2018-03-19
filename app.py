@@ -79,9 +79,7 @@ def delete_db():
 def get_patients():
     """Get list of patients.
 
-    The query parameter can filter by first_name, last_name, city.
-
-    Optional: query.
+    Optional: first_name, last_name, city.
     """
     qargs = {}
 
@@ -92,6 +90,8 @@ def get_patients():
     if request.args.get('city'):
         qargs['city'] = request.args.get('city') 
 
+    # or do get_args(['first_name', 'last_name', 'city'], request.args) 
+
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
     query = select(qargs)
@@ -100,6 +100,13 @@ def get_patients():
     if result:
         return jsonify({"result":result})
     return jsonify({"result":"no results"})
+
+def get_args([args], d):
+    qargs = {}
+    for arg in args:
+        if d[arg]:
+            qargs[arg] = d[arg] 
+    return qargs
 
 @app.route('/patients/<int:patient_id>', methods=(['GET']))
 def get_patient(patient_id):
