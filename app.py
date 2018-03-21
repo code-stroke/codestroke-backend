@@ -90,7 +90,7 @@ def get_patients():
     if request.args.get('city'):
         qargs['city'] = request.args.get('city') 
 
-    # or do get_args(['first_name', 'last_name', 'city'], request.args) 
+    qargs = get_args(['first_name', 'last_name', 'city'], request.args) 
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
@@ -101,7 +101,7 @@ def get_patients():
         return jsonify({"result":result})
     return jsonify({"result":"no results"})
 
-def get_args([args], d):
+def get_args(d):
     qargs = {}
     for arg in args:
         if d[arg]:
@@ -194,7 +194,7 @@ def remove_patient(patient_id):
 
     Required: patient_id.
     """
-    pass
+        return jsonify({"status":"test"})
 
 @app.route('/clinicians', methods=(['GET']))
 def get_clinicians():
