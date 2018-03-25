@@ -58,7 +58,6 @@ def create_db():
                 creates+= opts1
 
             query = "create table {}s ({})".format(func, ",".join(creates))
-            print(query)
             cursor.execute(query)
 
     return jsonify({"message":"created database"})
@@ -94,11 +93,11 @@ def get_patients():
     if request.args.get('urn'):
         qargs['urn'] = request.args.get('urn') 
 
-    qargs = get_args(['first_name', 'last_name', 'city', 'dob', 'urn'], request.args) 
+    qargz = get_args(['first_name', 'last_name', 'city', 'dob', 'urn'], qargs) 
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
-    query = select(qargs)
+    query = select(qargz)
     cursor.execute("select * from patients" + query[0], query[1])
     result = cursor.fetchall()
     if result:
@@ -207,17 +206,23 @@ def edit_patient(patient_id):
     if request.args.get('urn'):
         qargs['urn'] = request.args.get('urn') 
 
-    qargs = get_args(['first_name', 'last_name', 'city', 'dob',
+    qargz = get_args(['first_name', 'last_name', 'city', 'dob',
                       'address', 'state', 'phone', 'postcode', 'urn'],
-                     request.args) 
+                     qargs) 
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
-    query = update(qargs)
-    cursor.execute("update patients" + query[0], query[1])
-    result = cursor.fetchall()
-    if result:
-        return jsonify({"result":result})
+    query = update(qargz)
+    try:
+        cursor.execute("update `patients` " + query[0] + " where patient_id=%s", query[1]+(patient_id,))
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
+
     return jsonify({"result":"no results"})
 
 @app.route('/patients/<int:patient_id>', methods=(['DELETE']))
@@ -226,11 +231,13 @@ def remove_patient(patient_id):
 
     Required: patient_id.
     """
-    query = "delete from patients where patient_id = %s", (patient_id,)
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = "delete from `patients` where patient_id = %s"
     try:
-        cursor.execute(query)
+        cursor.execute(query, (patient_id,))
     except MySQLdb.Error as e:
-        return jsonify({"result":"error"}), 404
+        return jsonify({"error":e}), 404
     return jsonify({"status":"success"})
 
 @app.route('/clinicians', methods=(['GET']))
@@ -599,14 +606,14 @@ def select(d):
 def update(d):
     """ Generates a MySQL update statement from a query dictionary.
     """
-    clause = ",".join(["set {} = %s".format(k) for k in d.keys()])
+    clause = "set " + ",".join(["{} = %s".format(k) for k in d.keys()])
     tup = tuple([v for v in d.values()],)
     return clause, tup
 
 def get_args(args, d):
     qargs = {}
     for arg in args:
-        if d[arg]:
+        if arg in d:
             qargs[arg] = d[arg] 
     return qargs
 
