@@ -79,7 +79,7 @@ def delete_db():
 def get_patients():
     """Get list of patients.
 
-    Optional: first_name, last_name, city.
+    Optional: first_name, last_name, city, dob, urn.
     """
     qargs = {}
 
@@ -89,8 +89,12 @@ def get_patients():
         qargs['last_name'] = request.args.get('last_name') 
     if request.args.get('city'):
         qargs['city'] = request.args.get('city') 
+    if request.args.get('dob'):
+        qargs['dob'] = request.args.get('dob') 
+    if request.args.get('urn'):
+        qargs['urn'] = request.args.get('urn') 
 
-    qargs = get_args(['first_name', 'last_name', 'city'], request.args) 
+    qargs = get_args(['first_name', 'last_name', 'city', 'dob', 'urn'], request.args) 
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
@@ -100,13 +104,6 @@ def get_patients():
     if result:
         return jsonify({"result":result})
     return jsonify({"result":"no results"})
-
-def get_args(d):
-    qargs = {}
-    for arg in args:
-        if d[arg]:
-            qargs[arg] = d[arg] 
-    return qargs
 
 @app.route('/patients/<int:patient_id>', methods=(['GET']))
 def get_patient(patient_id):
@@ -131,7 +128,8 @@ def add_patient():
 
     Required: first_name VARCHAR(20), last_name VARCHAR(20),
     dob DATE, address VARCHAR(40), city VARCHAR(30),
-    state VARCHAR(20), postcode VARCHAR(20), phone VARCHAR(20).
+    state VARCHAR(20), postcode VARCHAR(20), phone VARCHAR(20),
+    urn INT(8).
 
     Optional: hospital_id INT(8).
     """
@@ -147,6 +145,7 @@ def add_patient():
         state = json['state']
         postcode = json['postcode']
         phone = json['phone']
+        urn = json['urn']
         hospital_id = None
     except KeyError as e:
         return jsonify({"status":"error",
@@ -155,8 +154,8 @@ def add_patient():
         hospital_id = json['hospital_id']
         
     query = ("""insert into patients (first_name, last_name, dob, 
-    address, city, state, postcode, phone, hospital_id) 
-    values (%s, %s, %s, %s, %s, %s, %s, %s, %s)""")
+    address, city, state, postcode, phone, hospital_id, urn) 
+    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""")
     
     args = (first_name,
             last_name,
@@ -166,7 +165,8 @@ def add_patient():
             state,
             postcode,
             phone,
-            hospital_id,)
+            hospital_id,
+            urn)
     try:
         cursor.execute(query, args)
         mysql.connection.commit()
@@ -184,9 +184,41 @@ def edit_patient(patient_id):
     Required: patient_id.
 
     Optional: first_name, last_name, dob, address, city, 
-    state, postcode, primary_hospital_name.
+    state, postcode, phone, urn.
     """
-    pass
+    qargs = {}
+
+    if request.args.get('first_name'):
+        qargs['first_name'] = request.args.get('first_name') 
+    if request.args.get('last_name'):
+        qargs['last_name'] = request.args.get('last_name') 
+    if request.args.get('city'):
+        qargs['city'] = request.args.get('city') 
+    if request.args.get('dob'):
+        qargs['dob'] = request.args.get('dob') 
+    if request.args.get('address'):
+        qargs['address'] = request.args.get('address') 
+    if request.args.get('state'):
+        qargs['state'] = request.args.get('state') 
+    if request.args.get('postcode'):
+        qargs['postcode'] = request.args.get('postcode') 
+    if request.args.get('phone'):
+        qargs['phone'] = request.args.get('phone') 
+    if request.args.get('urn'):
+        qargs['urn'] = request.args.get('urn') 
+
+    qargs = get_args(['first_name', 'last_name', 'city', 'dob',
+                      'address', 'state', 'phone', 'postcode', 'urn'],
+                     request.args) 
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = update(qargs)
+    cursor.execute("update patients" + query[0], query[1])
+    result = cursor.fetchall()
+    if result:
+        return jsonify({"result":result})
+    return jsonify({"result":"no results"})
 
 @app.route('/patients/<int:patient_id>', methods=(['DELETE']))
 def remove_patient(patient_id):
@@ -194,7 +226,12 @@ def remove_patient(patient_id):
 
     Required: patient_id.
     """
-        return jsonify({"status":"test"})
+    query = "delete from patients where patient_id = %s", (patient_id,)
+    try:
+        cursor.execute(query)
+    except MySQLdb.Error as e:
+        return jsonify({"result":"error"}), 404
+    return jsonify({"status":"success"})
 
 @app.route('/clinicians', methods=(['GET']))
 def get_clinicians():
@@ -557,8 +594,21 @@ def select(d):
         else:
             clause += " and `{}` = %s".format(k)  
         l.append(v)
-    print(clause, tuple(l,))
     return clause, tuple(l,)
+
+def update(d):
+    """ Generates a MySQL update statement from a query dictionary.
+    """
+    clause = ",".join(["set {} = %s".format(k) for k in d.keys()])
+    tup = tuple([v for v in d.values()],)
+    return clause, tup
+
+def get_args(args, d):
+    qargs = {}
+    for arg in args:
+        if d[arg]:
+            qargs[arg] = d[arg] 
+    return qargs
 
 if __name__ == '__main__':
     app.run(debug = True)
