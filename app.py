@@ -327,7 +327,7 @@ def add_clinician():
     finally:
         return jsonify({"status":"success",
                         "message":"added"}) 
-    #todo: hospitals and groups
+    #todo: hospitals and groups 
 
 @app.route('/clinicians/<int:clinician_id>', methods=(['PUT']))
 def edit_clinician(clinician_id):
