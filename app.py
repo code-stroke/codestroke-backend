@@ -49,6 +49,7 @@ def create_db():
             reqs = ("{}_id INT AUTO_INCREMENT PRIMARY KEY, ".format(func) +
                     req[0].replace("Required: ", "").replace(".","").strip()).split(", ")
             reqs1 = [r + " NOT NULL" for r in reqs if "LIST" not in r]
+            reqs_list = [r.strip("LIST ").strip(" ") for r in reqs if "LIST" in r]
             creates = reqs1
 
             opt  = [z for z in buf if "Optional" in z]
@@ -56,9 +57,15 @@ def create_db():
                 opts = opt[0].replace("Optional: ", "").replace(".","").strip().split(", ")
                 opts1 = [j for j in opts if "LIST" not in j]
                 creates+= opts1
+                opts_list = [j.strip("LIST ").strip(" ") for j in reqs if "LIST" in j]
 
             query = "create table {}s ({})".format(func, ",".join(creates))
             cursor.execute(query)
+
+            manytomany_tbls = reqs_list + opts_list  
+            for tbl in manytomany_tbls:
+                query = "create table {}_{}".format(tbl, func) + " (`id` INT AUTO_INCREMENT PRIMARY KEY, `{}_id` INT(8), `{}_id` INT(8))".format(tbl, func)
+                cursor.execute(query)
 
     return jsonify({"message":"created database"})
 
@@ -104,11 +111,11 @@ def get_patients():
         return jsonify({"result":result})
     return jsonify({"result":"no results"})
 
-@app.route('/patients/<int:patient_id>', methods=(['GET']))
+@app.route('/patients/<int:patient_id>', methods=(['get']))
 def get_patient(patient_id):
-    """Get patient specified by id.
+    """get patient specified by id.
 
-    Required: patient_id.
+    required: patient_id.
     """
     query = """select * from patients where 
     patient_id = %s"""
@@ -236,6 +243,7 @@ def remove_patient(patient_id):
     query = "delete from `patients` where patient_id = %s"
     try:
         cursor.execute(query, (patient_id,))
+        mysql.connection.commit()
     except MySQLdb.Error as e:
         return jsonify({"error":e}), 404
     return jsonify({"status":"success"})
@@ -249,7 +257,25 @@ def get_clinicians():
 
     Optional: query.
     """
-    pass
+    qargs = {}
+
+    if request.args.get('first_name'):
+        qargs['first_name'] = request.args.get('first_name') 
+    if request.args.get('last_name'):
+        qargs['last_name'] = request.args.get('last_name') 
+    if request.args.get('group_id'):
+        qargs['group_id'] = request.args.get('group_id') 
+
+    qargz = get_args(['first_name', 'last_name', 'group_id'], qargs) 
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = select(qargz)
+    cursor.execute("select * from clinicians" + query[0], query[1])
+    result = cursor.fetchall()
+    if result:
+        return jsonify({"result":result})
+    return jsonify({"result":"no results"})
 
 @app.route('/clinicians/<int:clinician_id>', methods=(['GET']))
 def get_clinician(clinician_id):
@@ -257,6 +283,16 @@ def get_clinician(clinician_id):
 
     Required: clinician_id.
     """
+    query = """select * from clinicians where 
+    clinician_id = %s"""
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    cursor.execute(query, (clinician_id,))
+    result = cursor.fetchall()
+    if result:
+        return jsonify({"result":result})
+
+    return jsonify({"message":"no results"}), 400
     pass
 
 @app.route('/clinicians', methods=(['POST']))
@@ -266,7 +302,32 @@ def add_clinician():
     Required: first_name VARCHAR(30), last_name VARCHAR(30),
     hospitals LIST, groups LIST.
     """
-    pass
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke;")
+    json = request.get_json()
+    try:
+        first_name = json['first_name']
+        last_name = json['last_name']
+        hospitals = json['hospitals']
+        groups = json['groups']
+    except KeyError as e:
+        return jsonify({"status":"error",
+                        "message":"missing {}".format(e)}), 400
+    query = ("""insert into clinicians (first_name, last_name) 
+    values (%s, %s)""")
+    
+    args = (first_name,
+            last_name)
+    try:
+        cursor.execute(query, args)
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
+    #todo: hospitals and groups
 
 @app.route('/clinicians/<int:clinician_id>', methods=(['PUT']))
 def edit_clinician(clinician_id):
