@@ -125,7 +125,8 @@ def create_db():
 
             manytomany_tbls = reqs_list + opts_list  
             for tbl in manytomany_tbls:
-                query = "create table {}_{}".format(tbl, func) + " (`id` INT AUTO_INCREMENT PRIMARY KEY, `{}_id` INT(8), `{}_id` INT(8))".format(tbl, func)
+                query = ("create table {}_{}s".format(tbl, func) +
+                " (`id` INT AUTO_INCREMENT PRIMARY KEY, `{}_id` INT(8), `{}_id` INT(8))".format(tbl[:-1], func))
                 cursor.execute(query)
 
     return jsonify({"message":"created database"})
@@ -291,7 +292,7 @@ def edit_patient(patient_id):
         return jsonify({"status":"success",
                         "message":"added"}) 
 
-    return jsonify({"result":"no results"})
+    return jsonify({"status":"error"}), 400
 
 @app.route('/patients/<int:patient_id>', methods=(['DELETE']))
 def remove_patient(patient_id):
@@ -379,16 +380,33 @@ def add_clinician():
     
     args = (first_name,
             last_name)
+
     try:
         cursor.execute(query, args)
         mysql.connection.commit()
+        clinician_id = connection.insert_id()
+
+        for group_id in groups:
+            query = ("""insert into groups_clinicians (group_id, clinician_id) 
+            values (%s, %s)""")
+            cursor.execute(query, (group_id, clinician_id))
+            mysql.connection.commit()
+
+        for hospital_id in hospitals:
+            query = ("""insert into groups_hospitals (group_id, clinician_id) 
+            values (%s, %s)""")
+            cursor.execute(query, (hospital_id, clinician_id))
+            mysql.connection.commit()
+
     except MySQLdb.Error as e:
         return jsonify({"status":"error",
                         "message":e}), 400
     finally:
         return jsonify({"status":"success",
                         "message":"added"}) 
-    #todo: hospitals and groups 
+
+    return jsonify({"status":"error"}), 400
+
 
 @app.route('/clinicians/<int:clinician_id>', methods=(['PUT']))
 def edit_clinician(clinician_id):
