@@ -1,5 +1,7 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL, MySQLdb
+from flask_dance.contrib.google import make_google_blueprint, google
+from flask_dance.consumer import oauth_authorized
 import getpass
 
 app = Flask(__name__)
@@ -8,6 +10,65 @@ app.config['MYSQL_PASSWORD'] = getpass.getpass('DB Password:')
 app.config['MYSQL_HOST'] = 'localhost'
 mysql = MySQL(app)
 
+# FOR LOCAL SERVER TESTING ONLY
+# Necessary for local server as Flask Dance usually requires https
+import os
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
+
+# OAUTH CONFIG AND SETUP
+# ensure ./app.conf exists with client id & secret, and secret key
+app.config.from_pyfile('./app.conf')
+bp_google = make_google_blueprint(
+    client_id = app.config['GOOGLE_CLIENT_ID'],
+    client_secret = app.config['GOOGLE_CLIENT_SECRET'],
+    scope = ["profile", "email"])
+app.register_blueprint(bp_google, url_prefix="/login")
+
+@oauth_authorized.connect
+def logged_in(blueprint, token):
+    if not token:
+        flash("Log in failed.", category="error")
+        return False
+
+    # Google-specific API getter
+    resp = blueprint.session.get("/oauth2/v2/userinfo")
+    
+    if not resp.ok:
+        flash("Failed to get user data.", category="error")
+        return False
+
+    user_info = resp.json()
+    # need to absolutely make sure email is unique per provider,
+    # otherwise, need to use a different unique id
+    social_id = "google." + user_info["email"]
+
+    # add user to database if not found
+    check_query = 'select * from user_profiles where social_id = %s'
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    cursor.execute(check_query, (social_id,))
+    result = cursor.fetchall()
+    if not result:
+        email = user_info["email"]
+        name = user_info["name"]
+        insert_query = """insert into user_profiles (social_id, name, email)
+                          values (%s, %s, %s)"""
+        insert_args = (social_id, name, email)
+        cursor.execute(insert_query, insert_args)
+        mysql.connection.commit()
+
+    session.permanent = True # is there a better place to put this?
+    session["social_id"] = social_id
+    return False # do not store identity provider access token
+
+@app.route('/')
+def index():
+    # codestroke database must already exist (TODO implement check?)
+    if 'social_id' not in session:
+        return jsonify({"logged_in":"false", "redirect_url":url_for("google.login")})
+    return jsonify({"logged_in":"true", "social_id":session["social_id"]})
+    
 @app.route('/create_db')
 def create_db():
     """ Create the database by parsing this file for API 
@@ -649,6 +710,15 @@ def create_token():
     """
     pass
 
+@app.route('/user_profiles', methods=(['POST']))
+def add_user_profile():
+    """Add a user_profile.
+
+    Required: social_id VARCHAR(40), name VARCHAR(40).
+    
+    Optional: email VARCHAR(40).
+    """
+    
 def select(d):
     """ Generates a MySQL select statement from a query dictionary. 
     """
