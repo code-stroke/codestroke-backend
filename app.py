@@ -17,6 +17,7 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 
 # OAUTH CONFIG AND SETUP
+# ensure ./app.conf exists with client id & secret, and secret key
 app.config.from_pyfile('./app.conf')
 bp_google = make_google_blueprint(
     client_id = app.config['GOOGLE_CLIENT_ID'],
@@ -62,6 +63,7 @@ def logged_in(blueprint, token):
 
 @app.route('/')
 def index():
+    # codestroke database must already exist (TODO implement check?)
     if 'social_id' not in session:
         return redirect(url_for("google.login"))
     return "Logged in with social_id: {}".format(session["social_id"])
