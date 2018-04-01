@@ -44,17 +44,18 @@ def logged_in(blueprint, token):
     social_id = "google." + user_info["email"]
 
     # add user to database if not found
-    check_query = 'select * from user_profiles where social_id="{}"'
+    check_query = 'select * from user_profiles where social_id = %s'
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
-    cursor.execute(check_query.format(social_id))
+    cursor.execute(check_query, (social_id,))
     result = cursor.fetchall()
     if not result:
         email = user_info["email"]
         name = user_info["name"]
         insert_query = """insert into user_profiles (social_id, name, email)
-                          values ('{0}', '{1}', '{2}')"""
-        cursor.execute(insert_query.format(social_id, name, email))
+                          values (%s, %s, %s)"""
+        insert_args = (social_id, name, email)
+        cursor.execute(insert_query, insert_args)
         mysql.connection.commit()
 
     session.permanent = True # is there a better place to put this?
@@ -65,8 +66,8 @@ def logged_in(blueprint, token):
 def index():
     # codestroke database must already exist (TODO implement check?)
     if 'social_id' not in session:
-        return redirect(url_for("google.login"))
-    return "Logged in with social_id: {}".format(session["social_id"])
+        return jsonify({"logged_in":"false", "redirect_url":url_for("google.login")})
+    return jsonify({"logged_in":"true", "social_id":session["social_id"]})
     
 @app.route('/create_db')
 def create_db():
