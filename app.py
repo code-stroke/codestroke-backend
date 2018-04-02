@@ -149,24 +149,11 @@ def get_patients():
 
     Optional: first_name, last_name, city, dob, urn.
     """
-    qargs = {}
-
-    if request.args.get('first_name'):
-        qargs['first_name'] = request.args.get('first_name') 
-    if request.args.get('last_name'):
-        qargs['last_name'] = request.args.get('last_name') 
-    if request.args.get('city'):
-        qargs['city'] = request.args.get('city') 
-    if request.args.get('dob'):
-        qargs['dob'] = request.args.get('dob') 
-    if request.args.get('urn'):
-        qargs['urn'] = request.args.get('urn') 
-
-    qargz = get_args(['first_name', 'last_name', 'city', 'dob', 'urn'], qargs) 
+    qargs = get_args(['first_name', 'last_name', 'city', 'dob', 'urn'], request.args) 
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
-    query = select(qargz)
+    query = select(qargs)
     cursor.execute("select * from patients" + query[0], query[1])
     result = cursor.fetchall()
     if result:
@@ -254,34 +241,13 @@ def edit_patient(patient_id):
     Optional: first_name, last_name, dob, address, city, 
     state, postcode, phone, urn.
     """
-    qargs = {}
-
-    if request.args.get('first_name'):
-        qargs['first_name'] = request.args.get('first_name') 
-    if request.args.get('last_name'):
-        qargs['last_name'] = request.args.get('last_name') 
-    if request.args.get('city'):
-        qargs['city'] = request.args.get('city') 
-    if request.args.get('dob'):
-        qargs['dob'] = request.args.get('dob') 
-    if request.args.get('address'):
-        qargs['address'] = request.args.get('address') 
-    if request.args.get('state'):
-        qargs['state'] = request.args.get('state') 
-    if request.args.get('postcode'):
-        qargs['postcode'] = request.args.get('postcode') 
-    if request.args.get('phone'):
-        qargs['phone'] = request.args.get('phone') 
-    if request.args.get('urn'):
-        qargs['urn'] = request.args.get('urn') 
-
-    qargz = get_args(['first_name', 'last_name', 'city', 'dob',
+    qargs = get_args(['first_name', 'last_name', 'city', 'dob',
                       'address', 'state', 'phone', 'postcode', 'urn'],
-                     qargs) 
+                     request.args) 
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
-    query = update(qargz)
+    query = update(qargs)
     try:
         cursor.execute("update `patients` " + query[0] + " where patient_id=%s", query[1]+(patient_id,))
         mysql.connection.commit()
@@ -319,20 +285,11 @@ def get_clinicians():
 
     Optional: query.
     """
-    qargs = {}
-
-    if request.args.get('first_name'):
-        qargs['first_name'] = request.args.get('first_name') 
-    if request.args.get('last_name'):
-        qargs['last_name'] = request.args.get('last_name') 
-    if request.args.get('group_id'):
-        qargs['group_id'] = request.args.get('group_id') 
-
-    qargz = get_args(['first_name', 'last_name', 'group_id'], qargs) 
+    qargs = get_args(['first_name', 'last_name', 'group_id'], request.args) 
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
-    query = select(qargz)
+    query = select(qargs)
     cursor.execute("select * from clinicians" + query[0], query[1])
     result = cursor.fetchall()
     if result:
@@ -384,29 +341,36 @@ def add_clinician():
     try:
         cursor.execute(query, args)
         mysql.connection.commit()
-        clinician_id = connection.insert_id()
-
-        for group_id in groups:
-            query = ("""insert into groups_clinicians (group_id, clinician_id) 
-            values (%s, %s)""")
-            cursor.execute(query, (group_id, clinician_id))
-            mysql.connection.commit()
-
-        for hospital_id in hospitals:
-            query = ("""insert into groups_hospitals (group_id, clinician_id) 
-            values (%s, %s)""")
-            cursor.execute(query, (hospital_id, clinician_id))
-            mysql.connection.commit()
-
     except MySQLdb.Error as e:
         return jsonify({"status":"error",
                         "message":e}), 400
-    finally:
-        return jsonify({"status":"success",
-                        "message":"added"}) 
 
-    return jsonify({"status":"error"}), 400
+    clinician_id = cursor.lastrowid
 
+    # TODO : this doesn't need to be a loop, can be single insert statement
+    for group_id in groups:
+        query = ("""insert into groups_clinicians (group_id, clinician_id) 
+        values (%s, %s)""")
+        try:
+            cursor.execute(query, (group_id, clinician_id))
+            mysql.connection.commit()
+        except MySQLdb.Error as e:
+            return jsonify({"status":"error",
+                            "message":e}), 400
+
+    # TODO : this doesn't need to be a loop, can be single insert statement
+    for hospital_id in hospitals:
+        query = ("""insert into hospitals_clinicians (hospital_id, clinician_id) 
+        values (%s, %s)""")
+        try:
+            cursor.execute(query, (hospital_id, clinician_id))
+            mysql.connection.commit()
+        except MySQLdb.Error as e:
+            return jsonify({"status":"error",
+                            "message":e}), 400
+
+    return jsonify({"status":"success",
+                    "message":"added"}) 
 
 @app.route('/clinicians/<int:clinician_id>', methods=(['PUT']))
 def edit_clinician(clinician_id):
@@ -414,9 +378,72 @@ def edit_clinician(clinician_id):
 
     Required: clinician_id.
 
-    Optional: name, hospitals, groups.
+    Optional: first_name, last_name, hospitals, groups.
     """
-    pass
+    qargs = get_args(['first_name', 'last_name'], request.args) 
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = update(qargs)
+    print(query)
+    try:
+        cursor.execute("update `clinicians` " + query[0] + " where clinician_id=%s", query[1]+(clinician_id,))
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+
+    if request.args.get('hospitals'):
+        hospitals = request.args.get('hospitals').split(",")
+        q = "select hospital_id from hospitals_clinicians where clinician_id = (%s)"
+        r = cursor.execute(q, (clinician_id,))
+        current_hospitals = list(cursor.fetchall())
+
+        removals = list(set(current_hospitals) - set(hospitals))  
+
+        for r in removals:
+            q = "delete from hospitals_clinicians where hospital_id = %s and clinician_id = %s" 
+            cursor.execute(q, (r,clinician_id,))
+            mysql.connection.commit()
+
+        additions = tuple(set(hospitals) - set(current_hospitals))
+
+        for a in additions:
+            q = "insert into hospitals_clinicians (clinician_id, hospital_id) values (%s, %s)" 
+            cursor.execute(q, (clinician_id,a,))
+            mysql.connection.commit()
+
+    if request.args.get('groups'):
+        groups = request.args.get('groups').split(",")
+        q = "select group_id from groups_clinicians where clinician_id = (%s)"
+        r = cursor.execute(q, (clinician_id,))
+        current_groups = list(cursor.fetchall())
+
+        removals = list(set(current_groups) - set(groups))  
+
+        for r in removals:
+            q = "delete from groups_clinicians where group_id = %s and clinician_id = %s" 
+            try:
+                cursor.execute(q, (r,clinician_id,))
+                mysql.connection.commit()
+            except MySQLdb.Error as e:
+                return jsonify({"status":"error",
+                                "message":e}), 400
+        additions = tuple(set(groups) - set(current_groups))
+
+        # TODO : this doesn't need to be a loop, can be single insert statement
+        for a in additions:
+            q = "insert into groups_clinicians (clinician_id, group_id) values (%s, %s)" 
+            try:
+                cursor.execute(q, (clinician_id,a,))
+                mysql.connection.commit()
+            except MySQLdb.Error as e:
+                return jsonify({"status":"error",
+                                "message":e}), 400
+
+    return jsonify({"status":"success",
+                    "message":"added"}) 
+
 
 @app.route('/clinicians/<int:clinician_id>', methods=(['DELETE']))
 def remove_clinician(clinician_id):
@@ -424,7 +451,15 @@ def remove_clinician(clinician_id):
 
     Required: clinician_id.
     """
-    pass
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = "delete from `clinicians` where clinician_id = %s"
+    try:
+        cursor.execute(query, (clinician_id,))
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"error":e}), 404
+    return jsonify({"status":"success"})
 
 @app.route('/hospitals', methods=(['GET']))
 def get_hospitals():
@@ -762,8 +797,8 @@ def update(d):
 def get_args(args, d):
     qargs = {}
     for arg in args:
-        if arg in d:
-            qargs[arg] = d[arg] 
+        if d.get(arg):
+            qargs[arg] = d.get(arg)
     return qargs
 
 if __name__ == '__main__':
