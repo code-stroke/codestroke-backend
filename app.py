@@ -432,14 +432,14 @@ def remove_clinician(clinician_id):
 def get_hospitals():
     """Get list of hosptials.
 
-    The query parameter can filter by name, city, state, patient_id.
+    The query parameter can filter by name, city, state, patient_id, lat, lon.
 
     The coordinates parameter specifies a GPS location,
     which sorts the list by proximity to the location.
 
-    Optional: query, coordinates.
+    Optional: query.
     """
-    qargs = get_args(['name', 'city', 'state', 'patient_id'], request.args) 
+    qargs = get_args(['name', 'city', 'state', 'patient_id', 'lat', 'lon'], request.args) 
     return _select_query_result(qargs, "hospitals")
 
 @app.route('/hospitals/<int:hospital_id>', methods=(['GET']))
@@ -456,7 +456,8 @@ def add_hospital():
     """Add a hospital.
 
     Required: name VARCHAR(30), city VARCHAR(30),
-    state VARCHAR(30), postcode VARCHAR(10).
+    state VARCHAR(30), postcode VARCHAR(10),
+    lat DECIMAL(10, 8), lon DECIMAL(11, 8).
     """
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke;")
@@ -466,12 +467,14 @@ def add_hospital():
         city = json['city']
         state = json['state']
         postcode = json['postcode']
+        lat = json['lat']
+        lon = json['lon']
     except KeyError as e:
         return jsonify({"status":"error",
                         "message":"missing {}".format(e)}), 400
 
-    query = ("""insert into hospitals (name, city, state, postcode)
-    values (%s, %s, %s, %s)""")
+    query = ("""insert into hospitals (name, city, state, postcode, lat, lon)
+    values (%s, %s, %s, %s, %s, %s)""")
     
     args = (name,
             city,
@@ -537,7 +540,8 @@ def get_cases():
     The query parameter filters by date range (date1,date2),
     patient_id, hospital_id.
     """
-    pass
+    qargs = get_args(['date1', 'date2', 'patient_id', 'hospital_id'], request.args) 
+    return _select_query_result(qargs, "cases")
 
 @app.route('/cases/<int:case_id>', methods=(['GET']))
 def get_case(case_id):
@@ -546,7 +550,7 @@ def get_case(case_id):
     Required:case_id.
     """
     qargs = {"case_id":case_id}
-    return _select_query_result(qargs, "hospitals")
+    return _select_query_result(qargs, "cases")
 
 @app.route('/cases', methods=(['POST']))
 def add_case():
@@ -607,7 +611,6 @@ def edit_case(case_id):
                         "message":"added"}) 
 
     return jsonify({"status":"error"}), 400
-
 
 @app.route('/cases/<int:case_id>', methods=(['DELETE']))
 def remove_case(case_id):
@@ -724,7 +727,8 @@ def get_events():
 
     Optional: query.
     """
-    pass
+    qargs = get_args(['date1', 'date2', 'patient_id', 'hospital_id'], request.args) 
+    return _select_query_result(qargs, "events")
 
 @app.route('/events/<int:event_id>', methods=(['GET']))
 def get_event(event_id):
@@ -1058,11 +1062,18 @@ def _select(d):
     l = []
     where_done = False
     for k,v in d.items():
+        cond = "`{}` = %s".format(k)
+        if k == 'date1':
+            cond = "`date` between %s"
+        elif k == 'date2':
+            cond = "and %s"
+
         if not where_done:
-            clause += " where `{}` = %s".format(k)
+            clause += " where " + cond
             where_done = True
         else:
-            clause += " and `{}` = %s".format(k)  
+            clause += " and " + cond
+
         l.append(v)
     return clause, tuple(l,)
 
