@@ -150,15 +150,7 @@ def get_patients():
     Optional: first_name, last_name, city, dob, urn.
     """
     qargs = get_args(['first_name', 'last_name', 'city', 'dob', 'urn'], request.args) 
-
-    cursor = mysql.connection.cursor()
-    cursor.execute("use codestroke")
-    query = select(qargs)
-    cursor.execute("select * from patients" + query[0], query[1])
-    result = cursor.fetchall()
-    if result:
-        return jsonify({"result":result})
-    return jsonify({"result":"no results"})
+    return _select_query_result(qargs, "patients")
 
 @app.route('/patients/<int:patient_id>', methods=(['get']))
 def get_patient(patient_id):
@@ -166,16 +158,8 @@ def get_patient(patient_id):
 
     required: patient_id.
     """
-    query = """select * from patients where 
-    patient_id = %s"""
-    cursor = mysql.connection.cursor()
-    cursor.execute("use codestroke")
-    cursor.execute(query, (patient_id,))
-    result = cursor.fetchall()
-    if result:
-        return jsonify({"result":result})
-
-    return jsonify({"message":"no results"}), 400
+    qargs = {"patient_id":patient_id}
+    return _select_query_result(qargs, "patients")
 
 @app.route('/patients', methods=(['POST']))
 def add_patient():
@@ -286,15 +270,7 @@ def get_clinicians():
     Optional: query.
     """
     qargs = get_args(['first_name', 'last_name', 'group_id'], request.args) 
-
-    cursor = mysql.connection.cursor()
-    cursor.execute("use codestroke")
-    query = select(qargs)
-    cursor.execute("select * from clinicians" + query[0], query[1])
-    result = cursor.fetchall()
-    if result:
-        return jsonify({"result":result})
-    return jsonify({"result":"no results"})
+    return _select_query_result(qargs, "clinicians")
 
 @app.route('/clinicians/<int:clinician_id>', methods=(['GET']))
 def get_clinician(clinician_id):
@@ -302,17 +278,8 @@ def get_clinician(clinician_id):
 
     Required: clinician_id.
     """
-    query = """select * from clinicians where 
-    clinician_id = %s"""
-    cursor = mysql.connection.cursor()
-    cursor.execute("use codestroke")
-    cursor.execute(query, (clinician_id,))
-    result = cursor.fetchall()
-    if result:
-        return jsonify({"result":result})
-
-    return jsonify({"message":"no results"}), 400
-    pass
+    qargs = {"clinician_id":clinician_id}
+    return _select_query_result(qargs, "clinicians")
 
 @app.route('/clinicians', methods=(['POST']))
 def add_clinician():
@@ -465,14 +432,15 @@ def remove_clinician(clinician_id):
 def get_hospitals():
     """Get list of hosptials.
 
-    The query parameter can filter by name, city, state, patient.
+    The query parameter can filter by name, city, state, patient_id.
 
     The coordinates parameter specifies a GPS location,
     which sorts the list by proximity to the location.
 
     Optional: query, coordinates.
     """
-    pass
+    qargs = get_args(['name', 'city', 'state', 'patient_id'], request.args) 
+    return _select_query_result(qargs, "hospitals")
 
 @app.route('/hospitals/<int:hospital_id>', methods=(['GET']))
 def get_hospital(hospital_id):
@@ -480,7 +448,8 @@ def get_hospital(hospital_id):
 
     Required: hospital_id.
     """
-    pass
+    qargs = {"hospital_id":hospital_id}
+    return _select_query_result(qargs, "hospitals")
 
 @app.route('/hospitals', methods=(['POST']))
 def add_hospital():
@@ -489,7 +458,34 @@ def add_hospital():
     Required: name VARCHAR(30), city VARCHAR(30),
     state VARCHAR(30), postcode VARCHAR(10).
     """
-    pass
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke;")
+    json = request.get_json()
+    try:
+        name = json['name']
+        city = json['city']
+        state = json['state']
+        postcode = json['postcode']
+    except KeyError as e:
+        return jsonify({"status":"error",
+                        "message":"missing {}".format(e)}), 400
+
+    query = ("""insert into hospitals (name, city, state, postcode)
+    values (%s, %s, %s, %s)""")
+    
+    args = (name,
+            city,
+            state,
+            postcode)
+    try:
+        cursor.execute(query, args)
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
 
 @app.route('/hospitals/<int:hospital_id>', methods=(['PUT']))
 def edit_hospital(hospital_id):
@@ -499,7 +495,24 @@ def edit_hospital(hospital_id):
 
     Optional: name, city, state, postcode.
     """
-    pass
+    qargs = get_args(['name', 'city', 'state', 'postcode'], 
+                     request.args) 
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = update(qargs)
+    try:
+        cursor.execute("update `hospitals` " + query[0] + " where hospital_id=%s", query[1]+(hospital_id,))
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
+
+    return jsonify({"status":"error"}), 400
+
 
 @app.route('/hospitals/<int:hospital_id>', methods=(['DELETE']))
 def remove_hospital(hospital_id):
@@ -507,7 +520,15 @@ def remove_hospital(hospital_id):
 
     Required: hospital_id.
     """
-    pass
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = "delete from `hospitals` where hospital_id = %s"
+    try:
+        cursor.execute(query, (clinician_id,))
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"error":e}), 404
+    return jsonify({"status":"success"})
 
 @app.route('/cases', methods=(['GET']))
 def get_cases():
@@ -524,15 +545,42 @@ def get_case(case_id):
 
     Required:case_id.
     """
-    pass
+    qargs = {"case_id":case_id}
+    return _select_query_result(qargs, "hospitals")
 
 @app.route('/cases', methods=(['POST']))
 def add_case():
     """Add a case.
 
-    Required: patient_id INT(8), hospital_id INT(8).
+    Required: patient_id INT(8), hospital_id INT(8), date DATETIME.
     """
-    pass
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke;")
+    json = request.get_json()
+    try:
+        patient_id = json['patient_id']
+        hospital_id = json['hospital_id']
+        date = json['date']
+    except KeyError as e:
+        return jsonify({"status":"error",
+                        "message":"missing {}".format(e)}), 400
+
+    query = ("""insert into cases (patient_id, hospital_id, date)
+    values (%s, %s, %s)""")
+    
+    args = (patient_id,
+            hospital_id,
+            date)
+    
+    try:
+        cursor.execute(query, args)
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
 
 @app.route('/cases/<int:case_id>', methods=(['PUT']))
 def edit_case(case_id):
@@ -540,7 +588,7 @@ def edit_case(case_id):
 
     Required: case_id.
 
-    Optional: patient_id, hospital_id.
+    Optional: patient_id, hospital_id, date DATETIME.
     """
     pass
 
@@ -550,7 +598,15 @@ def remove_case(case_id):
 
     Required: case_id.
     """
-    pass
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = "delete from `cases` where case_id = %s"
+    try:
+        cursor.execute(query, (case_id,))
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"error":e}), 404
+    return jsonify({"status":"success"})
 
 @app.route('/event_types', methods=(['GET']))
 def get_event_types():
@@ -558,7 +614,8 @@ def get_event_types():
 
     The query parameter can filter by name.
     """
-    pass
+    qargs = get_args(['name'], request.args) 
+    return _select_query_result(qargs, "event_types")
 
 @app.route('/event_types/<int:event_type_id>', methods=(['GET']))
 def get_event_type(event_type_id):
@@ -566,7 +623,8 @@ def get_event_type(event_type_id):
 
     Required: event_type_id.
     """
-    pass
+    qargs = {"event_type_id":event_type_id}
+    return _select_query_result(qargs, "event_types")
 
 @app.route('/event_types', methods=(['POST']))
 def add_event_type():
@@ -592,7 +650,15 @@ def remove_event_type(event_type_id):
 
     Required: event_type_id.
     """
-    pass
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = "delete from `event_types` where event_type_id = %s"
+    try:
+        cursor.execute(query, (event_type_id,))
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"error":e}), 404
+    return jsonify({"status":"success"})
 
 @app.route('/events', methods=(['GET']))
 def get_events():
@@ -610,9 +676,10 @@ def get_events():
 def get_event(event_id):
     """Get event specified by id.
 
-    Required: event id.
+    Required: event_id.
     """
-    pass
+    qargs = {"event_id":event_id}
+    return _select_query_result(qargs, "event_types")
 
 @app.route('/events', methods=(['POST']))
 def add_event():
@@ -621,9 +688,34 @@ def add_event():
     When an event is added, it is broadcasted to all clinicians
     that belong to groups with the given event_type_id.
 
-    Required: event_type_id INT(8), clinician_id INT(8).
+    Required: event_type_id INT(8), clinician_id INT(8), date DATETIME.
     """
-    pass
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke;")
+    json = request.get_json()
+    try:
+        event_type_id = json['event_type_id']
+        clinician_id = json['clinician_id']
+        date = json['date']
+    except KeyError as e:
+        return jsonify({"status":"error",
+                        "message":"missing {}".format(e)}), 400
+
+    query = ("""insert into events (event_type_id, clinician_id, date)
+    values (%s, %s, %s)""")
+    
+    args = (event_type_id,
+            clinicioan_id,
+            date)
+    try:
+        cursor.execute(query, args)
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
 
 @app.route('/messages', methods=(['GET']))
 def get_messages():
@@ -676,7 +768,8 @@ def get_groups():
 
     Optional: query.
     """
-    pass
+    qargs = get_args(['name', 'clinician_id', 'hospital_id'], request.args) 
+    return _select_query_result(qargs, "groups")
 
 @app.route('/groups/<int:group_id>', methods=(['GET']))
 def get_group(group_id):
@@ -684,7 +777,8 @@ def get_group(group_id):
 
     Required: group_id.
     """
-    pass
+    qargs = {"group_id":group_id}
+    return _select_query_result(qargs, "groups")
 
 @app.route('/groups', methods=(['POST']))
 def add_group():
@@ -710,7 +804,15 @@ def remove_group(group_id):
 
     Required: group_id.
     """
-    pass
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = "delete from `groups` where group_id = %s"
+    try:
+        cursor.execute(query, (patient_id,))
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"error":e}), 404
+    return jsonify({"status":"success"})
 
 @app.route('/vitals', methods=(['GET']))
 def get_vitals():
@@ -720,7 +822,8 @@ def get_vitals():
 
     Optional: query.
     """
-    pass
+    qargs = get_args(['name'], request.args) 
+    return _select_query_result(qargs, "vitals")
 
 @app.route('/vitals/<int:vital_id>', methods=(['GET']))
 def get_vital(vital_id):
@@ -728,7 +831,8 @@ def get_vital(vital_id):
 
     Required: vital_id.
     """
-    pass
+    qargs = {"vital_id":vital_id}
+    return _select_query_result(qargs, "vitals")
 
 @app.route('/vitals', methods=(['POST']))
 def add_vital():
@@ -753,7 +857,15 @@ def remove_vital(vital_id):
 
     Required: vital_id.
     """
-    pass
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = "delete from `vitals` where vital_id = %s"
+    try:
+        cursor.execute(query, (vital_id,))
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"error":e}), 404
+    return jsonify({"status":"success"})
 
 @app.route('/tokens', methods=(['POST']))
 def create_token():
@@ -771,8 +883,34 @@ def add_user_profile():
     
     Optional: email VARCHAR(40).
     """
-    
-def select(d):
+
+def _select_query_response(qargs, table):
+    if not __valid_table(table):
+        return jsonify({"status":"error", "message":"table {} not found".format(table)})
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = _select(qargs)
+    cursor.execute("select * from {}".format(table) + query[0], query[1])
+    result = cursor.fetchall()
+    if result:
+        return jsonify({"result":result})
+    return jsonify({"result":"no results"})
+
+def __valid_table(table):
+    return table in ("cases",
+                     "clinicians",
+                     "event_types",
+                     "events",    
+                     "groups",         
+                     "groups_clinicians",
+                     "hospitals",
+                     "hospitals_clinicians", 
+                     "messages",
+                     "patients",       
+                     "user_profiles",       
+                     "vitals")
+
+def _select(d):
     """ Generates a MySQL select statement from a query dictionary. 
     """
     clause = ""
@@ -787,14 +925,14 @@ def select(d):
         l.append(v)
     return clause, tuple(l,)
 
-def update(d):
+def _update(d):
     """ Generates a MySQL update statement from a query dictionary.
     """
     clause = "set " + ",".join(["{} = %s".format(k) for k in d.keys()])
     tup = tuple([v for v in d.values()],)
     return clause, tup
 
-def get_args(args, d):
+def _get_args(args, d):
     qargs = {}
     for arg in args:
         if d.get(arg):
