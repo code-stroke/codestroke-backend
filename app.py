@@ -590,7 +590,24 @@ def edit_case(case_id):
 
     Optional: patient_id, hospital_id, date DATETIME.
     """
-    pass
+    qargs = get_args(['patient_id', 'hospital_id', 'date'],
+                     request.args) 
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = update(qargs)
+    try:
+        cursor.execute("update `cases` " + query[0] + " where case_id=%s", query[1]+(case_id,))
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
+
+    return jsonify({"status":"error"}), 400
+
 
 @app.route('/cases/<int:case_id>', methods=(['DELETE']))
 def remove_case(case_id):
@@ -632,7 +649,29 @@ def add_event_type():
 
     Required: name VARCHAR(50), description VARCHAR(200).
     """
-    pass
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke;")
+    json = request.get_json()
+    try:
+        name = json['name']
+        description = json['description']
+    except KeyError as e:
+        return jsonify({"status":"error",
+                        "message":"missing {}".format(e)}), 400
+
+    query = ("""insert into event_types (name, description)
+    values (%s, %s)""")
+    
+    args = (name, description)
+    try:
+        cursor.execute(query, args)
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
 
 @app.route('/event_types/<int:event_type_id>', methods=(['PUT']))
 def edit_event_type(event_type_id):
@@ -642,7 +681,22 @@ def edit_event_type(event_type_id):
 
     Optional: name, description.
     """
-    pass
+    qargs = get_args(['name', 'description'], request.args) 
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = update(qargs)
+    try:
+        cursor.execute("update `event_types` " + query[0] + " where event_type_id=%s", query[1]+(event_type_id,))
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
+
+    return jsonify({"status":"error"}), 400
 
 @app.route('/event_types/<int:event_type_id>', methods=(['DELETE']))
 def remove_event_type(event_type_id):
@@ -734,6 +788,7 @@ def get_message(message_id):
 
     Required:message_id
     """
+    pass
 
 @app.route('/messages', methods=(['POST']))
 def add_message():
@@ -786,8 +841,28 @@ def add_group():
 
     Required: name VARCHAR(30).
     """
-    pass
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke;")
+    json = request.get_json()
+    try:
+        name = json['name']
+    except KeyError as e:
+        return jsonify({"status":"error",
+                        "message":"missing {}".format(e)}), 400
 
+    query = ("""insert into groups (name)
+    values (%s)""")
+    
+    args = (name,)
+    try:
+        cursor.execute(query, args)
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
 
 @app.route('/groups/<int:group_id>', methods=(['PUT']))
 def edit_group(group_id):
@@ -796,7 +871,22 @@ def edit_group(group_id):
     Required: group_id.
     Optional: name.
     """
-    pass
+    qargs = get_args(['name'], request.args) 
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = update(qargs)
+    try:
+        cursor.execute("update `groups` " + query[0] + " where group_id=%s", query[1]+(group_id,))
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
+
+    return jsonify({"status":"error"}), 400
 
 @app.route('/groups/<int:group_id>', methods=(['DELETE']))
 def remove_group(group_id):
@@ -840,7 +930,28 @@ def add_vital():
 
     Required: name VARCHAR(30).
     """
-    pass
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke;")
+    json = request.get_json()
+    try:
+        name = json['name']
+    except KeyError as e:
+        return jsonify({"status":"error",
+                        "message":"missing {}".format(e)}), 400
+
+    query = ("""insert into vitals (name)
+    values (%s)""")
+    
+    args = (name,)
+    try:
+        cursor.execute(query, args)
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
 
 @app.route('/vitals/<int:vital_id>', methods=(['PUT']))
 def edit_vital(vital_id):
@@ -849,7 +960,22 @@ def edit_vital(vital_id):
     Required: vital_id.
     Optional: name.
     """
-    pass
+    qargs = get_args(['name'], request.args) 
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = update(qargs)
+    try:
+        cursor.execute("update `vitals` " + query[0] + " where vital_id=%s", query[1]+(vital_id,))
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
+
+    return jsonify({"status":"error"}), 400
 
 @app.route('/vitals/<int:vital_id>', methods=(['DELETE']))
 def remove_vital(vital_id):
@@ -867,14 +993,6 @@ def remove_vital(vital_id):
         return jsonify({"error":e}), 404
     return jsonify({"status":"success"})
 
-@app.route('/tokens', methods=(['POST']))
-def create_token():
-    """Create a token and send it back to the sender of the request.
-
-    TODO: Required
-    """
-    pass
-
 @app.route('/user_profiles', methods=(['POST']))
 def add_user_profile():
     """Add a user_profile.
@@ -883,6 +1001,29 @@ def add_user_profile():
     
     Optional: email VARCHAR(40).
     """
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke;")
+    json = request.get_json()
+    try:
+        name = json['name']
+    except KeyError as e:
+        return jsonify({"status":"error",
+                        "message":"missing {}".format(e)}), 400
+
+    query = ("""insert into user_profiles (social_id, name)
+    values (%s, %s)""")
+    
+    args = (social_id,
+            name,)
+    try:
+        cursor.execute(query, args)
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
 
 def _select_query_response(qargs, table):
     if not __valid_table(table):
