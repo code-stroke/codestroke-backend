@@ -4,7 +4,7 @@ from flask_dance.contrib.google import make_google_blueprint, google
 from flask_dance.contrib.twitter import make_twitter_blueprint, twitter
 from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
 from flask_dance.consumer import oauth_authorized
-import getpass
+import getpass, datetime
 
 app = Flask(__name__)
 app.config['MYSQL_USER'] = 'root'
@@ -36,7 +36,6 @@ def login_exempt(func):
 
 @app.before_request
 def check_login():
-    print(request.endpoint)
     if not request.endpoint:
         return jsonify({"status":"error"})
     # needed for oauth login pages exemption
@@ -62,16 +61,26 @@ def check_add_social_id(social_id, input_info):
     if not result:
         name = input_info["name"]
         email = input_info["email"]
-        insert_query = """insert into user_profiles (social_id, name, email)
-                          values (%s, %s, %s)"""
-        insert_args = (social_id, name, email)
+        date = datetime.datetime.now().strftime("%Y-%m-%d")
+        insert_query = """insert into user_profiles (social_id, name,
+                          creation_date, email) values (%s, %s, %s, %s)"""
+        insert_args = (social_id, name, date, email)
         cursor.execute(insert_query, insert_args)
         mysql.connection.commit()
 
 @app.route('/')
 def index():
     session.permanent = True
+    if not check_database():
+        return jsonify({"status":"error", "message":"create db first"})
     return jsonify({"logged_in":"true", "social_id":session["social_id"]})
+
+@login_exempt
+def check_database():
+    check_query = "show databases like 'codestroke'"
+    cursor = mysql.connection.cursor()
+    cursor.execute(check_query)
+    return cursor.fetchall()
 
 @app.route('/login', methods=(['GET', 'POST']))
 @login_exempt
@@ -85,7 +94,7 @@ def login():
         return jsonify({"status":"error"})
         # url_str = "facebook.login"
     else:
-        return jsonify({"status":"require_provider"})
+        return jsonify({"message":"provider query required"})
     return jsonify({"status":"redirect", "redirect_url":url_for(url_str)})
 
 @oauth_authorized.connect_via(bp_google)
@@ -163,13 +172,18 @@ def create_db():
                 elif line.startswith("def"):
                     lines.append(line)
 
-            buf = [x for x in lines if "Required" or "Optional" in x]
+            tags = ["add_", "Required", "Optional"]
+            buf = [x for x in lines if any(i in x for i in tags)]
+            if not buf: # ensure initial login functions not counted
+                continue
 
             func = [t for t in buf if "add_" in t][0].replace("def add_","").replace("():","")
 
             creates = ""
 
             req = [y for y in buf if "Required" in y]
+            if not req: # ensure initial login functions not counted
+                continue
             reqs = ("{}_id INT AUTO_INCREMENT PRIMARY KEY, ".format(func) +
                     req[0].replace("Required: ", "").replace(".","").strip()).split(", ")
             reqs1 = [r + " NOT NULL" for r in reqs if "LIST" not in r]
@@ -709,7 +723,7 @@ def create_token():
 def add_user_profile():
     """Add a user_profile.
 
-    Required: social_id VARCHAR(40), name VARCHAR(40).
+    Required: social_id VARCHAR(40), name VARCHAR(40), creation_date DATE.
 
     Optional: email VARCHAR(40).
     """
