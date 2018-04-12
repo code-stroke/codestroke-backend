@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL, MySQLdb
 from flask_dance.contrib.google import make_google_blueprint, google
+from flask_dance.contrib.twitter import make_twitter_blueprint, twitter
 from flask_dance.consumer import oauth_authorized
 import getpass
 
@@ -17,7 +18,7 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 
 # OAUTH CONFIG AND SETUP
-# ensure ./app.conf exists with client id & secret, and secret key
+# ensure ./app.conf exists with client ids & secrets, and secret key
 app.config.from_pyfile('./app.conf')
 bp_google = make_google_blueprint(
     client_id = app.config['GOOGLE_CLIENT_ID'],
@@ -25,24 +26,12 @@ bp_google = make_google_blueprint(
     scope = ["profile", "email"])
 app.register_blueprint(bp_google, url_prefix="/login")
 
-@oauth_authorized.connect
-def logged_in(blueprint, token):
-    if not token:
-        flash("Log in failed.", category="error")
-        return False
+bp_twitter = make_twitter_blueprint(
+    api_key = app.config['TWITTER_CLIENT_ID'],
+    api_secret = app.config['TWITTER_CLIENT_SECRET'])
+app.register_blueprint(bp_twitter, url_prefix="/login")
 
-    # Google-specific API getter
-    resp = blueprint.session.get("/oauth2/v2/userinfo")
-    
-    if not resp.ok:
-        flash("Failed to get user data.", category="error")
-        return False
-
-    user_info = resp.json()
-    # need to absolutely make sure email is unique per provider,
-    # otherwise, need to use a different unique id
-    social_id = "google." + user_info["email"]
-
+def check_add_social_id(social_id, input_info):
     # add user to database if not found
     check_query = 'select * from user_profiles where social_id = %s'
     cursor = mysql.connection.cursor()
@@ -50,24 +39,66 @@ def logged_in(blueprint, token):
     cursor.execute(check_query, (social_id,))
     result = cursor.fetchall()
     if not result:
-        email = user_info["email"]
-        name = user_info["name"]
+        name = input_info["name"]
+        email = input_info["email"]
         insert_query = """insert into user_profiles (social_id, name, email)
                           values (%s, %s, %s)"""
         insert_args = (social_id, name, email)
         cursor.execute(insert_query, insert_args)
         mysql.connection.commit()
 
+@app.route('/login')
+def login():
+    # TODO: get user selection of login service
+    pass
+        
+@app.route('/google')
+def google_login():
+    return jsonify({"redirect_url":url_for("google.login")})
+
+@oauth_authorized.connect_via(bp_google)
+def google_logged_in(blueprint, token):
+    assert token is not None
+    resp = blueprint.session.get("/oauth2/v2/userinfo")
+    assert resp.ok
+    user_info = resp.json()
+
+    input_info = {}
+    input_info["name"] = user_info["name"]
+    input_info["email"] = user_info["email"]
+    social_id = "google." + user_info["id"]
+    
+    check_add_social_id(social_id, input_info)
     session.permanent = True # is there a better place to put this?
     session["social_id"] = social_id
     return False # do not store identity provider access token
 
+@app.route('/twitter')
+def twitter_login():
+    return jsonify({"redirect_url":url_for("twitter.login")})
+
+@oauth_authorized.connect_via(bp_twitter)
+def twitter_logged_in(blueprint, token):
+    assert token is not None
+    resp = blueprint.session.get("account/verify_credentials.json?include_email=true")
+    assert resp.ok
+    user_info = resp.json()
+    
+    input_info = {}
+    input_info["name"] = user_info["name"]
+    input_info["email"] = user_info["email"]
+    social_id = "twitter." + user_info["id_str"]
+    
+    check_add_social_id(social_id, input_info)
+    session["social_id"] = social_id
+    return False
+
 @app.route('/')
 def index():
-    # codestroke database must already exist (TODO implement check?)
+    session.permanent = True
     if 'social_id' not in session:
-        return jsonify({"logged_in":"false", "redirect_url":url_for("google.login")})
-    return jsonify({"logged_in":"true", "social_id":session["social_id"]})
+        return jsonify({"logged_in":"false", "redirect_url":url_for("login")})
+    return jsonify({"logged_in":"true", "social_id":session["social_id"]})    
     
 @app.route('/create_db')
 def create_db():
