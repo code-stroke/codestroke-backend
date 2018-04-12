@@ -29,7 +29,29 @@ app.register_blueprint(bp_twitter, url_prefix="/login")
 
 bp_facebook = make_facebook_blueprint()
 app.register_blueprint(bp_facebook, url_prefix="/login")
-    
+
+def login_exempt(func):
+    func.login_exempt = True
+    return func
+
+@app.before_request
+def check_login():
+    print(request.endpoint)
+    if not request.endpoint:
+        return jsonify({"status":"error"})
+    # needed for oauth login pages exemption
+    providers = ["google", "twitter", "facebook"]
+    logins = [path + ".authorized" for path in providers] + \
+             [path + ".login" for path in providers]
+    if request.endpoint in logins:
+        return
+    view = app.view_functions[request.endpoint]
+    if getattr(view, 'login_exempt', False):
+        return
+    if 'social_id' not in session:
+        return jsonify({"logged_in":"false", "redirect_url":url_for("login")})
+
+@login_exempt
 def check_add_social_id(social_id, input_info):
     # add user to database if not found
     check_query = 'select * from user_profiles where social_id = %s'
@@ -49,11 +71,10 @@ def check_add_social_id(social_id, input_info):
 @app.route('/')
 def index():
     session.permanent = True
-    if 'social_id' not in session:
-        return jsonify({"logged_in":"false", "redirect_url":url_for("login")})
-    return jsonify({"logged_in":"true", "social_id":session["social_id"]})    
-        
+    return jsonify({"logged_in":"true", "social_id":session["social_id"]})
+
 @app.route('/login', methods=(['GET', 'POST']))
+@login_exempt
 def login():
     if request.args.get("provider") == "google":
         url_str = "google.login"
@@ -66,8 +87,9 @@ def login():
     else:
         return jsonify({"status":"require_provider"})
     return jsonify({"status":"redirect", "redirect_url":url_for(url_str)})
-        
+
 @oauth_authorized.connect_via(bp_google)
+@login_exempt
 def google_logged_in(blueprint, token):
     assert token is not None
     resp = blueprint.session.get("/oauth2/v2/userinfo")
@@ -78,24 +100,25 @@ def google_logged_in(blueprint, token):
     input_info["name"] = user_info["name"]
     input_info["email"] = user_info["email"]
     social_id = "google." + user_info["id"]
-    
+
     check_add_social_id(social_id, input_info)
     session.permanent = True # is there a better place to put this?
     session["social_id"] = social_id
     return False # do not store identity provider access token
 
 @oauth_authorized.connect_via(bp_twitter)
+@login_exempt
 def twitter_logged_in(blueprint, token):
     assert token is not None
     resp = blueprint.session.get("account/verify_credentials.json?include_email=true")
     assert resp.ok
     user_info = resp.json()
-    
+
     input_info = {}
     input_info["name"] = user_info["name"]
     input_info["email"] = user_info["email"]
     social_id = "twitter." + user_info["id_str"]
-    
+
     check_add_social_id(social_id, input_info)
     session["social_id"] = social_id
     return False
@@ -103,15 +126,18 @@ def twitter_logged_in(blueprint, token):
 # NOTE: Facebook login will not work naively with a local app server.
 # As of March 2018, they require https strictly.
 @oauth_authorized.connect_via(bp_facebook)
+@login_exempt
 def facebook_logged_in(blueprint, token):
     return False
 
 @app.route('/create_db')
+@login_exempt # for purposes of local server database testing ONLY
+# login_exempt since login itself requires database to be available
 def create_db():
-    """ Create the database by parsing this file for API 
+    """ Create the database by parsing this file for API
     calls that add objects and getting the Required and Optional
     lines.
-    
+
     This API should only be called locally.
     """
     if request.remote_addr != "127.0.0.1":
@@ -129,7 +155,7 @@ def create_db():
             final_line = ""
             for line in l.splitlines():
                 if line.endswith(","):
-                    final_line += line 
+                    final_line += line
                 elif line.endswith("."):
                     final_line += line
                     lines.append(final_line)
@@ -138,7 +164,7 @@ def create_db():
                     lines.append(line)
 
             buf = [x for x in lines if "Required" or "Optional" in x]
-                    
+
             func = [t for t in buf if "add_" in t][0].replace("def add_","").replace("():","")
 
             creates = ""
@@ -182,17 +208,17 @@ def get_patients():
     qargs = {}
 
     if request.args.get('first_name'):
-        qargs['first_name'] = request.args.get('first_name') 
+        qargs['first_name'] = request.args.get('first_name')
     if request.args.get('last_name'):
-        qargs['last_name'] = request.args.get('last_name') 
+        qargs['last_name'] = request.args.get('last_name')
     if request.args.get('city'):
-        qargs['city'] = request.args.get('city') 
+        qargs['city'] = request.args.get('city')
     if request.args.get('dob'):
-        qargs['dob'] = request.args.get('dob') 
+        qargs['dob'] = request.args.get('dob')
     if request.args.get('urn'):
-        qargs['urn'] = request.args.get('urn') 
+        qargs['urn'] = request.args.get('urn')
 
-    qargs = get_args(['first_name', 'last_name', 'city', 'dob', 'urn'], request.args) 
+    qargs = get_args(['first_name', 'last_name', 'city', 'dob', 'urn'], request.args)
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
@@ -209,7 +235,7 @@ def get_patient(patient_id):
 
     Required: patient_id.
     """
-    query = """select * from patients where 
+    query = """select * from patients where
     patient_id = %s"""
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
@@ -250,11 +276,11 @@ def add_patient():
                         "message":"missing {}".format(e)}), 400
     if json['hospital_id']:
         hospital_id = json['hospital_id']
-        
-    query = ("""insert into patients (first_name, last_name, dob, 
-    address, city, state, postcode, phone, hospital_id, urn) 
+
+    query = ("""insert into patients (first_name, last_name, dob,
+    address, city, state, postcode, phone, hospital_id, urn)
     values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""")
-    
+
     args = (first_name,
             last_name,
             dob,
@@ -273,7 +299,7 @@ def add_patient():
                         "message":e}), 400
     finally:
         return jsonify({"status":"success",
-                        "message":"added"}) 
+                        "message":"added"})
 
 @app.route('/patients/<int:patient_id>', methods=(['PUT']))
 def edit_patient(patient_id):
@@ -281,33 +307,33 @@ def edit_patient(patient_id):
 
     Required: patient_id.
 
-    Optional: first_name, last_name, dob, address, city, 
+    Optional: first_name, last_name, dob, address, city,
     state, postcode, phone, urn.
     """
     qargs = {}
 
     if request.args.get('first_name'):
-        qargs['first_name'] = request.args.get('first_name') 
+        qargs['first_name'] = request.args.get('first_name')
     if request.args.get('last_name'):
-        qargs['last_name'] = request.args.get('last_name') 
+        qargs['last_name'] = request.args.get('last_name')
     if request.args.get('city'):
-        qargs['city'] = request.args.get('city') 
+        qargs['city'] = request.args.get('city')
     if request.args.get('dob'):
-        qargs['dob'] = request.args.get('dob') 
+        qargs['dob'] = request.args.get('dob')
     if request.args.get('address'):
-        qargs['address'] = request.args.get('address') 
+        qargs['address'] = request.args.get('address')
     if request.args.get('state'):
-        qargs['state'] = request.args.get('state') 
+        qargs['state'] = request.args.get('state')
     if request.args.get('postcode'):
-        qargs['postcode'] = request.args.get('postcode') 
+        qargs['postcode'] = request.args.get('postcode')
     if request.args.get('phone'):
-        qargs['phone'] = request.args.get('phone') 
+        qargs['phone'] = request.args.get('phone')
     if request.args.get('urn'):
-        qargs['urn'] = request.args.get('urn') 
+        qargs['urn'] = request.args.get('urn')
 
     qargs = get_args(['first_name', 'last_name', 'city', 'dob',
                       'address', 'state', 'phone', 'postcode', 'urn'],
-                     request.args) 
+                     request.args)
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
@@ -335,7 +361,7 @@ def remove_patient(patient_id):
 def get_clinicians():
     """Get list of clinicians.
 
-    The query paramater can filter by first_name, last_name, 
+    The query paramater can filter by first_name, last_name,
     hospital, group.
 
     Optional: query.
@@ -514,8 +540,8 @@ def remove_event_type(event_type_id):
 def get_events():
     """Get list of events.
 
-    The query parameter can filter by name, event_type_id, 
-    hospital_id, patient_id, sender_clinician_id, receiver_clinician_ids, 
+    The query parameter can filter by name, event_type_id,
+    hospital_id, patient_id, sender_clinician_id, receiver_clinician_ids,
     date range (date1,date2).
 
     Optional: query.
@@ -545,7 +571,7 @@ def add_event():
 def get_messages():
     """Get messages.
 
-    The query parameter can filter by group_id, sender_clinician_id, 
+    The query parameter can filter by group_id, sender_clinician_id,
     receiver_clinician_id.
 
     Optional: query.
@@ -684,12 +710,12 @@ def add_user_profile():
     """Add a user_profile.
 
     Required: social_id VARCHAR(40), name VARCHAR(40).
-    
+
     Optional: email VARCHAR(40).
     """
-    
+
 def select(d):
-    """ Generates a MySQL select statement from a query dictionary. 
+    """ Generates a MySQL select statement from a query dictionary.
     """
     clause = ""
     l = []
@@ -699,7 +725,7 @@ def select(d):
             clause += " where `{}` = %s".format(k)
             where_done = True
         else:
-            clause += " and `{}` = %s".format(k)  
+            clause += " and `{}` = %s".format(k)
         l.append(v)
     return clause, tuple(l,)
 
@@ -714,7 +740,7 @@ def get_args(args, d):
     qargs = {}
     for arg in args:
         if d[arg]:
-            qargs[arg] = d[arg] 
+            qargs[arg] = d[arg]
     return qargs
 
 if __name__ == '__main__':
