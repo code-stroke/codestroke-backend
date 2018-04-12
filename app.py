@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL, MySQLdb
 from flask_dance.contrib.google import make_google_blueprint, google
 from flask_dance.contrib.twitter import make_twitter_blueprint, twitter
+from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
 from flask_dance.consumer import oauth_authorized
 import getpass
 
@@ -20,17 +21,15 @@ os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 # OAUTH CONFIG AND SETUP
 # ensure ./app.conf exists with client ids & secrets, and secret key
 app.config.from_pyfile('./app.conf')
-bp_google = make_google_blueprint(
-    client_id = app.config['GOOGLE_CLIENT_ID'],
-    client_secret = app.config['GOOGLE_CLIENT_SECRET'],
-    scope = ["profile", "email"])
+bp_google = make_google_blueprint(scope = ["profile", "email"])
 app.register_blueprint(bp_google, url_prefix="/login")
 
-bp_twitter = make_twitter_blueprint(
-    api_key = app.config['TWITTER_CLIENT_ID'],
-    api_secret = app.config['TWITTER_CLIENT_SECRET'])
+bp_twitter = make_twitter_blueprint()
 app.register_blueprint(bp_twitter, url_prefix="/login")
 
+bp_facebook = make_facebook_blueprint()
+app.register_blueprint(bp_facebook, url_prefix="/login")
+    
 def check_add_social_id(social_id, input_info):
     # add user to database if not found
     check_query = 'select * from user_profiles where social_id = %s'
@@ -47,15 +46,27 @@ def check_add_social_id(social_id, input_info):
         cursor.execute(insert_query, insert_args)
         mysql.connection.commit()
 
-@app.route('/login')
-def login():
-    # TODO: get user selection of login service
-    pass
+@app.route('/')
+def index():
+    session.permanent = True
+    if 'social_id' not in session:
+        return jsonify({"logged_in":"false", "redirect_url":url_for("login")})
+    return jsonify({"logged_in":"true", "social_id":session["social_id"]})    
         
-@app.route('/google')
-def google_login():
-    return jsonify({"redirect_url":url_for("google.login")})
-
+@app.route('/login', methods=(['GET', 'POST']))
+def login():
+    if request.args.get("provider") == "google":
+        url_str = "google.login"
+    elif request.args.get("provider") == "twitter":
+        url_str = "twitter.login"
+    elif request.args.get("provider") == "facebook":
+        # Facebook login cannot be done on local server
+        return jsonify({"status":"error"})
+        # url_str = "facebook.login"
+    else:
+        return jsonify({"status":"require_provider"})
+    return jsonify({"status":"redirect", "redirect_url":url_for(url_str)})
+        
 @oauth_authorized.connect_via(bp_google)
 def google_logged_in(blueprint, token):
     assert token is not None
@@ -73,10 +84,6 @@ def google_logged_in(blueprint, token):
     session["social_id"] = social_id
     return False # do not store identity provider access token
 
-@app.route('/twitter')
-def twitter_login():
-    return jsonify({"redirect_url":url_for("twitter.login")})
-
 @oauth_authorized.connect_via(bp_twitter)
 def twitter_logged_in(blueprint, token):
     assert token is not None
@@ -93,13 +100,12 @@ def twitter_logged_in(blueprint, token):
     session["social_id"] = social_id
     return False
 
-@app.route('/')
-def index():
-    session.permanent = True
-    if 'social_id' not in session:
-        return jsonify({"logged_in":"false", "redirect_url":url_for("login")})
-    return jsonify({"logged_in":"true", "social_id":session["social_id"]})    
-    
+# NOTE: Facebook login will not work naively with a local app server.
+# As of March 2018, they require https strictly.
+@oauth_authorized.connect_via(bp_facebook)
+def facebook_logged_in(blueprint, token):
+    return False
+
 @app.route('/create_db')
 def create_db():
     """ Create the database by parsing this file for API 
