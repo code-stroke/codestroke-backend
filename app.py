@@ -8,6 +8,7 @@ app = Flask(__name__)
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = getpass.getpass('DB Password:')
 app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app)
 
 # FOR LOCAL SERVER TESTING ONLY
@@ -352,7 +353,6 @@ def edit_clinician(clinician_id):
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
     query = update(qargs)
-    print(query)
     try:
         cursor.execute("update `clinicians` " + query[0] + " where clinician_id=%s", query[1]+(clinician_id,))
         mysql.connection.commit()
@@ -779,12 +779,37 @@ def add_event():
 def get_messages():
     """Get messages.
 
-    The query parameter can filter by group_id, sender_clinician_id, 
-    receiver_clinician_id.
+    The query parameter can filter by clinician_id. 
 
     Optional: query.
     """
-    pass
+    try:
+        clinician_id = request.args.get('clinician_id')
+    except KeyError as e:
+        return jsonify({"status":"error",
+                        "message":e})
+
+        # get incoming messages
+        q1 = """select * from messages as a 
+        inner join clinicians as b 
+        on a.clinician_id = b.clinician_id 
+        where a.clinician_id in 
+            (select clinician_id from groups_clinicians 
+            where group_id in 
+                (select group_id from groups_clinicians 
+                where clinician_id = %s))""", (clinician_id,)
+        res = cursor.execute(q1)
+        in_messages = res.fetchall()
+            
+        # process in_messages[x]['first_name'] , body, last_name
+        # get outgoing messages
+        q2 = "select body from messages where clinician_id = %s", (clinician_id,)
+        res = cursor.execute(q2)
+        out_messages = res.fetchall()
+
+        return jsonify({"status":"success",
+                        "in_messages":in_messages,
+                        "out_messages":out_messages})
 
 @app.route('/messages/<int:message_id>', methods=(['GET']))
 def get_message(message_id):
@@ -792,7 +817,8 @@ def get_message(message_id):
 
     Required:message_id
     """
-    pass
+    qargs = {"message_id":message_id}
+    return _select_query_result(qargs, "messages")
 
 @app.route('/messages', methods=(['POST']))
 def add_message():
@@ -801,7 +827,30 @@ def add_message():
 
     Required: clinician_id INT(8), body TEXT.
     """
-    pass
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke;")
+    json = request.get_json()
+    try:
+        clinician_id = json['clinician_id']
+        body = json['body']
+    except KeyError as e:
+        return jsonify({"status":"error",
+                        "message":"missing {}".format(e)}), 400
+
+    query = ("""insert into messages (clinician_id, body)
+    values (%s, %s)""")
+    
+    args = (clinician_id,
+            body,)
+    try:
+        cursor.execute(query, args)
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
 
 @app.route('/messages/<int:message_id>', methods=(['PUT']))
 def edit_message(message_id):
@@ -809,7 +858,22 @@ def edit_message(message_id):
 
     Required: message_id, body
     """
-    pass
+    qargs = get_args(['body'], request.args) 
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = update(qargs)
+    try:
+        cursor.execute("update `messages` " + query[0] + " where message_id=%s", query[1]+(message_id,))
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"status":"error",
+                        "message":e}), 400
+    finally:
+        return jsonify({"status":"success",
+                        "message":"added"}) 
+
+    return jsonify({"status":"error"}), 400
 
 @app.route('/messages/<int:message_id>', methods=(['DELETE']))
 def remove_message(message_id):
@@ -817,7 +881,15 @@ def remove_message(message_id):
 
     Required: message_id.
     """
-    pass
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    query = "delete from `messages` where message_id = %s"
+    try:
+        cursor.execute(query, (patient_id,))
+        mysql.connection.commit()
+    except MySQLdb.Error as e:
+        return jsonify({"error":e}), 404
+    return jsonify({"status":"success"})
 
 @app.route('/groups', methods=(['GET']))
 def get_groups():
