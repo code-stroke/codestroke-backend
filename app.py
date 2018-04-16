@@ -1,8 +1,10 @@
 from flask import Flask, jsonify, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL, MySQLdb
 from flask_dance.contrib.google import make_google_blueprint, google
+from flask_dance.contrib.twitter import make_twitter_blueprint, twitter
+from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
 from flask_dance.consumer import oauth_authorized
-import getpass
+import getpass, datetime
 
 app = Flask(__name__)
 app.config['MYSQL_USER'] = 'root'
@@ -18,32 +20,39 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 
 # OAUTH CONFIG AND SETUP
-# ensure ./app.conf exists with client id & secret, and secret key
+# ensure ./app.conf exists with client ids & secrets, and secret key
 app.config.from_pyfile('./app.conf')
-bp_google = make_google_blueprint(
-    client_id = app.config['GOOGLE_CLIENT_ID'],
-    client_secret = app.config['GOOGLE_CLIENT_SECRET'],
-    scope = ["profile", "email"])
+bp_google = make_google_blueprint(scope = ["profile", "email"])
 app.register_blueprint(bp_google, url_prefix="/login")
 
-@oauth_authorized.connect
-def logged_in(blueprint, token):
-    if not token:
-        flash("Log in failed.", category="error")
-        return False
+bp_twitter = make_twitter_blueprint()
+app.register_blueprint(bp_twitter, url_prefix="/login")
 
-    # Google-specific API getter
-    resp = blueprint.session.get("/oauth2/v2/userinfo")
-    
-    if not resp.ok:
-        flash("Failed to get user data.", category="error")
-        return False
+bp_facebook = make_facebook_blueprint()
+app.register_blueprint(bp_facebook, url_prefix="/login")
 
-    user_info = resp.json()
-    # need to absolutely make sure email is unique per provider,
-    # otherwise, need to use a different unique id
-    social_id = "google." + user_info["email"]
+def login_exempt(func):
+    func.login_exempt = True
+    return func
 
+@app.before_request
+def check_login():
+    if not request.endpoint:
+        return jsonify({"status":"error"})
+    # needed for oauth login pages exemption
+    providers = ["google", "twitter", "facebook"]
+    logins = [path + ".authorized" for path in providers] + \
+             [path + ".login" for path in providers]
+    if request.endpoint in logins:
+        return
+    view = app.view_functions[request.endpoint]
+    if getattr(view, 'login_exempt', False):
+        return
+    if 'social_id' not in session:
+        return jsonify({"logged_in":"false", "redirect_url":url_for("login")})
+
+@login_exempt
+def check_add_social_id(social_id, input_info):
     # add user to database if not found
     check_query = 'select * from user_profiles where social_id = %s'
     cursor = mysql.connection.cursor()
@@ -51,31 +60,94 @@ def logged_in(blueprint, token):
     cursor.execute(check_query, (social_id,))
     result = cursor.fetchall()
     if not result:
-        email = user_info["email"]
-        name = user_info["name"]
-        insert_query = """insert into user_profiles (social_id, name, email)
-                          values (%s, %s, %s)"""
-        insert_args = (social_id, name, email)
+        name = input_info["name"]
+        email = input_info["email"]
+        date = datetime.datetime.now().strftime("%Y-%m-%d")
+        insert_query = """insert into user_profiles (social_id, name,
+                          creation_date, email) values (%s, %s, %s, %s)"""
+        insert_args = (social_id, name, date, email)
         cursor.execute(insert_query, insert_args)
         mysql.connection.commit()
 
+@app.route('/')
+def index():
+    session.permanent = True
+    if not check_database():
+        return jsonify({"status":"error", "message":"create db first"})
+    return jsonify({"logged_in":"true", "social_id":session["social_id"]})
+
+@login_exempt
+def check_database():
+    check_query = "show databases like 'codestroke'"
+    cursor = mysql.connection.cursor()
+    cursor.execute(check_query)
+    return cursor.fetchall()
+
+@app.route('/login', methods=(['GET', 'POST']))
+@login_exempt
+def login():
+    if request.args.get("provider") == "google":
+        url_str = "google.login"
+    elif request.args.get("provider") == "twitter":
+        url_str = "twitter.login"
+    elif request.args.get("provider") == "facebook":
+        # Facebook login cannot be done on local server
+        return jsonify({"status":"error"})
+        # url_str = "facebook.login"
+    else:
+        return jsonify({"message":"provider query required"})
+    return jsonify({"status":"redirect", "redirect_url":url_for(url_str)})
+
+@oauth_authorized.connect_via(bp_google)
+@login_exempt
+def google_logged_in(blueprint, token):
+    assert token is not None
+    resp = blueprint.session.get("/oauth2/v2/userinfo")
+    assert resp.ok
+    user_info = resp.json()
+
+    input_info = {}
+    input_info["name"] = user_info["name"]
+    input_info["email"] = user_info["email"]
+    social_id = "google." + user_info["id"]
+
+    check_add_social_id(social_id, input_info)
     session.permanent = True # is there a better place to put this?
     session["social_id"] = social_id
     return False # do not store identity provider access token
 
-@app.route('/')
-def index():
-    # codestroke database must already exist (TODO implement check?)
-    if 'social_id' not in session:
-        return jsonify({"logged_in":"false", "redirect_url":url_for("google.login")})
-    return jsonify({"logged_in":"true", "social_id":session["social_id"]})
-    
+@oauth_authorized.connect_via(bp_twitter)
+@login_exempt
+def twitter_logged_in(blueprint, token):
+    assert token is not None
+    resp = blueprint.session.get("account/verify_credentials.json?include_email=true")
+    assert resp.ok
+    user_info = resp.json()
+
+    input_info = {}
+    input_info["name"] = user_info["name"]
+    input_info["email"] = user_info["email"]
+    social_id = "twitter." + user_info["id_str"]
+
+    check_add_social_id(social_id, input_info)
+    session["social_id"] = social_id
+    return False
+
+# NOTE: Facebook login will not work naively with a local app server.
+# As of March 2018, they require https strictly.
+@oauth_authorized.connect_via(bp_facebook)
+@login_exempt
+def facebook_logged_in(blueprint, token):
+    return False
+
 @app.route('/create_db')
+@login_exempt # for purposes of local server database testing ONLY
+# login_exempt since login itself requires database to be available
 def create_db():
-    """ Create the database by parsing this file for API 
+    """ Create the database by parsing this file for API
     calls that add objects and getting the Required and Optional
     lines.
-    
+
     This API should only be called locally.
     """
     if request.remote_addr != "127.0.0.1":
@@ -93,7 +165,7 @@ def create_db():
             final_line = ""
             for line in l.splitlines():
                 if line.endswith(","):
-                    final_line += line 
+                    final_line += line
                 elif line.endswith("."):
                     final_line += line
                     lines.append(final_line)
@@ -101,13 +173,18 @@ def create_db():
                 elif line.startswith("def"):
                     lines.append(line)
 
-            buf = [x for x in lines if "Required" or "Optional" in x]
-                    
+            tags = ["add_", "Required", "Optional"]
+            buf = [x for x in lines if any(i in x for i in tags)]
+            if not buf: # ensure initial login functions not counted
+                continue
+
             func = [t for t in buf if "add_" in t][0].replace("def add_","").replace("():","")
 
             creates = ""
 
             req = [y for y in buf if "Required" in y]
+            if not req: # ensure initial login functions not counted
+                continue
             reqs = ("{}_id INT AUTO_INCREMENT PRIMARY KEY, ".format(func) +
                     req[0].replace("Required: ", "").replace(".","").strip()).split(", ")
             reqs1 = [r + " NOT NULL" for r in reqs if "LIST" not in r]
@@ -192,11 +269,11 @@ def add_patient():
                         "message":"missing {}".format(e)}), 400
     if json['hospital_id']:
         hospital_id = json['hospital_id']
-        
-    query = ("""insert into patients (first_name, last_name, dob, 
-    address, city, state, postcode, phone, hospital_id, urn) 
+
+    query = ("""insert into patients (first_name, last_name, dob,
+    address, city, state, postcode, phone, hospital_id, urn)
     values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""")
-    
+
     args = (first_name,
             last_name,
             dob,
@@ -215,7 +292,7 @@ def add_patient():
                         "message":e}), 400
     finally:
         return jsonify({"status":"success",
-                        "message":"added"}) 
+                        "message":"added"})
 
 @app.route('/patients/<int:patient_id>', methods=(['PUT']))
 def edit_patient(patient_id):
@@ -223,12 +300,12 @@ def edit_patient(patient_id):
 
     Required: patient_id.
 
-    Optional: first_name, last_name, dob, address, city, 
+    Optional: first_name, last_name, dob, address, city,
     state, postcode, phone, urn.
     """
     qargs = get_args(['first_name', 'last_name', 'city', 'dob',
                       'address', 'state', 'phone', 'postcode', 'urn'],
-                     request.args) 
+                     request.args)
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
@@ -265,7 +342,7 @@ def remove_patient(patient_id):
 def get_clinicians():
     """Get list of clinicians.
 
-    The query paramater can filter by first_name, last_name, 
+    The query paramater can filter by first_name, last_name,
     hospital, group.
 
     Optional: query.
@@ -721,8 +798,8 @@ def remove_event_type(event_type_id):
 def get_events():
     """Get list of events.
 
-    The query parameter can filter by name, event_type_id, 
-    hospital_id, patient_id, sender_clinician_id, receiver_clinician_ids, 
+    The query parameter can filter by name, event_type_id,
+    hospital_id, patient_id, sender_clinician_id, receiver_clinician_ids,
     date range (date1,date2).
 
     Optional: query.
@@ -1073,8 +1150,8 @@ def remove_vital(vital_id):
 def add_user_profile():
     """Add a user_profile.
 
-    Required: social_id VARCHAR(40), name VARCHAR(40).
-    
+    Required: social_id VARCHAR(40), name VARCHAR(40), creation_date DATE.
+
     Optional: email VARCHAR(40).
     """
     cursor = mysql.connection.cursor()
@@ -1145,7 +1222,7 @@ def _select(d):
             where_done = True
         else:
             clause += " and " + cond
-
+            
         l.append(v)
     return clause, tuple(l,)
 
