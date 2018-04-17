@@ -227,7 +227,7 @@ def get_patients():
 
     Optional: first_name, last_name, city, dob, urn.
     """
-    qargs = get_args(['first_name', 'last_name', 'city', 'dob', 'urn'], request.args) 
+    qargs = _get_args(['first_name', 'last_name', 'city', 'dob', 'urn'], request.args) 
     return _select_query_result(qargs, "patients")
 
 @app.route('/patients/<int:patient_id>', methods=(['get']))
@@ -303,13 +303,13 @@ def edit_patient(patient_id):
     Optional: first_name, last_name, dob, address, city,
     state, postcode, phone, urn.
     """
-    qargs = get_args(['first_name', 'last_name', 'city', 'dob',
+    qargs = _get_args(['first_name', 'last_name', 'city', 'dob',
                       'address', 'state', 'phone', 'postcode', 'urn'],
                      request.args)
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
-    query = update(qargs)
+    query = _update(qargs)
     try:
         cursor.execute("update `patients` " + query[0] + " where patient_id=%s", query[1]+(patient_id,))
         mysql.connection.commit()
@@ -347,7 +347,7 @@ def get_clinicians():
 
     Optional: query.
     """
-    qargs = get_args(['first_name', 'last_name', 'group_id'], request.args) 
+    qargs = _get_args(['first_name', 'last_name', 'group_id'], request.args) 
     return _select_query_result(qargs, "clinicians")
 
 @app.route('/clinicians/<int:clinician_id>', methods=(['GET']))
@@ -425,11 +425,11 @@ def edit_clinician(clinician_id):
 
     Optional: first_name, last_name, hospitals, groups.
     """
-    qargs = get_args(['first_name', 'last_name'], request.args) 
+    qargs = _get_args(['first_name', 'last_name'], request.args) 
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
-    query = update(qargs)
+    query = _update(qargs)
     try:
         cursor.execute("update `clinicians` " + query[0] + " where clinician_id=%s", query[1]+(clinician_id,))
         mysql.connection.commit()
@@ -516,7 +516,7 @@ def get_hospitals():
 
     Optional: query.
     """
-    qargs = get_args(['name', 'city', 'state', 'patient_id', 'lat', 'lon'], request.args) 
+    qargs = _get_args(['name', 'city', 'state', 'patient_id', 'lat', 'lon'], request.args) 
     return _select_query_result(qargs, "hospitals")
 
 @app.route('/hospitals/<int:hospital_id>', methods=(['GET']))
@@ -534,7 +534,7 @@ def add_hospital():
 
     Required: name VARCHAR(30), city VARCHAR(30),
     state VARCHAR(30), postcode VARCHAR(10),
-    lat DECIMAL(10, 8), lon DECIMAL(11, 8).
+    lat POINT, lon POINT.
     """
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke;")
@@ -575,12 +575,12 @@ def edit_hospital(hospital_id):
 
     Optional: name, city, state, postcode.
     """
-    qargs = get_args(['name', 'city', 'state', 'postcode'], 
+    qargs = _get_args(['name', 'city', 'state', 'postcode'], 
                      request.args) 
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
-    query = update(qargs)
+    query = _update(qargs)
     try:
         cursor.execute("update `hospitals` " + query[0] + " where hospital_id=%s", query[1]+(hospital_id,))
         mysql.connection.commit()
@@ -617,7 +617,7 @@ def get_cases():
     The query parameter filters by date range (date1,date2),
     patient_id, hospital_id.
     """
-    qargs = get_args(['date1', 'date2', 'patient_id', 'hospital_id'], request.args) 
+    qargs = _get_args(['date1', 'date2', 'patient_id', 'hospital_id'], request.args) 
     return _select_query_result(qargs, "cases")
 
 @app.route('/cases/<int:case_id>', methods=(['GET']))
@@ -671,12 +671,12 @@ def edit_case(case_id):
 
     Optional: patient_id, hospital_id, date DATETIME.
     """
-    qargs = get_args(['patient_id', 'hospital_id', 'date'],
+    qargs = _get_args(['patient_id', 'hospital_id', 'date'],
                      request.args) 
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
-    query = update(qargs)
+    query = _update(qargs)
     try:
         cursor.execute("update `cases` " + query[0] + " where case_id=%s", query[1]+(case_id,))
         mysql.connection.commit()
@@ -711,7 +711,7 @@ def get_event_types():
 
     The query parameter can filter by name.
     """
-    qargs = get_args(['name'], request.args) 
+    qargs = _get_args(['name'], request.args) 
     return _select_query_result(qargs, "event_types")
 
 @app.route('/event_types/<int:event_type_id>', methods=(['GET']))
@@ -761,11 +761,11 @@ def edit_event_type(event_type_id):
 
     Optional: name, description.
     """
-    qargs = get_args(['name', 'description'], request.args) 
+    qargs = _get_args(['name', 'description'], request.args) 
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
-    query = update(qargs)
+    query = _update(qargs)
     try:
         cursor.execute("update `event_types` " + query[0] + " where event_type_id=%s", query[1]+(event_type_id,))
         mysql.connection.commit()
@@ -804,7 +804,7 @@ def get_events():
 
     Optional: query.
     """
-    qargs = get_args(['date1', 'date2', 'patient_id', 'hospital_id'], request.args) 
+    qargs = _get_args(['date1', 'date2', 'patient_id', 'hospital_id'], request.args) 
     return _select_query_result(qargs, "events")
 
 @app.route('/events/<int:event_id>', methods=(['GET']))
@@ -852,41 +852,36 @@ def add_event():
         return jsonify({"status":"success",
                         "message":"added"}) 
 
-@app.route('/messages', methods=(['GET']))
-def get_messages():
-    """Get messages.
+@login_exempt
+@app.route('/messages/<int:clinician_id>', methods=(['GET']))
+def get_messages(clinician_id):
+    """Get incoming and outgoing messages for a clinician.
 
-    The query parameter can filter by clinician_id. 
-
-    Optional: query.
+    Required: clinician_id.
     """
-    try:
-        clinician_id = request.args.get('clinician_id')
-    except KeyError as e:
-        return jsonify({"status":"error",
-                        "message":e})
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke;")
+    # get incoming messages
+    q1 = """select * from messages as a 
+    inner join clinicians as b 
+    on a.clinician_id = b.clinician_id 
+    where a.clinician_id in 
+        (select clinician_id from groups_clinicians 
+        where group_id in 
+            (select group_id from groups_clinicians 
+            where clinician_id = %s))"""
+    res = cursor.execute(q1, (clinician_id,))
+    in_messages = cursor.fetchall()
 
-        # get incoming messages
-        q1 = """select * from messages as a 
-        inner join clinicians as b 
-        on a.clinician_id = b.clinician_id 
-        where a.clinician_id in 
-            (select clinician_id from groups_clinicians 
-            where group_id in 
-                (select group_id from groups_clinicians 
-                where clinician_id = %s))""", (clinician_id,)
-        res = cursor.execute(q1)
-        in_messages = res.fetchall()
-            
-        # process in_messages[x]['first_name'] , body, last_name
-        # get outgoing messages
-        q2 = "select body from messages where clinician_id = %s", (clinician_id,)
-        res = cursor.execute(q2)
-        out_messages = res.fetchall()
+    # process in_messages[x]['first_name'] , body, last_name
+    # get outgoing messages
+    q2 = "select body from messages where clinician_id = %s"
+    res = cursor.execute(q2, (clinician_id,))
+    out_messages = cursor.fetchall()
 
-        return jsonify({"status":"success",
-                        "in_messages":in_messages,
-                        "out_messages":out_messages})
+    return jsonify({"status":"success",
+                    "in_messages":in_messages,
+                    "out_messages":out_messages})
 
 @app.route('/messages/<int:message_id>', methods=(['GET']))
 def get_message(message_id):
@@ -902,7 +897,7 @@ def add_message():
     """Add (post) a message.
     The message is broadcasted to the groups that are subscribed.
 
-    Required: clinician_id INT(8), body TEXT.
+    Required: clinician_id INT(8), body TEXT, date DATE.
     """
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke;")
@@ -914,11 +909,12 @@ def add_message():
         return jsonify({"status":"error",
                         "message":"missing {}".format(e)}), 400
 
-    query = ("""insert into messages (clinician_id, body)
-    values (%s, %s)""")
+    query = ("""insert into messages (clinician_id, body, date)
+    values (%s, %s, %s)""")
     
     args = (clinician_id,
-            body,)
+            body,
+            datetime.datetime.now())
     try:
         cursor.execute(query, args)
         mysql.connection.commit()
@@ -935,11 +931,11 @@ def edit_message(message_id):
 
     Required: message_id, body
     """
-    qargs = get_args(['body'], request.args) 
+    qargs = _get_args(['body'], request.args) 
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
-    query = update(qargs)
+    query = _update(qargs)
     try:
         cursor.execute("update `messages` " + query[0] + " where message_id=%s", query[1]+(message_id,))
         mysql.connection.commit()
@@ -976,7 +972,7 @@ def get_groups():
 
     Optional: query.
     """
-    qargs = get_args(['name', 'clinician_id', 'hospital_id'], request.args) 
+    qargs = _get_args(['name', 'clinician_id', 'hospital_id'], request.args) 
     return _select_query_result(qargs, "groups")
 
 @app.route('/groups/<int:group_id>', methods=(['GET']))
@@ -1024,11 +1020,11 @@ def edit_group(group_id):
     Required: group_id.
     Optional: name.
     """
-    qargs = get_args(['name'], request.args) 
+    qargs = _get_args(['name'], request.args) 
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
-    query = update(qargs)
+    query = _update(qargs)
     try:
         cursor.execute("update `groups` " + query[0] + " where group_id=%s", query[1]+(group_id,))
         mysql.connection.commit()
@@ -1065,7 +1061,7 @@ def get_vitals():
 
     Optional: query.
     """
-    qargs = get_args(['name'], request.args) 
+    qargs = _get_args(['name'], request.args) 
     return _select_query_result(qargs, "vitals")
 
 @app.route('/vitals/<int:vital_id>', methods=(['GET']))
@@ -1113,11 +1109,11 @@ def edit_vital(vital_id):
     Required: vital_id.
     Optional: name.
     """
-    qargs = get_args(['name'], request.args) 
+    qargs = _get_args(['name'], request.args) 
 
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
-    query = update(qargs)
+    query = _update(qargs)
     try:
         cursor.execute("update `vitals` " + query[0] + " where vital_id=%s", query[1]+(vital_id,))
         mysql.connection.commit()
