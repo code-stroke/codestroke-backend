@@ -54,18 +54,22 @@ def check_login():
 @login_exempt
 def check_add_social_id(social_id, input_info):
     # add user to database if not found
-    check_query = 'select * from user_profiles where social_id = %s'
+    check_query = 'select * from clinicians where social_id = %s'
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
     cursor.execute(check_query, (social_id,))
     result = cursor.fetchall()
     if not result:
-        name = input_info["name"]
+        # TODO Hospitals and Groups registration for many-to-many
+        # TODO check for double-ups
+        first_name = input_info["first_name"]
+        last_name = input_info["last_name"]
         email = input_info["email"]
         date = datetime.datetime.now().strftime("%Y-%m-%d")
-        insert_query = """insert into user_profiles (social_id, name,
-                          creation_date, email) values (%s, %s, %s, %s)"""
-        insert_args = (social_id, name, date, email)
+        insert_query = """insert into clinicians (first_name, last_name, 
+                          social_id, creation_date, email)
+                          values (%s, %s, %s, %s, %s)"""
+        insert_args = (first_name, last_name, social_id, date, email)
         cursor.execute(insert_query, insert_args)
         mysql.connection.commit()
 
@@ -107,12 +111,12 @@ def google_logged_in(blueprint, token):
     user_info = resp.json()
 
     input_info = {}
-    input_info["name"] = user_info["name"]
+    input_info["first_name"] = user_info["given_name"]
+    input_info["last_name"] = user_info["family_name"]
     input_info["email"] = user_info["email"]
     social_id = "google." + user_info["id"]
 
     check_add_social_id(social_id, input_info)
-    session.permanent = True # is there a better place to put this?
     session["social_id"] = social_id
     return False # do not store identity provider access token
 
@@ -125,7 +129,9 @@ def twitter_logged_in(blueprint, token):
     user_info = resp.json()
 
     input_info = {}
-    input_info["name"] = user_info["name"]
+    name = user_info["name"].split(" ")
+    input_info["first_name"] = " ".join(name[0:-1])
+    input_info["last_name"] = name[-1]
     input_info["email"] = user_info["email"]
     social_id = "twitter." + user_info["id_str"]
 
@@ -196,7 +202,7 @@ def create_db():
                 opts = opt[0].replace("Optional: ", "").replace(".","").strip().split(", ")
                 opts1 = [j for j in opts if "LIST" not in j]
                 creates+= opts1
-                opts_list = [j.strip("LIST ").strip(" ") for j in reqs if "LIST" in j]
+                opts_list = [j.strip("LIST ").strip(" ") for j in opts if "LIST" in j]
 
             query = "create table {}s ({})".format(func, ",".join(creates))
             cursor.execute(query)
@@ -364,7 +370,11 @@ def add_clinician():
     """Add a clinician.
 
     Required: first_name VARCHAR(30), last_name VARCHAR(30),
-    hospitals LIST, groups LIST.
+    hospitals LIST, groups LIST,
+    social_id VARCHAR(40), creation_date DATE.
+
+    Optional: email VARCHAR(40).
+
     """
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke;")
@@ -1142,38 +1152,6 @@ def remove_vital(vital_id):
         return jsonify({"error":e}), 404
     return jsonify({"status":"success"})
 
-@app.route('/user_profiles', methods=(['POST']))
-def add_user_profile():
-    """Add a user_profile.
-
-    Required: social_id VARCHAR(40), name VARCHAR(40), creation_date DATE.
-
-    Optional: email VARCHAR(40).
-    """
-    cursor = mysql.connection.cursor()
-    cursor.execute("use codestroke;")
-    json = request.get_json()
-    try:
-        name = json['name']
-    except KeyError as e:
-        return jsonify({"status":"error",
-                        "message":"missing {}".format(e)}), 400
-
-    query = ("""insert into user_profiles (social_id, name)
-    values (%s, %s)""")
-    
-    args = (social_id,
-            name,)
-    try:
-        cursor.execute(query, args)
-        mysql.connection.commit()
-    except MySQLdb.Error as e:
-        return jsonify({"status":"error",
-                        "message":e}), 400
-    finally:
-        return jsonify({"status":"success",
-                        "message":"added"}) 
-
 def _select_query_response(qargs, table):
     if not __valid_table(table):
         return jsonify({"status":"error", "message":"table {} not found".format(table)})
@@ -1197,7 +1175,6 @@ def __valid_table(table):
                      "hospitals_clinicians", 
                      "messages",
                      "patients",       
-                     "user_profiles",       
                      "vitals")
 
 def _select(d):
