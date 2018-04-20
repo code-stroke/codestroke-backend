@@ -1,10 +1,10 @@
 from flask import Flask, jsonify, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL, MySQLdb
-from flask_dance.contrib.google import make_google_blueprint, google
-from flask_dance.contrib.twitter import make_twitter_blueprint, twitter
-from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
-from flask_dance.consumer import oauth_authorized
-import getpass, datetime
+from flask_jsonpify import jsonify as jsonp_jsonify
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_requests
+from flask_cors import CORS
+import getpass, datetime, urllib.request
 
 app = Flask(__name__)
 app.config['MYSQL_USER'] = 'root'
@@ -18,18 +18,11 @@ mysql = MySQL(app)
 import os
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
+CORS(app) # cross-origin allowance for local testing
 
 # OAUTH CONFIG AND SETUP
 # ensure ./app.conf exists with client ids & secrets, and secret key
 app.config.from_pyfile('./app.conf')
-bp_google = make_google_blueprint(scope = ["profile", "email"])
-app.register_blueprint(bp_google, url_prefix="/login")
-
-bp_twitter = make_twitter_blueprint()
-app.register_blueprint(bp_twitter, url_prefix="/login")
-
-bp_facebook = make_facebook_blueprint()
-app.register_blueprint(bp_facebook, url_prefix="/login")
 
 def login_exempt(func):
     func.login_exempt = True
@@ -39,16 +32,10 @@ def login_exempt(func):
 def check_login():
     if not request.endpoint:
         return jsonify({"status":"error"})
-    # needed for oauth login pages exemption
-    providers = ["google", "twitter", "facebook"]
-    logins = [path + ".authorized" for path in providers] + \
-             [path + ".login" for path in providers]
-    if request.endpoint in logins:
-        return
     view = app.view_functions[request.endpoint]
     if getattr(view, 'login_exempt', False):
         return
-    if 'social_id' not in session:
+    if 'name' not in session:
         return jsonify({"logged_in":"false", "redirect_url":url_for("login")})
 
 @login_exempt
@@ -75,10 +62,8 @@ def check_add_social_id(social_id, input_info):
 
 @app.route('/')
 def index():
-    session.permanent = True
-    if not check_database():
-        return jsonify({"status":"error", "message":"create db first"})
-    return jsonify({"logged_in":"true", "social_id":session["social_id"]})
+    return jsonify({"logged_in":"true", "social_id":session["social_id"],
+                    "name":session["name"]})
 
 @login_exempt
 def check_database():
@@ -90,61 +75,42 @@ def check_database():
 @app.route('/login', methods=(['GET', 'POST']))
 @login_exempt
 def login():
+    session.permanent = True
+    if not check_database():
+        return jsonify({"status":"error", "message":"create db first"})
     if request.args.get("provider") == "google":
-        url_str = "google.login"
+        id_token = request.args.get("id_token")
+        return login_google(id_token)
     elif request.args.get("provider") == "twitter":
-        url_str = "twitter.login"
+        pass
     elif request.args.get("provider") == "facebook":
-        # Facebook login cannot be done on local server
-        return jsonify({"status":"error"})
-        # url_str = "facebook.login"
+        return jsonify({"status":"error", "message":"not for local"})
     else:
-        return jsonify({"message":"provider query required"})
-    return jsonify({"status":"redirect", "redirect_url":url_for(url_str)})
+        return jsonify({"status":"error",
+                        "message":"provider query required"})
 
-@oauth_authorized.connect_via(bp_google)
-@login_exempt
-def google_logged_in(blueprint, token):
-    assert token is not None
-    resp = blueprint.session.get("/oauth2/v2/userinfo")
-    assert resp.ok
-    user_info = resp.json()
-
-    input_info = {}
-    input_info["first_name"] = user_info["given_name"]
-    input_info["last_name"] = user_info["family_name"]
-    input_info["email"] = user_info["email"]
-    social_id = "google." + user_info["id"]
-
-    check_add_social_id(social_id, input_info)
-    session["social_id"] = social_id
-    return False # do not store identity provider access token
-
-@oauth_authorized.connect_via(bp_twitter)
-@login_exempt
-def twitter_logged_in(blueprint, token):
-    assert token is not None
-    resp = blueprint.session.get("account/verify_credentials.json?include_email=true")
-    assert resp.ok
-    user_info = resp.json()
-
-    input_info = {}
-    name = user_info["name"].split(" ")
-    input_info["first_name"] = " ".join(name[0:-1])
-    input_info["last_name"] = name[-1]
-    input_info["email"] = user_info["email"]
-    social_id = "twitter." + user_info["id_str"]
-
-    check_add_social_id(social_id, input_info)
-    session["social_id"] = social_id
-    return False
-
-# NOTE: Facebook login will not work naively with a local app server.
-# As of March 2018, they require https strictly.
-@oauth_authorized.connect_via(bp_facebook)
-@login_exempt
-def facebook_logged_in(blueprint, token):
-    return False
+def login_google(id_token):
+    try:
+        idinfo = google_id_token.verify_oauth2_token(id_token,
+                        google_requests.Request(),
+                        app.config["GOOGLE_OAUTH_CLIENT_ID"])
+        input_info = {}
+        input_info["first_name"] = idinfo["given_name"]
+        try:
+            input_info["last_name"] = idinfo["family_name"]
+        except KeyError:
+            input_info["last_name"] = "Unknown"
+        input_info["email"] = idinfo["email"]
+        social_id = "google." + idinfo["sub"]
+        check_add_social_id(social_id, input_info)
+        session["social_id"] = social_id
+        session["name"] = idinfo["name"]
+        # JSONP required for cross origin access
+        return jsonp_jsonify(logged_in="true",
+                             social_id=session["social_id"],
+                             name=session["name"])
+    except ValueError:
+        return jsonify({"status":"error"})
 
 @app.route('/create_db')
 @login_exempt # for purposes of local server database testing ONLY
