@@ -1,10 +1,10 @@
 from flask import Flask, jsonify, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL, MySQLdb
-from flask_dance.contrib.google import make_google_blueprint, google
-from flask_dance.contrib.twitter import make_twitter_blueprint, twitter
-from flask_dance.contrib.facebook import make_facebook_blueprint, facebook
-from flask_dance.consumer import oauth_authorized
-import getpass, datetime
+from flask_jsonpify import jsonify as jsonp_jsonify
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_requests
+from flask_cors import CORS
+import getpass, datetime, urllib.request
 
 app = Flask(__name__)
 app.config['MYSQL_USER'] = 'root'
@@ -18,65 +18,53 @@ mysql = MySQL(app)
 import os
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
+CORS(app) # cross-origin allowance for local testing
 
 # OAUTH CONFIG AND SETUP
 # ensure ./app.conf exists with client ids & secrets, and secret key
 app.config.from_pyfile('./app.conf')
-bp_google = make_google_blueprint(scope = ["profile", "email"])
-app.register_blueprint(bp_google, url_prefix="/login")
 
-bp_twitter = make_twitter_blueprint()
-app.register_blueprint(bp_twitter, url_prefix="/login")
+# def login_exempt(func):
+#     func.login_exempt = True
+#     return func
 
-bp_facebook = make_facebook_blueprint()
-app.register_blueprint(bp_facebook, url_prefix="/login")
+# @app.before_request
+# def check_login():
+#     if not request.endpoint:
+#         return jsonify({"status":"error"})
+#     view = app.view_functions[request.endpoint]
+#     if getattr(view, 'login_exempt', False):
+#         return
+#     if 'name' not in session:
+#         return jsonify({"logged_in":"false", "redirect_url":url_for("login")})
 
-def login_exempt(func):
-    func.login_exempt = True
-    return func
-
-@app.before_request
-def check_login():
-    if not request.endpoint:
-        return jsonify({"status":"error"})
-    # needed for oauth login pages exemption
-    providers = ["google", "twitter", "facebook"]
-    logins = [path + ".authorized" for path in providers] + \
-             [path + ".login" for path in providers]
-    if request.endpoint in logins:
-        return
-    view = app.view_functions[request.endpoint]
-    if getattr(view, 'login_exempt', False):
-        return
-    if 'social_id' not in session:
-        return jsonify({"logged_in":"false", "redirect_url":url_for("login")})
-
-@login_exempt
+# @login_exempt
 def check_add_social_id(social_id, input_info):
     # add user to database if not found
-    check_query = 'select * from user_profiles where social_id = %s'
+    check_query = 'select * from clinicians where social_id = %s'
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke")
     cursor.execute(check_query, (social_id,))
     result = cursor.fetchall()
     if not result:
-        name = input_info["name"]
+        # TODO Hospitals and Groups registration for many-to-many
+        # TODO check for double-ups
+        first_name = input_info["first_name"]
+        last_name = input_info["last_name"]
         email = input_info["email"]
         date = datetime.datetime.now().strftime("%Y-%m-%d")
-        insert_query = """insert into user_profiles (social_id, name,
-                          creation_date, email) values (%s, %s, %s, %s)"""
-        insert_args = (social_id, name, date, email)
+        insert_query = """insert into clinicians (first_name, last_name, 
+                          social_id, creation_date, email)
+                          values (%s, %s, %s, %s, %s)"""
+        insert_args = (first_name, last_name, social_id, date, email)
         cursor.execute(insert_query, insert_args)
         mysql.connection.commit()
 
 @app.route('/')
 def index():
-    session.permanent = True
-    if not check_database():
-        return jsonify({"status":"error", "message":"create db first"})
-    return jsonify({"logged_in":"true", "social_id":session["social_id"]})
+    return jsonify({"message":"placeholder"})
 
-@login_exempt
+# @login_exempt
 def check_database():
     check_query = "show databases like 'codestroke'"
     cursor = mysql.connection.cursor()
@@ -84,64 +72,47 @@ def check_database():
     return cursor.fetchall()
 
 @app.route('/login', methods=(['GET', 'POST']))
-@login_exempt
+# @login_exempt
 def login():
+    session.permanent = True
+    if not check_database():
+        return jsonify({"status":"error", "message":"create db first"})
     if request.args.get("provider") == "google":
-        url_str = "google.login"
+        id_token = request.args.get("id_token")
+        return login_google(id_token)
     elif request.args.get("provider") == "twitter":
-        url_str = "twitter.login"
+        pass
     elif request.args.get("provider") == "facebook":
-        # Facebook login cannot be done on local server
-        return jsonify({"status":"error"})
-        # url_str = "facebook.login"
+        return jsonify({"status":"error", "message":"not for local"})
     else:
-        return jsonify({"message":"provider query required"})
-    return jsonify({"status":"redirect", "redirect_url":url_for(url_str)})
+        return jsonify({"status":"error",
+                        "message":"provider query required"})
 
-@oauth_authorized.connect_via(bp_google)
-@login_exempt
-def google_logged_in(blueprint, token):
-    assert token is not None
-    resp = blueprint.session.get("/oauth2/v2/userinfo")
-    assert resp.ok
-    user_info = resp.json()
-
-    input_info = {}
-    input_info["name"] = user_info["name"]
-    input_info["email"] = user_info["email"]
-    social_id = "google." + user_info["id"]
-
-    check_add_social_id(social_id, input_info)
-    session.permanent = True # is there a better place to put this?
-    session["social_id"] = social_id
-    return False # do not store identity provider access token
-
-@oauth_authorized.connect_via(bp_twitter)
-@login_exempt
-def twitter_logged_in(blueprint, token):
-    assert token is not None
-    resp = blueprint.session.get("account/verify_credentials.json?include_email=true")
-    assert resp.ok
-    user_info = resp.json()
-
-    input_info = {}
-    input_info["name"] = user_info["name"]
-    input_info["email"] = user_info["email"]
-    social_id = "twitter." + user_info["id_str"]
-
-    check_add_social_id(social_id, input_info)
-    session["social_id"] = social_id
-    return False
-
-# NOTE: Facebook login will not work naively with a local app server.
-# As of March 2018, they require https strictly.
-@oauth_authorized.connect_via(bp_facebook)
-@login_exempt
-def facebook_logged_in(blueprint, token):
-    return False
+def login_google(id_token):
+    try:
+        idinfo = google_id_token.verify_oauth2_token(id_token,
+                        google_requests.Request(),
+                        app.config["GOOGLE_OAUTH_CLIENT_ID"])
+        input_info = {}
+        input_info["first_name"] = idinfo["given_name"]
+        try:
+            input_info["last_name"] = idinfo["family_name"]
+        except KeyError:
+            input_info["last_name"] = "Unknown"
+        input_info["email"] = idinfo["email"]
+        social_id = "google." + idinfo["sub"]
+        check_add_social_id(social_id, input_info)
+        session["social_id"] = social_id
+        session["name"] = idinfo["name"]
+        # JSONP required for cross origin access
+        return jsonp_jsonify(logged_in="true",
+                             social_id=session["social_id"],
+                             name=session["name"])
+    except ValueError:
+        return jsonify({"status":"error"})
 
 @app.route('/create_db')
-@login_exempt # for purposes of local server database testing ONLY
+# @login_exempt # for purposes of local server database testing ONLY
 # login_exempt since login itself requires database to be available
 def create_db():
     """ Create the database by parsing this file for API
@@ -196,7 +167,7 @@ def create_db():
                 opts = opt[0].replace("Optional: ", "").replace(".","").strip().split(", ")
                 opts1 = [j for j in opts if "LIST" not in j]
                 creates+= opts1
-                opts_list = [j.strip("LIST ").strip(" ") for j in reqs if "LIST" in j]
+                opts_list = [j.strip("LIST ").strip(" ") for j in opts if "LIST" in j]
 
             query = "create table {}s ({})".format(func, ",".join(creates))
             cursor.execute(query)
@@ -364,7 +335,11 @@ def add_clinician():
     """Add a clinician.
 
     Required: first_name VARCHAR(30), last_name VARCHAR(30),
-    hospitals LIST, groups LIST.
+    hospitals LIST, groups LIST,
+    social_id VARCHAR(40), creation_date DATE.
+
+    Optional: email VARCHAR(40).
+
     """
     cursor = mysql.connection.cursor()
     cursor.execute("use codestroke;")
@@ -852,7 +827,7 @@ def add_event():
         return jsonify({"status":"success",
                         "message":"added"}) 
 
-@login_exempt
+# @login_exempt
 @app.route('/messages/<int:clinician_id>', methods=(['GET']))
 def get_messages(clinician_id):
     """Get incoming and outgoing messages for a clinician.
@@ -1142,38 +1117,6 @@ def remove_vital(vital_id):
         return jsonify({"error":e}), 404
     return jsonify({"status":"success"})
 
-@app.route('/user_profiles', methods=(['POST']))
-def add_user_profile():
-    """Add a user_profile.
-
-    Required: social_id VARCHAR(40), name VARCHAR(40), creation_date DATE.
-
-    Optional: email VARCHAR(40).
-    """
-    cursor = mysql.connection.cursor()
-    cursor.execute("use codestroke;")
-    json = request.get_json()
-    try:
-        name = json['name']
-    except KeyError as e:
-        return jsonify({"status":"error",
-                        "message":"missing {}".format(e)}), 400
-
-    query = ("""insert into user_profiles (social_id, name)
-    values (%s, %s)""")
-    
-    args = (social_id,
-            name,)
-    try:
-        cursor.execute(query, args)
-        mysql.connection.commit()
-    except MySQLdb.Error as e:
-        return jsonify({"status":"error",
-                        "message":e}), 400
-    finally:
-        return jsonify({"status":"success",
-                        "message":"added"}) 
-
 def _select_query_response(qargs, table):
     if not __valid_table(table):
         return jsonify({"status":"error", "message":"table {} not found".format(table)})
@@ -1197,7 +1140,6 @@ def __valid_table(table):
                      "hospitals_clinicians", 
                      "messages",
                      "patients",       
-                     "user_profiles",       
                      "vitals")
 
 def _select(d):
