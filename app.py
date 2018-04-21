@@ -62,8 +62,7 @@ def check_add_social_id(social_id, input_info):
 
 @app.route('/')
 def index():
-    return jsonify({"logged_in":"true", "social_id":session["social_id"],
-                    "name":session["name"]})
+    return jsonify({"message":"placeholder"})
 
 # @login_exempt
 def check_database():
