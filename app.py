@@ -24,21 +24,21 @@ CORS(app) # cross-origin allowance for local testing
 # ensure ./app.conf exists with client ids & secrets, and secret key
 app.config.from_pyfile('./app.conf')
 
-def login_exempt(func):
-    func.login_exempt = True
-    return func
+# def login_exempt(func):
+#     func.login_exempt = True
+#     return func
 
-@app.before_request
-def check_login():
-    if not request.endpoint:
-        return jsonify({"status":"error"})
-    view = app.view_functions[request.endpoint]
-    if getattr(view, 'login_exempt', False):
-        return
-    if 'name' not in session:
-        return jsonify({"logged_in":"false", "redirect_url":url_for("login")})
+# @app.before_request
+# def check_login():
+#     if not request.endpoint:
+#         return jsonify({"status":"error"})
+#     view = app.view_functions[request.endpoint]
+#     if getattr(view, 'login_exempt', False):
+#         return
+#     if 'name' not in session:
+#         return jsonify({"logged_in":"false", "redirect_url":url_for("login")})
 
-@login_exempt
+# @login_exempt
 def check_add_social_id(social_id, input_info):
     # add user to database if not found
     check_query = 'select * from clinicians where social_id = %s'
@@ -65,7 +65,7 @@ def index():
     return jsonify({"logged_in":"true", "social_id":session["social_id"],
                     "name":session["name"]})
 
-@login_exempt
+# @login_exempt
 def check_database():
     check_query = "show databases like 'codestroke'"
     cursor = mysql.connection.cursor()
@@ -73,7 +73,7 @@ def check_database():
     return cursor.fetchall()
 
 @app.route('/login', methods=(['GET', 'POST']))
-@login_exempt
+# @login_exempt
 def login():
     session.permanent = True
     if not check_database():
@@ -113,7 +113,7 @@ def login_google(id_token):
         return jsonify({"status":"error"})
 
 @app.route('/create_db')
-@login_exempt # for purposes of local server database testing ONLY
+# @login_exempt # for purposes of local server database testing ONLY
 # login_exempt since login itself requires database to be available
 def create_db():
     """ Create the database by parsing this file for API
@@ -828,7 +828,7 @@ def add_event():
         return jsonify({"status":"success",
                         "message":"added"}) 
 
-@login_exempt
+# @login_exempt
 @app.route('/messages/<int:clinician_id>', methods=(['GET']))
 def get_messages(clinician_id):
     """Get incoming and outgoing messages for a clinician.
