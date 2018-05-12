@@ -4,6 +4,7 @@ from flask_jsonpify import jsonify as jsonp_jsonify
 from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_requests
 from flask_cors import CORS
+from passlib.hash import pbkdf2_sha256 
 import getpass, datetime, urllib.request
 
 app = Flask(__name__)
@@ -14,32 +15,15 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 mysql = MySQL(app)
 
 # FOR LOCAL SERVER TESTING ONLY
-# Necessary for local server as Flask Dance usually requires https
 import os
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 CORS(app) # cross-origin allowance for local testing
 
 # OAUTH CONFIG AND SETUP
 # ensure ./app.conf exists with client ids & secrets, and secret key
 app.config.from_pyfile('./app.conf')
 
-# def login_exempt(func):
-#     func.login_exempt = True
-#     return func
-
-# @app.before_request
-# def check_login():
-#     if not request.endpoint:
-#         return jsonify({"status":"error"})
-#     view = app.view_functions[request.endpoint]
-#     if getattr(view, 'login_exempt', False):
-#         return
-#     if 'name' not in session:
-#         return jsonify({"logged_in":"false", "redirect_url":url_for("login")})
-
-# @login_exempt
 def check_add_social_id(social_id, input_info):
+    # this expects the users to have been genrated using the generate_users script!
     # add user to database if not found
     check_query = 'select * from clinicians where social_id = %s'
     cursor = mysql.connection.cursor()
@@ -47,16 +31,22 @@ def check_add_social_id(social_id, input_info):
     cursor.execute(check_query, (social_id,))
     result = cursor.fetchall()
     if not result:
+        # Add failsafe if no more unlinked users/not created
+        # Get an unlinked user
+        select_query = "select clinician_id from clinicians where linked = 0 limit 1"
+        cursor.execute(select_query)
+        unlinked_id = cursor.fetchall()[0]['clinician_id']
         # TODO Hospitals and Groups registration for many-to-many
         # TODO check for double-ups
         first_name = input_info["first_name"]
         last_name = input_info["last_name"]
         email = input_info["email"]
         date = datetime.datetime.now().strftime("%Y-%m-%d")
-        insert_query = """insert into clinicians (first_name, last_name, 
-                          social_id, creation_date, email)
-                          values (%s, %s, %s, %s, %s)"""
-        insert_args = (first_name, last_name, social_id, date, email)
+        insert_query = """update clinicians 
+                          set first_name=%s, last_name =%s, 
+                          creation_date=%s, email=%s, social_id=%s
+                          where clinician_id=%s"""
+        insert_args = (first_name, last_name, date, email, social_id, unlinked_id)
         cursor.execute(insert_query, insert_args)
         mysql.connection.commit()
 
@@ -72,18 +62,17 @@ def check_database():
     return cursor.fetchall()
 
 @app.route('/login', methods=(['GET', 'POST']))
-# @login_exempt
 def login():
     session.permanent = True
     if not check_database():
         return jsonify({"status":"error", "message":"create db first"})
-    if request.args.get("provider") == "google":
+    elif request.args.get("provider") == "google":
         id_token = request.args.get("id_token")
         return login_google(id_token)
-    elif request.args.get("provider") == "twitter":
-        pass
-    elif request.args.get("provider") == "facebook":
-        return jsonify({"status":"error", "message":"not for local"})
+    elif request.args.get("provider") == "manual":
+        in_un = request.args.get("username")
+        in_pw = request.args.get("password")
+        return login_manual(in_un, in_pw)
     else:
         return jsonify({"status":"error",
                         "message":"provider query required"})
@@ -111,9 +100,22 @@ def login_google(id_token):
     except ValueError:
         return jsonify({"status":"error"})
 
+def login_manual(in_un, in_pw):
+    select_query = 'select pwhash from clinicians where username = %s'
+    cursor = mysql.connection.cursor()
+    cursor.execute("use codestroke")
+    cursor.execute(select_query, (in_un,))
+    result = cursor.fetchall()
+    if result:
+        pwhash = result[0]['pwhash']
+        if pbkdf2_sha256.verify(in_pw, pwhash):
+            return jsonify({"logged_in":"true", "username":in_un})
+        else:
+            return jsonify({"logged_in":"false", "message":"incorrect username or password"})
+    else:
+        return jsonify({"logged_in":"false", "message":"incorrect username or password"})
+
 @app.route('/create_db')
-# @login_exempt # for purposes of local server database testing ONLY
-# login_exempt since login itself requires database to be available
 def create_db():
     """ Create the database by parsing this file for API
     calls that add objects and getting the Required and Optional
@@ -335,10 +337,11 @@ def add_clinician():
     """Add a clinician.
 
     Required: first_name VARCHAR(30), last_name VARCHAR(30),
+    username VARCHAR(10), pwhash TEXT,
     hospitals LIST, groups LIST,
-    social_id VARCHAR(40), creation_date DATE.
+    creation_date DATE, linked BOOL.
 
-    Optional: email VARCHAR(40).
+    Optional: email VARCHAR(40), social_id VARCHAR(40).
 
     """
     cursor = mysql.connection.cursor()
