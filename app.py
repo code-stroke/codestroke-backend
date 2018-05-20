@@ -54,28 +54,28 @@ def check_add_social_id(social_id, input_info):
 def index():
     return jsonify({"message":"placeholder"})
 
-# @login_exempt
 def check_database():
     check_query = "show databases like 'codestroke'"
     cursor = mysql.connection.cursor()
     cursor.execute(check_query)
     return cursor.fetchall()
 
-@app.route('/login', methods=(['GET', 'POST']))
+@app.route('/login', methods=(["POST"]))
 def login():
     session.permanent = True
     if not check_database():
         return jsonify({"status":"error", "message":"create db first"})
-    elif request.args.get("provider") == "google":
-        id_token = request.args.get("id_token")
+    elif request.form.get("provider") == "google":
+        id_token = request.form.get("id_token")
         return login_google(id_token)
-    elif request.args.get("provider") == "manual":
-        in_un = request.args.get("username")
-        in_pw = request.args.get("password")
-        return login_manual(in_un, in_pw)
+    #elif request.form.get("provider") == "manual":
     else:
-        return jsonify({"status":"error",
-                        "message":"provider query required"})
+        in_un = request.form.get("username")
+        in_pw = request.form.get("password")
+        return login_manual(in_un, in_pw)
+    # else:
+    #     return jsonify({"status":"error",
+    #                     "message":"provider query required"})
 
 def login_google(id_token):
     try:
