@@ -1120,7 +1120,7 @@ def remove_vital(vital_id):
         return jsonify({"error":e}), 404
     return jsonify({"status":"success"})
 
-def _select_query_response(qargs, table):
+def _select_query_result(qargs, table):
     if not __valid_table(table):
         return jsonify({"status":"error", "message":"table {} not found".format(table)})
     cursor = mysql.connection.cursor()
