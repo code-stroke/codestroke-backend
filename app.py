@@ -818,7 +818,7 @@ def add_event():
     values (%s, %s, %s)""")
     
     args = (event_type_id,
-            clinicioan_id,
+            clinician_id,
             date)
     try:
         cursor.execute(query, args)
@@ -830,7 +830,6 @@ def add_event():
         return jsonify({"status":"success",
                         "message":"added"}) 
 
-# @login_exempt
 @app.route('/messages/<int:clinician_id>', methods=(['GET']))
 def get_messages(clinician_id):
     """Get incoming and outgoing messages for a clinician.
