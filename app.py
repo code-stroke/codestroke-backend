@@ -18,7 +18,7 @@ def index():
     else:
         return jsonify({'status':'error'})
 
-@app.route('/create_db')
+@app.route('/create_db/')
 def create_db():
     try:
         cursor = mysql.connection.cursor()
@@ -33,11 +33,11 @@ def create_db():
         print(e)
         return jsonify({"status":"error",}), 400
 
-@app.route('/cases/get', methods=(['GET']))
+@app.route('/cases/get/', methods=(['GET']))
 def get_cases():
     return select_query_result_({}, 'cases')
 
-@app.route('/cases/add', methods=(['POST']))
+@app.route('/cases/add/', methods=(['POST']))
 def add_case():
     # TODO Safe error handling
     # Patient details, history and hospital_id MUST be submitted
