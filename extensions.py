@@ -10,8 +10,15 @@ def check_database_():
     return cursor.fetchall()
 
 def valid_table_(table):
-    # TODO implement
-    return True
+    cursor = mysql.connection.cursor()
+    cursor.execute('use codestroke')
+    cursor.execute('show tables')
+    result = cursor.fetchall()
+    tables_list = [item['Tables_in_codestroke'] for item in result]
+    if table in tables_list:
+        return True
+    else:
+        return False
 
 def select_query_result_(qargs, table):
     if not valid_table_(table):
