@@ -6,28 +6,28 @@ CREATE TABLE IF NOT EXISTS `cases` (
   `first_name` varchar(30) NOT NULL,
   `last_name` varchar(30) NOT NULL,
   `dob` date NOT NULL,
-  `address` text NOT NULL,
-  `gender` varchar(1) NOT NULL,
-  `last_well` datetime NOT NULL,
-  `nok` varchar(40) NOT NULL,
-  `nok_phone` varchar(16) NOT NULL,
+  `address` text DEFAULT NULL,
+  `gender` varchar(1) DEFAULT NULL,
+  `last_well` datetime DEFAULT NULL,
+  `nok` varchar(40) DEFAULT NULL,
+  `nok_phone` varchar(16) DEFAULT NULL,
   `medicare_no` varchar(12) DEFAULT NULL,
-  `status` tinyint DEFAULT 0
+  `status` tinyint DEFAULT 0,
+  `status_time` datetime DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS `case_hospitals` (
-  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `case_id` int NOT NULL,
   `hospital_id` int NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS `case_histories` (
   `case_id` int NOT NULL PRIMARY KEY,
-  `pmhx` text NOT NULL,
-  `meds` text NOT NULL,
-  `anticoags` bool NOT NULL,
+  `pmhx` text DEFAULT NULL,
+  `meds` text DEFAULT NULL,
+  `anticoags` bool DEFAULT NULL,
   `anticoags_last_dose` datetime DEFAULT NULL,
-  `hopc` text NOT NULL,
+  `hopc` text DEFAULT NULL,
   `weight` float DEFAULT NULL,
   `last_meal` datetime DEFAULT NULL
 );
