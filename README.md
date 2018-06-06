@@ -22,8 +22,8 @@ For a quick start:
 5. Run `python app.py` from this directory and follow the database password prompts
 6. Navigate to `http://127.0.0.1:5000` in your web browser.
 
-You will get a message here that you need to create the database.
 For testing purposes, navigate to `http://127.0.0.1:5000/create_db` to
-initialise the database (*local only*). 
+initialise the database (*local only*), *then* run the `generate_users.py`
+script to generate an initial batch of users.
 
 
