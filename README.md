@@ -58,9 +58,10 @@ debugger mode stating that this can't be done reliably. Better safe than sorry!
 
   Any other value for `<table_name>` will return an error.
 
-### Paramedic Usage
+### Paramedic "Drop Off" Usage
 
-The main function route for a paramedic's usage will be at `/cases/` e.g.
+The main function route for a paramedic's "drop off" usage will be at `/cases/`
+e.g.
 
 ```
 http://127.0.0.1:5000/cases/
@@ -86,7 +87,7 @@ and, using cURL:
 curl -X POST -H 'Content-Type: application/json' -i 'http://127.0.0.1:5000/cases/add/' --data '{"first_name":"Claire", "last_name":"Li", "dob":"2000-01-01", "address":"2 Street, Suburb", "gender":"0", "last_well":"2000-01-01 00:00:00", "anticoags":"0", "hospital_id":"1"}'
 ```
 
-### Clinician Usage
+### ED Usage
 
 The major routes are all defined as `<table_name>/<case_id>`, and will permit
 both a GET request (to receive information from the database) and a PUT request
@@ -105,7 +106,7 @@ PUT request to edit the case history with `case_id` == 1 for example  might be:
 curl -X PUT -H 'Content-Type: application/json' -i 'http://127.0.0.1:5000/case_histories/1/' --data '{"pmhx":"HTN, IHD", "meds":"aspirin", "weight":"70"}'
 ```
 
-The other useful route for clinician usage is `/cases/` through a GET request
+The other useful route for ED usage is `/cases/` through a GET request
 which returns all cases in the database. When setting up the front end, make
 sure the `case_id` for each returned case is somehow persisted when you follow a
 case hyperlink so that you can submit the `case_id` with the forms when you make
