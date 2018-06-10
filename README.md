@@ -21,7 +21,7 @@ For a quick start:
 4. Ensure you have the file `app.conf` in this directory. You should configure
    your `app.conf` file with your MySQL database settings if you're running this
    locally. As a minimum, you should specify `MYSQL_HOST`, `MYSQL_USER` and
-   `MYSQL_PASSWORD`. 
+   `MYSQL_PASSWORD`.
 5. Run `python app.py` from this directory.
 6. Navigate to `http://127.0.0.1:5000` in your web browser.
 
@@ -30,51 +30,83 @@ initialise the database (*local only*).
 
 ## API Details
 
-### Paramedic (iOS) App
+Just a note - ensure that the requests are sent to the routes *with* the
+trailing backslash (e.g. `http://127.0.0.1:5000/cases/` rather than
+`http://127.0.0.1:5000/cases`) - Flask automatically redirects URLs that lack
+the trailing backslash to the correct routes, but raises an exception in
+debugger mode stating that this can't be done reliably. Better safe than sorry!
 
-The main function route for the paramedic app will be at `/cases/add/` e.g. 
+### Route Listing
+
+- `/cases/` with GET: get all cases with their basic patient details.
+- `/cases/` with POST: add a case with the arguments specified in the request.
+- `/<table_name>/<case_id>` with GET: get the information specified in a given
+  table for a given case id.
+- `/<table_name>/<case_id>` with PUT: modify the existing information in a given
+  table for a given case id with the arguments specified in the request.
+
+`<table_name>` can be one of:
+
+  - `cases` (the patient details) (noting that accessing this route without the
+    case id will instead return all cases, or will add a case depending on
+    request type)
+  - `case_histories`
+  - `case_assessments`
+  - `case_eds`
+  - `case_radiologies`
+  - `case_managements`
+
+  Any other value for `<table_name>` will return an error.
+
+### Paramedic Usage
+
+The main function route for a paramedic's usage will be at `/cases/` e.g.
 
 ```
-http://127.0.0.1:5000/cases/add/
+http://127.0.0.1:5000/cases/
 ```
 
-It will accept POST requests and requires, as a minimum, the patient details
-(except for the Medicare number) as specified in the wireframes and a number of
-other fields that you can check in the `schema.sql` file (anything that
-is marked `NOT NULL`). 
+To add a patient, you *must* submit your request as a POST request (a GET
+request, for example, will instead return a list of cases). The exact contents
+should be the same as the fields specified in `schema.sql`, and note that some
+of these must be specified (i.e. anything labelled `NOT NULL` other than the
+`case_id` which will be automatically generated). It's okay to skip anything
+which has a `DEFAULT` value (for now at least).
 
-(Will document more specifically the required arguments later). 
-
-An example of an acceptable body for the POST request is:
-
-```
-first_name=Claire&last_name=Li&dob=2000-01-01&address=2 Street, Suburb&gender=0&last_well=2000-01-01 00:00:00&nok=AnneSmith&nok_phone=04010101&pmhx=None of note&meds=Aspirin&anticoags=0&hopc=Facialdroop&facial_droop=1&arm_drift=1&bp_systolic=150&bp_diastolic=90&heart_rate=100&hospital_id=1
-```
-
-### Web App
-
-The major routes are all defined as `<table_name>/get/<case_id>` and
-`<table_name>/edit/<case_id>` for example:
+An example of an acceptable body for the POST request is (ensuring the content
+type is specified in the header as JSON):
 
 ```
-http://127.0.0.1:5000/case_histories/get/4/
+{"first_name":"Claire", "last_name":"Li", "dob":"2000-01-01", "address":"2 Street, Suburb", "gender":"0", "last_well":"2000-01-01 00:00:00", "anticoags":"0", "hospital_id":"1"}
 ```
 
-will return the case history information for the patient with `case_id` == 4. 
+and, using cURL:
 
-For reference, the tables with case information are:
+```
+curl -X POST -H 'Content-Type: application/json' -i 'http://127.0.0.1:5000/cases/add/' --data '{"first_name":"Claire", "last_name":"Li", "dob":"2000-01-01", "address":"2 Street, Suburb", "gender":"0", "last_well":"2000-01-01 00:00:00", "anticoags":"0", "hospital_id":"1"}'
+```
 
-- `cases` (the patient details)
-- `case_histories`
-- `case_assessments`
-- `case_eds`
-- `case_radiologies`
-- `case_managements`
+### Clinician Usage
 
-The `edit` route is done through a PUT request. You don't have to specify all
-parameters, only the one that has changed. 
+The major routes are all defined as `<table_name>/<case_id>`, and will permit
+both a GET request (to receive information from the database) and a PUT request
+(to edit information in the database), e.g.
 
-The other useful route for the web app is `/cases/get/` which returns all cases
-in the database. When setting up the front end, make sure the `case_id` for each
-returned case is somehow persisted when you follow a case hyperlink so that you
-can submit the `case_id` with the forms when you make changes. 
+```
+http://127.0.0.1:5000/case_histories/1/
+```
+
+will return the case history information for the patient with `case_id` == 1 if
+requested through a GET request, or will edit the case history information for
+that patient with the arguments sent through with a PUT request. An example of a
+PUT request to edit the case history with `case_id` == 1 for example  might be:
+
+```
+curl -X PUT -H 'Content-Type: application/json' -i 'http://127.0.0.1:5000/case_histories/1/' --data '{"pmhx":"HTN, IHD", "meds":"aspirin", "weight":"70"}'
+```
+
+The other useful route for clinician usage is `/cases/` through a GET request
+which returns all cases in the database. When setting up the front end, make
+sure the `case_id` for each returned case is somehow persisted when you follow a
+case hyperlink so that you can submit the `case_id` with the forms when you make
+changes.

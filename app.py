@@ -33,18 +33,18 @@ def create_db():
         print(e)
         return jsonify({"status":"error",}), 400
 
-@app.route('/cases/get/', methods=(['GET']))
+@app.route('/cases/', methods=(['GET']))
 def get_cases():
     return select_query_result_({}, 'cases')
 
-@app.route('/cases/add/', methods=(['POST']))
+@app.route('/cases/', methods=(['POST']))
 def add_case():
     # TODO Safe error handling
     # Patient details, history and hospital_id MUST be submitted
     cursor = mysql.connection.cursor()
 
     cols_cases = get_cols_('cases')
-    args_cases = get_args_(cols_cases, request.form)
+    args_cases = get_args_(cols_cases, request.get_json())
 
     add_params = add_(args_cases)
     add_query = 'insert into cases ' + add_params[0]
@@ -55,14 +55,14 @@ def add_case():
 
     for info_table in ['case_histories', 'case_assessments']:
         cols_table = get_cols_(info_table)
-        args_table = get_args_(cols_table, request.form)
+        args_table = get_args_(cols_table, request.get_json())
         args_table['case_id'] = case_id
         add_params = add_(args_table)
         add_query = 'insert into {} '.format(info_table) + add_params[0]
         cursor.execute(add_query, add_params[1])
 
     hospital_query = 'insert into case_hospitals (case_id, hospital_id) values (%s, %s)'
-    cursor.execute(hospital_query, (case_id, request.form.get('hospital_id')))
+    cursor.execute(hospital_query, (case_id, request.get_json().get('hospital_id')))
 
     for info_table in ['case_eds', 'case_radiologies', 'case_managements']:
         add_query = 'insert into {} '.format(info_table) + '(case_id) values (%s)'
