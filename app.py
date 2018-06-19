@@ -53,7 +53,11 @@ def add_case():
     result = cursor.fetchall()
     case_id = result[0]['last_insert_id()']
 
-    for info_table in ['case_histories', 'case_assessments']:
+    info_tables = ['case_histories', 'case_assessments',
+                   'case_eds', 'case_radiologies', 'case_managements']
+
+    # Will accept parameters from ANY of the case info table (incl. ed)
+    for info_table in info_tables:
         cols_table = get_cols_(info_table)
         args_table = get_args_(cols_table, request.get_json())
         args_table['case_id'] = case_id
@@ -64,10 +68,6 @@ def add_case():
     hospital_query = 'insert into case_hospitals (case_id, hospital_id) values (%s, %s)'
     cursor.execute(hospital_query, (case_id, request.get_json().get('hospital_id')))
 
-    for info_table in ['case_eds', 'case_radiologies', 'case_managements']:
-        add_query = 'insert into {} '.format(info_table) + '(case_id) values (%s)'
-        cursor.execute(add_query, (case_id,))
-        
     mysql.connection.commit()
 
     return jsonify({'status':'success'})
