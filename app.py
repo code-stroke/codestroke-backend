@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request, redirect, url_for, session, flash
+from flask_cors import CORS
 from flask_mysqldb import MySQL, MySQLdb
 from passlib.hash import pbkdf2_sha256
 from case_info import case_info
@@ -7,6 +8,7 @@ import getpass, datetime, urllib.request
 
 app = Flask(__name__)
 app.config.from_pyfile('app.conf')
+CORS(app)
 mysql.init_app(app)
 
 app.register_blueprint(case_info)
