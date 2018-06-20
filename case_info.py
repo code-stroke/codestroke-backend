@@ -14,7 +14,7 @@ def edit_case_info(info_table, case_id):
     # TODO Requires safer error handling
     # TODO Check table exists and exit if not (safety)
     cursor = mysql.connection.cursor()
-    cursor.execute("use codestroke")
+    cursor.execute("use codestroke$codestroke")
     columns = get_cols_(info_table)
     qargs = get_args_(columns, request.get_json())
     query = update_(qargs)

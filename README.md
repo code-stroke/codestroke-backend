@@ -8,8 +8,7 @@ Backend code for codestroke in early development - June-July sprint edition!
 
 1. Python
 2. Some sort of [virtual environment](https://virtualenv.pypa.io/en/stable/) (not essential but highly recommended)
-3. An `app.conf` file containing client IDs and secrets for OAuth in this
-   directory (not included in this GitHub repo)
+3. An `app.conf` file containing database details as described in Quick Start. 
 
 ### Quick Start
 
@@ -21,7 +20,7 @@ For a quick start:
 4. Ensure you have the file `app.conf` in this directory. You should configure
    your `app.conf` file with your MySQL database settings if you're running this
    locally. As a minimum, you should specify `MYSQL_HOST`, `MYSQL_USER` and
-   `MYSQL_PASSWORD`.
+   `MYSQL_PASSWORD`, as well as MYSQL_CURSORCLASS='DictCursor'.
 5. Run `python app.py` from this directory.
 6. Navigate to `http://127.0.0.1:5000` in your web browser.
 

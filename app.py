@@ -20,18 +20,18 @@ def index():
 
 @app.route('/create_db/')
 def create_db():
-    try:
-        cursor = mysql.connection.cursor()
-        with open("schema.sql") as schema_file:
-            schema_queries = filter(lambda x: not (x == ''),
-                                    ' '.join(schema_file.read().splitlines()).split(';'))
-        for query in schema_queries:
-            cursor.execute(query)
-        mysql.connection.commit()
-        return jsonify({'status':'success'})
-    except MySQLdb.Error as e:
-        print(e)
-        return jsonify({"status":"error",}), 400
+    #try:
+    cursor = mysql.connection.cursor()
+    with open("schema.sql") as schema_file: 
+        schema_queries = filter(lambda x: not (x == ''),
+                                ' '.join(schema_file.read().splitlines()).split(';'))
+    for query in schema_queries:
+        cursor.execute(query)
+    mysql.connection.commit()
+    return jsonify({'status':'success'})
+    #except MySQLdb.Error as e:
+    #    print(e)
+    #    return jsonify({"status":"error",}), 400
 
 @app.route('/cases/', methods=(['GET']))
 def get_cases():
@@ -51,6 +51,7 @@ def add_case():
     cursor.execute(add_query, add_params[1])
     cursor.execute('select last_insert_id()')
     result = cursor.fetchall()
+    print(result)
     case_id = result[0]['last_insert_id()']
 
     info_tables = ['case_histories', 'case_assessments',

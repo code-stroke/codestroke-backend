@@ -5,16 +5,16 @@ mysql = MySQL()
 
 def check_database_():
     cursor = mysql.connection.cursor()
-    check_query = "show databases like 'codestroke'"
+    check_query = "show databases like 'codestroke$codestroke'"
     cursor.execute(check_query)
     return cursor.fetchall()
 
 def valid_table_(table):
     cursor = mysql.connection.cursor()
-    cursor.execute('use codestroke')
+    cursor.execute('use codestroke$codestroke')
     cursor.execute('show tables')
     result = cursor.fetchall()
-    tables_list = [item['Tables_in_codestroke'] for item in result]
+    tables_list = [item['Tables_in_codestroke$codestroke'] for item in result]
     if table in tables_list:
         return True
     else:
@@ -24,7 +24,7 @@ def select_query_result_(qargs, table):
     if not valid_table_(table):
         return jsonify({"status":"error", "message":"table {} not found".format(table)})
     cursor = mysql.connection.cursor()
-    cursor.execute("use codestroke")
+    cursor.execute("use codestroke$codestroke")
     query = select_(qargs)
     cursor.execute("select * from {}".format(table) + query[0], query[1])
     result = cursor.fetchall()
@@ -82,7 +82,7 @@ def get_cols_(table):
     if not valid_table_(table):
         raise ValueError('Table does not exist in database')
     cursor = mysql.connection.cursor()
-    cursor.execute('use codestroke')
+    cursor.execute('use codestroke$codestroke')
     cursor.execute('describe {}'.format(table))
     cols = [item['Field'] for item in cursor.fetchall()]
     return cols
