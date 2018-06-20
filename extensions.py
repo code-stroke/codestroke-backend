@@ -30,7 +30,7 @@ def select_query_result_(qargs, table):
     result = cursor.fetchall()
     if result:
         return jsonify({"result":result})
-    return jsonify({"result":"no results"})
+    return jsonify({"result":None})
 
 def select_(d):
     """ Generates a MySQL select statement from a query dictionary. 
