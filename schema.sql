@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS `cases` (
   `last_name` varchar(30) NOT NULL,
   `dob` date NOT NULL,
   `address` text DEFAULT NULL,
-  `gender` varchar(1) DEFAULT NULL,
+  `gender` tinyint DEFAULT NULL,
   `last_well` datetime DEFAULT NULL,
   `nok` varchar(40) DEFAULT NULL,
   `nok_phone` varchar(16) DEFAULT NULL,
