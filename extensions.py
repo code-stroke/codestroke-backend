@@ -10,8 +10,8 @@ def connect_():
     return cursor
 
 def execute_sqlfile_(sqlfile):
-    cursor = connect_()
-    with open(sqlfile) as schema_file: 
+    cursor = mysql.connection.cursor()
+    with open(sqlfile) as schema_file:
         schema_queries = filter(lambda x: not (x == ''),
                                 ' '.join(schema_file.read().splitlines()).split(';'))
     for query in schema_queries:
