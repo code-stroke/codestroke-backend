@@ -75,5 +75,6 @@ def add_case():
 
     return jsonify({'status':'success'})
 
+
 if __name__ == '__main__':
     app.run(debug = True)

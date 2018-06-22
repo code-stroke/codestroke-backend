@@ -9,7 +9,7 @@ def get_case_info(info_table, case_id):
     qargs = {"case_id":case_id}
     return select_query_result_(qargs, info_table)
 
-@case_info.route('/<int:case_id>/', methods=(['PUT']))
+@case_info.route('/<int:case_id>/', methods=(['PATCH']))
 def edit_case_info(info_table, case_id):
     # TODO Requires safer error handling
     # TODO Check table exists and exit if not (safety)
