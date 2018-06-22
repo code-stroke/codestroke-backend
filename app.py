@@ -23,10 +23,8 @@ def index():
 @app.route('/create_db/')
 def create_db():
     #try:
-    cursor = mysql.connection.cursor()
-    with open("schema.sql") as schema_file: 
-        schema_queries = filter(lambda x: not (x == ''),
-                                ' '.join(schema_file.read().splitlines()).split(';'))
+    execute_sqlfile_('identities.sql')
+    execute_sqlfile_('schema.sql')
     return jsonify({'success': True})
     #except MySQLdb.Error as e:
     #    print(e)
