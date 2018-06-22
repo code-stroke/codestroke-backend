@@ -27,9 +27,6 @@ def create_db():
     with open("schema.sql") as schema_file: 
         schema_queries = filter(lambda x: not (x == ''),
                                 ' '.join(schema_file.read().splitlines()).split(';'))
-    for query in schema_queries:
-        cursor.execute(query)
-    mysql.connection.commit()
     return jsonify({'success': True})
     #except MySQLdb.Error as e:
     #    print(e)
