@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS `case_assessments` (
   `aphasia` tinyint DEFAULT NULL,
   `dysarthria` tinyint DEFAULT NULL,
   `neglect` tinyint DEFAULT NULL,
-  `rankin_conscious` tinyint DEFAULT NULL
+  `rankin_conscious` tinyint DEFAULT NULL,
   `likely_lvo` bool DEFAULT NULL,
   FOREIGN KEY (heart_rhythm) REFERENCES id_heart_rhythm(heart_rhythm_id),
   FOREIGN KEY (facial_droop) REFERENCES id_options(options_id),

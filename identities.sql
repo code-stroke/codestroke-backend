@@ -7,8 +7,8 @@ CREATE TABLE IF NOT EXISTS `id_gender` (
   `gender_str` varchar(1) NOT NULL
 );
 
-INSERT INTO gender
-  (gender_id, gender_str, gender_desc)
+INSERT INTO id_gender
+  (gender_id, gender_str)
 VALUES
   (0, 'f'),
   (1, 'm'),
@@ -17,7 +17,7 @@ VALUES
 
 CREATE TABLE IF NOT EXISTS `id_status` (
   `status_id` tinyint NOT NULL PRIMARY KEY,
-  `status_str` varchar(20) NOT NULL,
+  `status_str` varchar(20) NOT NULL
 );
 
 INSERT INTO id_status
@@ -30,7 +30,7 @@ VALUES
 
 CREATE TABLE IF NOT EXISTS `id_options` (
   `options_id` tinyint NOT NULL PRIMARY KEY,
-  `options_str` varchar(20) NOT NULL,
+  `options_str` varchar(20) NOT NULL
 );
 
 INSERT INTO id_options
@@ -43,10 +43,10 @@ VALUES
 
 CREATE TABLE IF NOT EXISTS `id_heart_rhythm` (
   `heart_rhythm_id` tinyint NOT NULL PRIMARY KEY,
-  `heart_rhythm_str` varchar(20) NOT NULL,
+  `heart_rhythm_str` varchar(20) NOT NULL
 );
 
-INSERT INTO id_status
+INSERT INTO id_heart_rhythm
   (heart_rhythm_id, heart_rhythm_str)
 VALUES
   (0, 'regular'),
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS `id_side` (
   `side_str` varchar(5) NOT NULL
 );
 
-INSERT INTO id_status
+INSERT INTO id_side
   (side_id, side_str)
 VALUES
   (0, 'none'),
