@@ -18,7 +18,10 @@ CREATE TABLE IF NOT EXISTS `cases` (
 
 CREATE TABLE IF NOT EXISTS `case_hospitals` (
   `case_id` int NOT NULL,
-  `hospital_id` int NOT NULL
+  `hospital_id` int NOT NULL,
+  FOREIGN KEY (case_id) REFERENCES cases(case_id)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS `case_histories` (
@@ -29,7 +32,10 @@ CREATE TABLE IF NOT EXISTS `case_histories` (
   `anticoags_last_dose` datetime DEFAULT NULL,
   `hopc` text DEFAULT NULL,
   `weight` float DEFAULT NULL,
-  `last_meal` datetime DEFAULT NULL
+  `last_meal` datetime DEFAULT NULL,
+  FOREIGN KEY (case_id) REFERENCES cases(case_id)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS `case_assessments` (
@@ -69,6 +75,10 @@ CREATE TABLE IF NOT EXISTS `case_assessments` (
   `dysarthria` tinyint DEFAULT NULL,
   `neglect` tinyint DEFAULT NULL,
   `rankin_conscious` tinyint DEFAULT NULL
+  `likely_lvo` bool DEFAULT NULL,
+  FOREIGN KEY (case_id) REFERENCES cases(case_id)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS `case_eds` (
@@ -76,7 +86,10 @@ CREATE TABLE IF NOT EXISTS `case_eds` (
   `location` VARCHAR(30) DEFAULT NULL,
   `registered` bool DEFAULT 0,
   `triaged` bool DEFAULT 0,
-  `primary_survey` bool DEFAULT 0
+  `primary_survey` bool DEFAULT 0,
+  FOREIGN KEY (case_id) REFERENCES cases(case_id)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS `case_radiologies` (
@@ -89,7 +102,10 @@ CREATE TABLE IF NOT EXISTS `case_radiologies` (
   `ich_found` bool DEFAULT NULL,
   `do_cta_ctp` bool DEFAULT NULL,
   `cta_ctp_complete` bool DEFAULT 0,
-  `large_vessel_occlusion` bool DEFAULT NULL
+  `large_vessel_occlusion` bool DEFAULT NULL,
+  FOREIGN KEY (case_id) REFERENCES cases(case_id)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS `case_managements` (
@@ -114,7 +130,10 @@ CREATE TABLE IF NOT EXISTS `case_managements` (
   `thrombolysis_time_given` datetime DEFAULT NULL,
   `ecr` bool DEFAULT NULL,
   `surgical_rx` bool DEFAULT NULL,
-  `conservative_rx` bool DEFAULT NULL
+  `conservative_rx` bool DEFAULT NULL,
+  FOREIGN KEY (case_id) REFERENCES cases(case_id)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS `clinicians` (
