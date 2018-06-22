@@ -43,8 +43,6 @@ def get_cases():
 def add_case():
     # TODO Safe error handling
     # Patient details, history and hospital_id MUST be submitted
-    cursor = mysql.connection.cursor()
-
     cols_cases = get_cols_('cases')
     args_cases = get_args_(cols_cases, request.get_json())
 
@@ -74,7 +72,6 @@ def add_case():
     mysql.connection.commit()
 
     return jsonify({'status':'success'})
-
 
 if __name__ == '__main__':
     app.run(debug = True)

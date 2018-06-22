@@ -3,15 +3,21 @@ from flask_mysqldb import MySQL, MySQLdb
 
 mysql = MySQL()
 
-def check_database_():
+def connect_():
     cursor = mysql.connection.cursor()
+    cursor.execute('use codestroke$codestroke')
+    cursor.execute('set time_zone = "+10:00"')
+    return cursor
+
+
+def check_database_():
+    cursor = connect_()
     check_query = "show databases like 'codestroke$codestroke'"
     cursor.execute(check_query)
     return cursor.fetchall()
 
 def valid_table_(table):
-    cursor = mysql.connection.cursor()
-    cursor.execute('use codestroke$codestroke')
+    cursor = connect_()
     cursor.execute('show tables')
     result = cursor.fetchall()
     tables_list = [item['Tables_in_codestroke$codestroke'] for item in result]
@@ -23,8 +29,7 @@ def valid_table_(table):
 def select_query_result_(qargs, table):
     if not valid_table_(table):
         return jsonify({"status":"error", "message":"table {} not found".format(table)})
-    cursor = mysql.connection.cursor()
-    cursor.execute("use codestroke$codestroke")
+    cursor = connect_()
     query = select_(qargs)
     cursor.execute("select * from {}".format(table) + query[0], query[1])
     result = cursor.fetchall()
@@ -81,8 +86,6 @@ def get_args_(args, d):
 def get_cols_(table):
     if not valid_table_(table):
         raise ValueError('Table does not exist in database')
-    cursor = mysql.connection.cursor()
-    cursor.execute('use codestroke$codestroke')
-    cursor.execute('describe {}'.format(table))
+    cursor = connect_()
     cols = [item['Field'] for item in cursor.fetchall()]
     return cols
