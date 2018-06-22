@@ -77,6 +77,7 @@ def add_case():
 def delete_case(case_id):
     query = 'delete from `cases` where `case_id` = %s'
     cursor.execute(query, case_id)
+    # TODO Implement check that was deleted
     return jsonify({'success': True})
 
 if __name__ == '__main__':
