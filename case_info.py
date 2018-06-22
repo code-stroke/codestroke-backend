@@ -23,7 +23,7 @@ def edit_case_info(info_table, case_id):
     #cursor.execute("update %s " + query[0] + " where case_id=%s", (info_table,)+query[1]+(case_id,))
     cursor.execute(query_string, query[1]+(case_id,))
     mysql.connection.commit()
-    return jsonify({"status":"success",
+    return jsonify({"success": True,
                     "message":"added"})
 
     # except MySQLdb.Error as e:

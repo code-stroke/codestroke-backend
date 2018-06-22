@@ -28,7 +28,7 @@ def valid_table_(table):
 
 def select_query_result_(qargs, table):
     if not valid_table_(table):
-        return jsonify({"status":"error", "message":"table {} not found".format(table)})
+        return jsonify({"success":False, "message":"table {} not found".format(table)})
     cursor = connect_()
     query = select_(qargs)
     cursor.execute("select * from {}".format(table) + query[0], query[1])

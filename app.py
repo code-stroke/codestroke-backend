@@ -16,9 +16,9 @@ app.register_blueprint(case_info)
 @app.route('/')
 def index():
     if check_database_():
-        return jsonify({'status':'ready'})
+        return jsonify({'success': True})
     else:
-        return jsonify({'status':'error'})
+        return jsonify({'success': False})
 
 @app.route('/create_db/')
 def create_db():
@@ -30,7 +30,7 @@ def create_db():
     for query in schema_queries:
         cursor.execute(query)
     mysql.connection.commit()
-    return jsonify({'status':'success'})
+    return jsonify({'success': True})
     #except MySQLdb.Error as e:
     #    print(e)
     #    return jsonify({"status":"error",}), 400
@@ -71,7 +71,13 @@ def add_case():
 
     mysql.connection.commit()
 
-    return jsonify({'status':'success'})
+    return jsonify({'success': True})
+
+@app.route('/cases/<int:case_id>', methods=(['DELETE']))
+def delete_case(case_id):
+    query = 'delete from `cases` where `case_id` = %s'
+    cursor.execute(query, case_id)
+    return jsonify({'success': True})
 
 if __name__ == '__main__':
     app.run(debug = True)
