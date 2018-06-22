@@ -66,7 +66,7 @@ def add_case():
 
     mysql.connection.commit()
 
-    return jsonify({'success': True})
+    return jsonify({'success': True, 'case_id': case_id})
 
 @app.route('/cases/<int:case_id>/', methods=(['DELETE']))
 def delete_case(case_id):
