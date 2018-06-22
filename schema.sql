@@ -1,4 +1,3 @@
-CREATE DATABASE IF NOT EXISTS `codestroke$codestroke`;
 USE `codestroke$codestroke`;
 
 CREATE TABLE IF NOT EXISTS `cases` (
@@ -13,7 +12,9 @@ CREATE TABLE IF NOT EXISTS `cases` (
   `nok_phone` varchar(16) DEFAULT NULL,
   `medicare_no` varchar(12) DEFAULT NULL,
   `status` tinyint DEFAULT 0,
-  `status_time` datetime DEFAULT CURRENT_TIMESTAMP
+  `status_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (gender) REFERENCES id_gender(gender_id),
+  FOREIGN KEY (status) REFERENCES id_status(status_id)
 );
 
 CREATE TABLE IF NOT EXISTS `case_hospitals` (
@@ -40,10 +41,10 @@ CREATE TABLE IF NOT EXISTS `case_histories` (
 
 CREATE TABLE IF NOT EXISTS `case_assessments` (
   `case_id` int NOT NULL PRIMARY KEY,
-  `facial_droop` bool DEFAULT NULL,
-  `arm_drift` bool DEFAULT NULL,
-  `weak_grip` bool DEFAULT NULL,
-  `speech_difficulty` bool DEFAULT NULL,
+  `facial_droop` tinyint DEFAULT NULL,
+  `arm_drift` tinyint DEFAULT NULL,
+  `weak_grip` tinyint DEFAULT NULL,
+  `speech_difficulty` tinyint DEFAULT NULL,
   `bp_systolic` int DEFAULT NULL,
   `bp_diastolic` int DEFAULT NULL,
   `heart_rate` int DEFAULT NULL,
@@ -76,6 +77,12 @@ CREATE TABLE IF NOT EXISTS `case_assessments` (
   `neglect` tinyint DEFAULT NULL,
   `rankin_conscious` tinyint DEFAULT NULL
   `likely_lvo` bool DEFAULT NULL,
+  FOREIGN KEY (heart_rhythm) REFERENCES id_heart_rhythm(heart_rhythm_id),
+  FOREIGN KEY (facial_droop) REFERENCES id_options(options_id),
+  FOREIGN KEY (arm_drift) REFERENCES id_options(options_id),
+  FOREIGN KEY (weak_grip) REFERENCES id_options(options_id),
+  FOREIGN KEY (speech_difficulty) REFERENCES id_options(options_id),
+  FOREIGN KEY (hemiparesis) REFERENCES id_side(side_id),
   FOREIGN KEY (case_id) REFERENCES cases(case_id)
   ON DELETE CASCADE
   ON UPDATE CASCADE
