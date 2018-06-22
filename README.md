@@ -35,6 +35,12 @@ trailing backslash (e.g. `http://127.0.0.1:5000/cases/` rather than
 the trailing backslash to the correct routes, but raises an exception in
 debugger mode stating that this can't be done reliably. Better safe than sorry!
 
+### Database Schema
+
+Please have a look at `schema.sql` and `identities.sql` which have the main
+patient database and various string identities for ambiguous values
+respectively. 
+
 ### Route Listing
 
 - `/cases/` with GET: get all cases with their basic patient details.
@@ -110,3 +116,8 @@ which returns all cases in the database. When setting up the front end, make
 sure the `case_id` for each returned case is somehow persisted when you follow a
 case hyperlink so that you can submit the `case_id` with the forms when you make
 changes.
+
+### Deleting Patients
+
+For development purposes, you can delete a patient by accessing the
+`/cases/<case_id>/` route and sending a delete request. 
