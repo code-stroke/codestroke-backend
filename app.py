@@ -38,6 +38,7 @@ def get_cases():
 def add_case():
     # TODO Safe error handling
     # Patient details, history and hospital_id MUST be submitted
+    cursor = connect_()
     cols_cases = get_cols_('cases')
     args_cases = get_args_(cols_cases, request.get_json())
 
@@ -46,7 +47,6 @@ def add_case():
     cursor.execute(add_query, add_params[1])
     cursor.execute('select last_insert_id()')
     result = cursor.fetchall()
-    print(result)
     case_id = result[0]['last_insert_id()']
 
     info_tables = ['case_histories', 'case_assessments',
@@ -68,10 +68,12 @@ def add_case():
 
     return jsonify({'success': True})
 
-@app.route('/cases/<int:case_id>', methods=(['DELETE']))
+@app.route('/cases/<int:case_id>/', methods=(['DELETE']))
 def delete_case(case_id):
-    query = 'delete from `cases` where `case_id` = %s'
-    cursor.execute(query, case_id)
+    cursor = connect_()
+    query = 'delete from cases where case_id = %s'
+    cursor.execute(query, (case_id,))
+    mysql.connection.commit()
     # TODO Implement check that was deleted
     return jsonify({'success': True})
 

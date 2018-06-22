@@ -96,5 +96,6 @@ def get_cols_(table):
     if not valid_table_(table):
         raise ValueError('Table does not exist in database')
     cursor = connect_()
+    cursor.execute('describe {}'.format(table))
     cols = [item['Field'] for item in cursor.fetchall()]
     return cols
