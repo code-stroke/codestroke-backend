@@ -6,15 +6,13 @@ CREATE TABLE IF NOT EXISTS `cases` (
   `last_name` varchar(30) NOT NULL,
   `dob` date NOT NULL,
   `address` text DEFAULT NULL,
-  `gender` tinyint DEFAULT NULL,
+  `gender` enum('f', 'm', 'u') DEFAULT NULL,
   `last_well` timestamp DEFAULT NULL,
   `nok` varchar(40) DEFAULT NULL,
   `nok_phone` varchar(16) DEFAULT NULL,
   `medicare_no` varchar(12) DEFAULT NULL,
-  `status` tinyint DEFAULT 0,
+  `status` enum('incoming', 'active', 'completed') DEFAULT 0,
   `status_time` timestamp DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (gender) REFERENCES id_gender(gender_id),
-  FOREIGN KEY (status) REFERENCES id_status(status_id)
 );
 
 CREATE TABLE IF NOT EXISTS `case_hospitals` (
@@ -41,14 +39,14 @@ CREATE TABLE IF NOT EXISTS `case_histories` (
 
 CREATE TABLE IF NOT EXISTS `case_assessments` (
   `case_id` int NOT NULL PRIMARY KEY,
-  `facial_droop` tinyint DEFAULT NULL,
-  `arm_drift` tinyint DEFAULT NULL,
-  `weak_grip` tinyint DEFAULT NULL,
-  `speech_difficulty` tinyint DEFAULT NULL,
+  `facial_droop` enum('no', 'yes', 'unknown') DEFAULT NULL,
+  `arm_drift` enum('no', 'yes', 'unknown') DEFAULT NULL,
+  `weak_grip` enum('no', 'yes', 'unknown') DEFAULT NULL,
+  `speech_difficulty` enum('no', 'yes', 'unknown') DEFAULT NULL,
   `bp_systolic` int DEFAULT NULL,
   `bp_diastolic` int DEFAULT NULL,
   `heart_rate` int DEFAULT NULL,
-  `heart_rhythm` bool DEFAULT NULL,
+  `heart_rhythm` enum('regular', 'irregular') DEFAULT NULL,
   `rr` int DEFAULT NULL,
   `o2sats` int DEFAULT NULL,
   `temp` int DEFAULT NULL,
@@ -58,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `case_assessments` (
   `arm_motor_impair` tinyint DEFAULT NULL,
   `leg_motor_impair` tinyint DEFAULT NULL,
   `head_gaze_deviate` tinyint DEFAULT NULL,
-  `hemiparesis` bool DEFAULT NULL,
+  `hemiparesis` enum('left', 'right') DEFAULT NULL,
   `cannula` bool DEFAULT NULL,
   `conscious_level` tinyint DEFAULT NULL,
   `month_age` tinyint DEFAULT NULL,
@@ -77,12 +75,6 @@ CREATE TABLE IF NOT EXISTS `case_assessments` (
   `neglect` tinyint DEFAULT NULL,
   `rankin_conscious` tinyint DEFAULT NULL,
   `likely_lvo` bool DEFAULT NULL,
-  FOREIGN KEY (heart_rhythm) REFERENCES id_heart_rhythm(heart_rhythm_id),
-  FOREIGN KEY (facial_droop) REFERENCES id_options(options_id),
-  FOREIGN KEY (arm_drift) REFERENCES id_options(options_id),
-  FOREIGN KEY (weak_grip) REFERENCES id_options(options_id),
-  FOREIGN KEY (speech_difficulty) REFERENCES id_options(options_id),
-  FOREIGN KEY (hemiparesis) REFERENCES id_side(side_id),
   FOREIGN KEY (case_id) REFERENCES cases(case_id)
   ON DELETE CASCADE
   ON UPDATE CASCADE

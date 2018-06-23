@@ -39,9 +39,8 @@ debugger mode stating that this can't be done reliably. Better safe than sorry!
 
 ### Database Schema
 
-Please have a look at `schema.sql` and `identities.sql` which have the main
-patient database and various string identities for ambiguous values
-respectively. 
+Please have a look at `schema.sql` which has the main patient database schema
+that the backend is based on. 
 
 ### Route Listing
 
