@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request, redirect, url_for, session, flash, Blueprint
 from flask_mysqldb import MySQL, MySQLdb
 from extensions import *
+import dbfilters
 
 case_info = Blueprint('case_info', __name__, url_prefix='/<info_table>')
 
@@ -16,6 +17,9 @@ def edit_case_info(info_table, case_id):
     cursor = connect_()
     columns = get_cols_(info_table)
     qargs = get_args_(columns, request.get_json())
+
+    qargs = dbfilters.qargs(qargs)
+
     query = update_(qargs)
     #try:
 

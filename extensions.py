@@ -1,5 +1,6 @@
 from flask import jsonify
 from flask_mysqldb import MySQL, MySQLdb
+import dbfilters
 
 mysql = MySQL()
 
@@ -43,7 +44,8 @@ def select_query_result_(qargs, table):
     cursor.execute("select * from {}".format(table) + query[0], query[1])
     result = cursor.fetchall()
     if result:
-        return jsonify({"result":result})
+        filtered = dbfiltes.fetch(result)
+        return jsonify({"result":filtered})
     return jsonify({"result":None})
 
 def select_(d):
