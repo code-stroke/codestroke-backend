@@ -8,12 +8,12 @@ CREATE TABLE IF NOT EXISTS `cases` (
   `dob` date NOT NULL,
   `address` text DEFAULT NULL,
   `gender` enum('f', 'm', 'u') DEFAULT NULL,
-  `last_well` timestamp DEFAULT NULL,
+  `last_well` datetime DEFAULT NULL,
   `nok` varchar(40) DEFAULT NULL,
   `nok_phone` varchar(16) DEFAULT NULL,
   `medicare_no` varchar(12) DEFAULT NULL,
-  `status` enum('incoming', 'active', 'completed') DEFAULT 0,
-  `status_time` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `status` enum('incoming', 'active', 'completed') DEFAULT 'incoming',
+  `status_time` timestamp DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS `case_hospitals` (
@@ -29,10 +29,10 @@ CREATE TABLE IF NOT EXISTS `case_histories` (
   `pmhx` text DEFAULT NULL,
   `meds` text DEFAULT NULL,
   `anticoags` bool DEFAULT NULL,
-  `anticoags_last_dose` timestamp DEFAULT NULL,
+  `anticoags_last_dose` datetime DEFAULT NULL,
   `hopc` text DEFAULT NULL,
   `weight` float DEFAULT NULL,
-  `last_meal` timestamp DEFAULT NULL,
+  `last_meal` datetime DEFAULT NULL,
   FOREIGN KEY (case_id) REFERENCES cases(case_id)
   ON DELETE CASCADE
   ON UPDATE CASCADE
@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS `case_managements` (
   `recent_lumbar_puncture` bool DEFAULT NULL,
   `post_acs_pericarditis` bool DEFAULT NULL,
   `pregnant` bool DEFAULT NULL,
-  `thrombolysis_time_given` timestamp DEFAULT NULL,
+  `thrombolysis_time_given` datetime DEFAULT NULL,
   `ecr` bool DEFAULT NULL,
   `surgical_rx` bool DEFAULT NULL,
   `conservative_rx` bool DEFAULT NULL,
