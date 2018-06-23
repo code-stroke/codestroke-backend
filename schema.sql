@@ -1,6 +1,29 @@
 CREATE DATABASE IF NOT EXISTS `codestroke$codestroke`;
 USE `codestroke$codestroke`;
 
+CREATE TABLE IF NOT EXISTS `hospitals` (
+  `id` int NOT NULL PRIMARY KEY,
+  `name` varchar(30) NOT NULL,
+  `city` varchar(30),
+  `state` varchar(5),
+  `postcode` varchar(30),
+  `latitude` text,
+  `longitude` text
+);
+
+CREATE TABLE IF NOT EXISTS `clinicians` (
+  `id` int NOT NULL PRIMARY KEY,
+  `first_name` varchar(30) DEFAULT NULL,
+  `last_name` varchar(30) DEFAULT NULL,
+  `username` varchar(20) NOT NULL,
+  `pwhash` text NOT NULL,
+  `hospital_id` int,
+  `role` int,
+  `creation_date` date,
+  `email` varchar(40),
+  FOREIGN KEY (hospital_id) REFERENCES hospitals(id)
+);
+
 CREATE TABLE IF NOT EXISTS `cases` (
   `case_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `first_name` varchar(30) NOT NULL,
@@ -135,26 +158,4 @@ CREATE TABLE IF NOT EXISTS `case_managements` (
   FOREIGN KEY (case_id) REFERENCES cases(case_id)
   ON DELETE CASCADE
   ON UPDATE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS `clinicians` (
-  `id` int NOT NULL PRIMARY KEY,
-  `first_name` varchar(30) DEFAULT NULL,
-  `last_name` varchar(30) DEFAULT NULL,
-  `username` varchar(20) NOT NULL,
-  `pwhash` text NOT NULL,
-  `hospital_id` int,
-  `role` int,
-  `creation_date` date,
-  `email` varchar(40)
-);
-
-CREATE TABLE IF NOT EXISTS `hospitals` (
-  `id` int NOT NULL PRIMARY KEY,
-  `name` varchar(30) NOT NULL,
-  `city` varchar(30),
-  `state` varchar(5),
-  `postcode` varchar(30),
-  `latitude` text,
-  `longitude` text
 );
