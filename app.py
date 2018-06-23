@@ -23,7 +23,6 @@ def index():
 @app.route('/create_db/')
 def create_db():
     #try:
-    execute_sqlfile_('identities.sql')
     execute_sqlfile_('schema.sql')
     return jsonify({'success': True})
     #except MySQLdb.Error as e:

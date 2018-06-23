@@ -1,3 +1,4 @@
+CREATE DATABASE IF NOT EXISTS `codestroke$codestroke`;
 USE `codestroke$codestroke`;
 
 CREATE TABLE IF NOT EXISTS `cases` (
