@@ -1,5 +1,6 @@
 import requests
 import json
+from extensions import *
 
 # TODO move this to external data format later once debugged
 # targets MUST be a list (or other iterable) or None
@@ -87,3 +88,18 @@ def filterize(targets):
     del filter_list[-1] # remove last OR operator
 
     return filter_list
+
+def package_message(case_id):
+    case_info = get_all_case_info_(case_id)
+    info = {}
+    # Just to simplify, assume first name and last name are each one word
+    # Will probably have to modify later to account for two-word first or last names
+    info['initials'] = case_info['first_name'][0] + case_info['last_name'][0]
+    # TODO calculate age based on dob returned
+    info['age'] = case_info['dob']
+    info['gender'] = case_info['gender']
+    # TODO Be exclusive with which arguments are provided based on notification type
+    info['eta_mins'] = 30 # PLACEHOLDER until this is clarified how to calculate
+    info['hospital_name'] = 'Austin' # PLACEHOLDER until hospital id and hospital name linked
+    info['ct_num'] = 1 # PLACEHOLDER 
+    return info

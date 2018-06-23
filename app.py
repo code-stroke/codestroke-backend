@@ -5,6 +5,7 @@ from passlib.hash import pbkdf2_sha256
 from case_info import case_info
 from extensions import *
 import getpass, datetime, urllib.request
+from notify import add_message, package_message
 
 app = Flask(__name__)
 app.config.from_pyfile('app.conf')
@@ -65,6 +66,8 @@ def add_case():
 
     mysql.connection.commit()
 
+    add_message('case_incoming', package_message(case_id), app.config)
+    
     return jsonify({'success': True, 'case_id': case_id})
 
 @app.route('/cases/<int:case_id>/', methods=(['DELETE']))

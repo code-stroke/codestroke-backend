@@ -1,5 +1,5 @@
 def fetch(result):
     return result
 
-def qargs(qargs):
+def put(info_table, case_id, qargs):
     return qargs

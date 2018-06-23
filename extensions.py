@@ -1,6 +1,6 @@
 from flask import jsonify
 from flask_mysqldb import MySQL, MySQLdb
-import dbfilters
+import hooks
 
 mysql = MySQL()
 
@@ -44,7 +44,7 @@ def select_query_result_(qargs, table):
     cursor.execute("select * from {}".format(table) + query[0], query[1])
     result = cursor.fetchall()
     if result:
-        filtered = dbfiltes.fetch(result)
+        filtered = hooks.fetch(result)
         return jsonify({"result":filtered})
     return jsonify({"result":None})
 
@@ -101,3 +101,18 @@ def get_cols_(table):
     cursor.execute('describe {}'.format(table))
     cols = [item['Field'] for item in cursor.fetchall()]
     return cols
+
+def get_all_case_info_(case_id):
+    cursor = connect_()
+    cursor.execute('show tables')
+    result = cursor.fetchall()
+    tables_list = [item['Tables_in_codestroke$codestroke'] for item in result]
+    case_info_tables = filter(lambda x: x.startswith('case_'), tables_list)
+    query = 'select * from cases ' + \
+            ' '.join(['left join {} using (case_id)'.format(tbl) for tbl in case_info_tables]) + \
+            'where case_id = %s'
+    print(query)
+    cursor.execute(query, (case_id,))
+    result = cursor.fetchall()
+    print(result)
+    return result[0]

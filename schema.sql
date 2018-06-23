@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS `case_hospitals` (
   `hospital_id` int NOT NULL,
   FOREIGN KEY (case_id) REFERENCES cases(case_id)
   ON DELETE CASCADE
-  ON UPDATE CASCADE
+  ON UPDATE CASCADE,
+  FOREIGN KEY (hospital_id) REFERENCES hospitals(id)
 );
 
 CREATE TABLE IF NOT EXISTS `case_histories` (
