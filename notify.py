@@ -51,13 +51,13 @@ def add_messagoe(notify_type, args):
     """
 
     header = {"Content-Type": "application/json; charset=utf-8",
-              "Authorization": "BASIC {REST_API_KEY}"}
+              "Authorization": "BASIC {}".format(OS_REST_API_KEY)}
 
     # TODO Handle if required args not present
     msg_prefix = "{initials} {age}{gender} -- "
     msg = (msg_prefix + notify_types[notify_type].msg_base).format(**args)
 
-    payload = {"app_id": "{APP_ID}",
+    payload = {"app_id": OS_APP_ID,
                "filters": filterize(notify_types[notify_type].targets) # check if works with None!
 	           "contents": {"en": msg}}
 

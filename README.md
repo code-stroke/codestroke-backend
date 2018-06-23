@@ -20,7 +20,9 @@ For a quick start:
 4. Ensure you have the file `app.conf` in this directory. You should configure
    your `app.conf` file with your MySQL database settings if you're running this
    locally. As a minimum, you should specify `MYSQL_HOST`, `MYSQL_USER` and
-   `MYSQL_PASSWORD`, as well as MYSQL_CURSORCLASS='DictCursor'.
+   `MYSQL_PASSWORD`, as well as `MYSQL_CURSORCLASS='DictCursor'`. For
+   notifications, you will also need to specify the REST API Key for OneSignal
+   as `OS_REST_API_KEY` and the OneSignal App ID as `OS_APP_ID`. 
 5. Run `python app.py` from this directory.
 6. Navigate to `http://127.0.0.1:5000` in your web browser.
 
