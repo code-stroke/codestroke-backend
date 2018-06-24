@@ -2,6 +2,7 @@ import requests
 import json
 from flask import current_app as app
 import extensions as ext
+from datetime import datetime
 
 # TODO move this to external data format later once debugged
 # targets MUST be a list (or other iterable) or None
@@ -98,8 +99,8 @@ def package_message(case_id, args):
     # Will probably have to modify later to account for two-word first or last names
     info['initials'] = case_info['first_name'][0] + case_info['last_name'][0]
     # TODO calculate age based on dob returned
-    info['age'] = case_info['dob']
-    info['gender'] = case_info['gender']
+    info['age'] = (datetime.now() - datetime.combine(case_info['dob'], datetime.min.time())).strftime('%').days // 365
+    info['gender'] = case_info['gender'].upper()
     # TODO Be exclusive with which arguments are provided based on notification type
     if args:
         info['eta_mins'] = 30 if 'eta_mins' in args.keys() else None# PLACEHOLDER until this is clarified how to calculate
