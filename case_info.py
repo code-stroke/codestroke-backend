@@ -18,7 +18,11 @@ def edit_case_info(info_table, case_id):
     columns = get_cols_(info_table)
     qargs = get_args_(columns, request.get_json())
 
-    qargs = hooks.put(info_table, case_id, qargs)
+    # Necessary for PUT since expect whole replacement back.
+    # Will be much easier to implement this hook as a PATCH request
+    # as will not have to check the previous stored data
+    prior = get_case_info(info_table, case_id)[0]
+    qargs = hooks.put(info_table, case_id, qargs, prior)
 
     query = update_(qargs)
     #try:
