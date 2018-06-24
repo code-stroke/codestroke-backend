@@ -64,7 +64,7 @@ def add_case():
 
     mysql.connection.commit()
 
-    add_message('case_incoming', package_message(case_id), app.config)
+    add_message('case_incoming', case_id)
     
     return jsonify({'success': True, 'case_id': case_id})
 

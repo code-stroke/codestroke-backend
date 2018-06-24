@@ -43,12 +43,13 @@ notify_types = {
     },
 }
 
-def add_message(notify_type, case_id):
+def add_message(notify_type, case_id, args=None):
     """ Add notification with arguments.
 
     Args:
         notify_type: a notification type as specified in notify_types dict. 
         case_id: ID of case which will used to get arguments.
+        args: dictionary of arguments for packaging with package_message.
     """
 
     header = {"Content-Type": "application/json; charset=utf-8",
@@ -56,8 +57,8 @@ def add_message(notify_type, case_id):
 
     # TODO Handle if required args not present
     msg_prefix = "{initials} {age}{gender} -- "
-    args = package_message(case_id)
-    msg = (msg_prefix + notify_types[notify_type]['msg_base']).format(**args)
+    packaged = package_message(case_id, args)
+    msg = (msg_prefix + notify_types[notify_type]['msg_base']).format(**packaged)
 
     targets = notify_types[notify_type]['targets']
 
@@ -89,7 +90,7 @@ def filterize(targets):
 
     return filter_list
 
-def package_message(case_id):
+def package_message(case_id, args):
     case_info = get_all_case_info_(case_id)
     info = {}
     # Just to simplify, assume first name and last name are each one word
@@ -99,7 +100,8 @@ def package_message(case_id):
     info['age'] = case_info['dob']
     info['gender'] = case_info['gender']
     # TODO Be exclusive with which arguments are provided based on notification type
-    info['eta_mins'] = 30 # PLACEHOLDER until this is clarified how to calculate
-    info['hospital_name'] = 'Austin' # PLACEHOLDER until hospital id and hospital name linked
-    info['ct_num'] = 1 # PLACEHOLDER 
+    if args:
+        info['eta_mins'] = 30 # PLACEHOLDER until this is clarified how to calculate
+        info['hospital_name'] = 'Austin' # PLACEHOLDER until hospital id and hospital name linked
+        info['ct_num'] = args['ct_num']
     return info
