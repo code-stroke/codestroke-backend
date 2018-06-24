@@ -17,7 +17,7 @@ notify_types = {
     },
     "case_arrived": {
         "targets": None,
-        "msg_base": "ACTIVE PATIENT ARIVAL IN ED"
+        "msg_base": "ACTIVE PATIENT ARRIVAL IN ED"
     },
     "likely_lvo": {
         "targets": None,
@@ -99,7 +99,7 @@ def package_message(case_id, args):
     # Will probably have to modify later to account for two-word first or last names
     info['initials'] = case_info['first_name'][0] + case_info['last_name'][0]
     # TODO calculate age based on dob returned
-    info['age'] = (datetime.now() - datetime.combine(case_info['dob'], datetime.min.time())).strftime('%').days // 365
+    info['age'] = (datetime.now() - datetime.combine(case_info['dob'], datetime.min.time())).days // 365
     info['gender'] = case_info['gender'].upper()
     # TODO Be exclusive with which arguments are provided based on notification type
     if args:

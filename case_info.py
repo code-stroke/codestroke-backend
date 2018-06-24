@@ -22,7 +22,7 @@ def edit_case_info(info_table, case_id):
     # Necessary for PUT since expect whole replacement back.
     # Will be much easier to implement this hook as a PATCH request
     # as will not have to check the previous stored data
-    prior = get_case_info(info_table, case_id)['result'][0]
+    prior = ext.select_query_result_({"case_id":case_id}, info_table)['result'][0]
     qargs = hooks.put(info_table, case_id, qargs, prior)
 
     query = ext.update_(qargs)

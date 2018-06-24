@@ -1,6 +1,7 @@
 import datetime
 from pytz import timezone
 import notify
+import extensions as ext
 
 def fetch(result):
     rows = list(result)
@@ -25,7 +26,7 @@ def put(info_table, case_id, new_data, prior_data):
 
     def _check(key):
         # since PUT, must check prior data
-        return (key in new_args.keys() and _data_is_new(key))
+        return (key in new_data.keys() and _data_is_new(key))
 
     if _check('status'):
         new_data['status_time'] = _time_now()
@@ -34,7 +35,10 @@ def put(info_table, case_id, new_data, prior_data):
             notify.add_message('case_completed', case_id)
 
     if _check('registered'):
-        new_data['status'] = 'active'
+        cursor = ext.connect_()
+        query = "update cases set status = 'active', status_time = %s where case_id = %s"
+        cursor.execute(query, (_time_now(), case_id))
+        ext.mysql.connection.commit()# TODO abstract away 
         notify.add_message('case_arrived', case_id)
 
     if _check('likely_lvo') and new_data['likely_lvo']:
@@ -43,11 +47,11 @@ def put(info_table, case_id, new_data, prior_data):
     if info_table == 'case_radiologies':
         [notify.add_message('ct_ready', case_id, {'ct_num': num}) for num in [1, 2, 3] if _check('ct{}'.format(num))]
 
-        if _check('ctb_completed') and new_data['ct_complete']:
+        if _check('ct_complete') and new_data['ct_complete']:
             notify.add_message('ctb_completed', case_id)
 
         if _check('do_cta_ctp') and new_data['do_cta_ctp']:
-            notify.add_message('do_ct_ctp', case_id)
+            notify.add_message('do_cta_ctp', case_id)
 
     if info_table == 'case_managements':
 
