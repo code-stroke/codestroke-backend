@@ -1,9 +1,6 @@
-from flask import jsonify, Flask
+from flask import jsonify
 from flask_mysqldb import MySQL, MySQLdb
 import hooks
-
-app = Flask(__name__)
-app.config.from_pyfile('app.conf')
 
 mysql = MySQL()
 

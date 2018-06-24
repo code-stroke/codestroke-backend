@@ -1,6 +1,7 @@
 import requests
 import json
-from extensions import *
+from flask import current_app as app
+import extensions as ext
 
 # TODO move this to external data format later once debugged
 # targets MUST be a list (or other iterable) or None
@@ -91,7 +92,7 @@ def filterize(targets):
     return filter_list
 
 def package_message(case_id, args):
-    case_info = get_all_case_info_(case_id)
+    case_info = ext.get_all_case_info_(case_id)
     info = {}
     # Just to simplify, assume first name and last name are each one word
     # Will probably have to modify later to account for two-word first or last names
@@ -101,7 +102,7 @@ def package_message(case_id, args):
     info['gender'] = case_info['gender']
     # TODO Be exclusive with which arguments are provided based on notification type
     if args:
-        info['eta_mins'] = 30 # PLACEHOLDER until this is clarified how to calculate
-        info['hospital_name'] = 'Austin' # PLACEHOLDER until hospital id and hospital name linked
-        info['ct_num'] = args['ct_num']
+        info['eta_mins'] = 30 if 'eta_mins' in args.keys() else None# PLACEHOLDER until this is clarified how to calculate
+        info['hospital_name'] = 'Austin' if 'hospital_name' in args.keys() else None# PLACEHOLDER until hospital id and hospital name linked
+        info['ct_num'] = args['ct_num'] if 'ct_num' in args.keys() else None
     return info
