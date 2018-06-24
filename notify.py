@@ -43,26 +43,26 @@ notify_types = {
     },
 }
 
-def add_message(notify_type, args, config):
+def add_message(notify_type, case_id):
     """ Add notification with arguments.
 
     Args:
         notify_type: a notification type as specified in notify_types dict. 
-        args: dict with notification-specific arguments for notification.
-        config: dictionary with stored values for OneSignal keys.
+        case_id: ID of case which will used to get arguments.
     """
 
     header = {"Content-Type": "application/json; charset=utf-8",
-              "Authorization": "Basic {}".format(config['OS_REST_API_KEY'])}
+              "Authorization": "Basic {}".format(app.config['OS_REST_API_KEY'])}
 
     # TODO Handle if required args not present
     msg_prefix = "{initials} {age}{gender} -- "
+    args = package_message(case_id)
     msg = (msg_prefix + notify_types[notify_type]['msg_base']).format(**args)
 
     targets = notify_types[notify_type]['targets']
 
     if targets == None:
-        payload = {"app_id": config['OS_APP_ID'],
+        payload = {"app_id": app.config['OS_APP_ID'],
                    "included_segments": ["All"],
 	           "contents": {"en": msg}}
     # TODO Test filter-specific messages once roles implemented

@@ -1,14 +1,12 @@
-from flask import Flask, jsonify, request, redirect, url_for, session, flash
+from flask import jsonify, request, redirect, url_for, session, flash
 from flask_cors import CORS
 from flask_mysqldb import MySQL, MySQLdb
 from passlib.hash import pbkdf2_sha256
 from case_info import case_info
 from extensions import *
 import getpass, datetime, urllib.request
-from notify import add_message, package_message
+from notify import add_message
 
-app = Flask(__name__)
-app.config.from_pyfile('app.conf')
 CORS(app)
 mysql.init_app(app)
 
