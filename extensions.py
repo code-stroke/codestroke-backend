@@ -38,15 +38,15 @@ def valid_table_(table):
 
 def select_query_result_(qargs, table):
     if not valid_table_(table):
-        return jsonify({"success":False, "message":"table {} not found".format(table)})
+        return {"success":False, "message":"table {} not found".format(table)}
     cursor = connect_()
     query = select_(qargs)
     cursor.execute("select * from {}".format(table) + query[0], query[1])
     result = cursor.fetchall()
     if result:
         filtered = hooks.fetch(result)
-        return jsonify({"result":filtered})
-    return jsonify({"result":None})
+        return {"result":filtered}
+    return {"result":None}
 
 def select_(d):
     """ Generates a MySQL select statement from a query dictionary. 

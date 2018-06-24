@@ -66,7 +66,7 @@ def add_message(notify_type, case_id, args=None):
 
     if targets == None:
         payload = {"app_id": app.config['OS_APP_ID'],
-                   "included_segments": ["All"],
+                   "included_segments": ["test_users"],
 	           "contents": {"en": msg}}
     # TODO Test filter-specific messages once roles implemented
     else:

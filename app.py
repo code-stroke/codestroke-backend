@@ -33,7 +33,7 @@ def create_db():
 
 @app.route('/cases/', methods=(['GET']))
 def get_cases():
-    return ext.select_query_result_({}, 'cases')
+    return jsonify(ext.select_query_result_({}, 'cases'))
 
 @app.route('/cases/', methods=(['POST']))
 def add_case():
