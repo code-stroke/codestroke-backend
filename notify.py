@@ -97,7 +97,7 @@ def package_message(case_id, args):
     info = {}
     # Just to simplify, assume first name and last name are each one word
     # Will probably have to modify later to account for two-word first or last names
-    info['initials'] = case_info['first_name'][0] + case_info['last_name'][0]
+    info['initials'] = case_info['first_name'][0].upper() + case_info['last_name'][0].upper()
     # TODO calculate age based on dob returned
     info['age'] = (datetime.now() - datetime.combine(case_info['dob'], datetime.min.time())).days // 365
     info['gender'] = case_info['gender'].upper()
