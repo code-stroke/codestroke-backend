@@ -31,15 +31,11 @@ def put(info_table, case_id, new_data, prior_data):
     if _check('status'):
         new_data['status_time'] = _time_now()
 
+        if new_data['status'] == 'active':
+            notify.add_message('case_arrived', case_id)
+
         if new_data['status'] == 'completed':
             notify.add_message('case_completed', case_id)
-
-    if _check('registered'):
-        cursor = ext.connect_()
-        query = "update cases set status = 'active', status_time = %s where case_id = %s"
-        cursor.execute(query, (_time_now(), case_id))
-        ext.mysql.connection.commit()# TODO abstract away 
-        notify.add_message('case_arrived', case_id)
 
     if _check('likely_lvo') and new_data['likely_lvo']:
         notify.add_message('likely_lvo', case_id)
