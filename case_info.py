@@ -4,17 +4,18 @@ import extensions as ext
 from extensions import mysql
 import hooks
 
-case_info = Blueprint('case_info', __name__, url_prefix='/<info_table>')
+case_info = Blueprint('case_info', __name__, url_prefix='/case<info_table>')
 
 @case_info.route('/<int:case_id>/', methods=(['GET']))
 def get_case_info(info_table, case_id):
     qargs = {"case_id":case_id}
-    return jsonify(ext.select_query_result_(qargs, info_table))
+    return jsonify(ext.select_query_result_(qargs, 'case' + info_table))
 
 @case_info.route('/<int:case_id>/', methods=(['PUT']))
 def edit_case_info(info_table, case_id):
     # TODO Requires safer error handling
     # TODO Check table exists and exit if not (safety)
+    info_table = 'case' + info_table
     cursor = ext.connect_()
     columns = ext.get_cols_(info_table)
     qargs = ext.get_args_(columns, request.get_json())
