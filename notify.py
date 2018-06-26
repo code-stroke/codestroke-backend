@@ -53,6 +53,8 @@ def add_message(notify_type, case_id, args=None):
         case_id: ID of case which will used to get arguments.
         args: dictionary of arguments for packaging with package_message.
     """
+    # TODO Will probably need to specify targets as extra argument if dependent on
+    # notification ID e.g. acknowledge, but may try to get around this instead.
 
     header = {"Content-Type": "application/json; charset=utf-8",
               "Authorization": "Basic {}".format(app.config['OS_REST_API_KEY'])}

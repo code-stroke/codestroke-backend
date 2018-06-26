@@ -78,5 +78,11 @@ def delete_case(case_id):
     # TODO Implement check that was deleted
     return jsonify({'success': True})
 
+@app.route('/acknowledge/<int:case_id>/', methods=(['POST']))
+def acknowledge_case(case_id):
+    # Get notification ID from POST request (TODO check how notification sender is recorded...or implement this)
+    # Match notification ID to sender
+    add_message('case_acknowledged', case_id)
+
 if __name__ == '__main__':
     app.run(debug = True)
