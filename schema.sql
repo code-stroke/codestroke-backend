@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS `clinicians` (
   `hospital_id` int DEFAULT NULL,
   `role` enum('paramedic', 'ed_clinician', 'radiographer',
   	      'stroke_team', 'radiologist', 'stroke_ward',
-	      'neuroint', 'angio_nurse', 'anaesthetist') DEFAULT NULL,
+	      'neuroint', 'angio_nurse', 'anaesthetist',
+	      'admin') DEFAULT NULL,
   `email` varchar(40),
   FOREIGN KEY (hospital_id) REFERENCES hospitals(id)
 );

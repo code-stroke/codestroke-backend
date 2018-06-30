@@ -60,6 +60,10 @@ for user_type in user_types:
     master, users_db = gen_users(user_type, user_type, 10)
     users_master.extend(master)
     users.extend(users_db)
+# make one admin user
+master, users_db = gen_users('admin', 'admin', 1)
+users_master.extend(master)
+users.extend(users_db)
 
 for user in users:
     # placeholders for now as these are required fields, probably require change on first login
@@ -79,6 +83,4 @@ db.close()
 users_text = '\n'.join(users_master)
 with open(master_file, 'w') as f:
     f.write(users_text)
-
-
 
