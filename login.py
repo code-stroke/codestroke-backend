@@ -1,12 +1,13 @@
 from flask import Blueprint, request, jsonify
+from functools import wraps
 from extensions import mysql
 from uuid import uuid4
 from passlib.hash import pbkdf2_sha256
 import extensions as ext
 
-login = Blueprint('login', __name__)
+users = Blueprint('users', __name__)
 
-@login.route('/login/', methods=['POST'])
+@users.route('/login/', methods=['POST'])
 def user_login():
     # for testing only; TODO change to accepting pwhash instead of password
     args = ext.get_args_(['username', 'password'], request.get_json())
@@ -42,7 +43,7 @@ def user_login():
         return jsonify({'success': False,
                         'debugmsg': 'Username incorrect'})
         
-@login.route('/logout/', methods=['POST'])
+@users.route('/logout/', methods=['POST'])
 def user_logout():
     args = ext.get_args_(['username', 'token'], request.get_json())
     cursor = ext.connect_()
@@ -67,5 +68,26 @@ def user_logout():
     else:
         return jsonify({'success': False,
                         'debugmsg': 'Unknown username'})
+
+def check_auth(username, token):
+    cursor = ext.connect_()
+    query = 'select token from clinicians where username = %s'
+    cursor.execute(query, (username,))
+    result = cursor.fetchall()
+    if result:
+        db_token = result[0]['token']
+        if db_token == token:
+            return True
+    return False
         
-    
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return jsonify({'success': False,
+                            'login': False,
+                            'debugmsg': 'Authentication failed',})
+        return f(*args, **kwargs)
+    return decorated
+            
