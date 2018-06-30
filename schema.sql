@@ -2,7 +2,7 @@ CREATE DATABASE IF NOT EXISTS `codestroke$codestroke`;
 USE `codestroke$codestroke`;
 
 CREATE TABLE IF NOT EXISTS `hospitals` (
-  `id` int NOT NULL PRIMARY KEY,
+  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name` varchar(30) NOT NULL,
   `city` varchar(30),
   `state` varchar(5),
@@ -12,14 +12,17 @@ CREATE TABLE IF NOT EXISTS `hospitals` (
 );
 
 CREATE TABLE IF NOT EXISTS `clinicians` (
-  `id` int NOT NULL PRIMARY KEY,
+  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `first_name` varchar(30) DEFAULT NULL,
   `last_name` varchar(30) DEFAULT NULL,
   `username` varchar(20) NOT NULL,
   `pwhash` text NOT NULL,
-  `hospital_id` int,
-  `role` int,
-  `creation_date` date,
+  `token` text DEFAULT NULL,
+  `token_created_time` timestamp,
+  `hospital_id` int DEFAULT NULL,
+  `role` enum('paramedic', 'ed_clinician', 'radiographer',
+  	      'stroke_team', 'radiologist', 'stroke_ward',
+	      'neuroint', 'angio_nurse', 'anaesthetist') DEFAULT NULL,
   `email` varchar(40),
   FOREIGN KEY (hospital_id) REFERENCES hospitals(id)
 );
