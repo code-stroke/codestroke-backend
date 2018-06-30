@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS `clinicians` (
   `username` varchar(20) NOT NULL,
   `pwhash` text NOT NULL,
   `token` text DEFAULT NULL,
-  `token_created_time` timestamp,
+  `token_changed_time` timestamp,
   `hospital_id` int DEFAULT NULL,
   `role` enum('paramedic', 'ed_clinician', 'radiographer',
   	      'stroke_team', 'radiologist', 'stroke_ward',
