@@ -42,6 +42,26 @@ debugger mode stating that this can't be done reliably. Better safe than sorry!
 Please have a look at `schema.sql` which has the main patient database schema
 that the backend is based on. 
 
+### Authentication (DRAFT)
+
+For every request decorated with `@requires_auth`, you will need to be
+authenticated. 
+
+The authentication workflow as it currently stands is as follows:
+
+1. Send a POST request to `/login/` with `username` and `password` (FOR TESTING
+   ONLY) data to receive an access token from the server as well as some user
+   information that will likely be needed by the frontend (e.g. name, role).
+2. For OneSignal integration, you should subscribe the user and tag their device
+   with their role upon login, and send this to the OneSignal API.
+3. Once you've received the access token, you will need to send an Authorization
+   header with the username and access token with every request that
+   requires authentication. 
+4. Send a POST request to `/logout/` with the `username` and `token` data to
+   reset the token to `NULL` on the server, which will invalidate the current
+   access token. For OneSignal integration, you should unsubscribe the user's
+   device upon logging out.
+
 ### Route Listing
 
 - `/cases/` with GET: get all cases with their basic patient details.
@@ -122,3 +142,4 @@ changes.
 
 For development purposes, you can delete a patient by accessing the
 `/cases/<case_id>/` route and sending a delete request. 
+

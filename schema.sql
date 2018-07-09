@@ -2,14 +2,18 @@ CREATE DATABASE IF NOT EXISTS `codestroke$codestroke`;
 USE `codestroke$codestroke`;
 
 CREATE TABLE IF NOT EXISTS `clinicians` (
-  `id` int NOT NULL PRIMARY KEY,
+  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `first_name` varchar(30) DEFAULT NULL,
   `last_name` varchar(30) DEFAULT NULL,
   `username` varchar(20) NOT NULL,
   `pwhash` text NOT NULL,
-  `role` int,
-  `creation_date` date,
-  `email` varchar(40)
+  `token` text DEFAULT NULL,
+  `token_changed_time` timestamp NULL DEFAULT NULL,
+  `role` enum('paramedic', 'ed_clinician', 'radiographer',
+  	      'stroke_team', 'radiologist', 'stroke_ward',
+	      'neuroint', 'angio_nurse', 'anaesthetist',
+	      'admin') DEFAULT NULL,
+  `email` varchar(40),
 );
 
 CREATE TABLE IF NOT EXISTS `cases` (
