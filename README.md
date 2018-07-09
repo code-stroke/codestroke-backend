@@ -62,13 +62,20 @@ fields this is less so.
 So, as a (for-the-time-being) workaround, please send these values for 'unknown'
 for the following field data types.
 
-| Field                                              | Unknown Value         |
-|----------------------------------------------------|-----------------------|
-| any `varchar` or `text` field                      | 'unknown'             |
-| any `enum` field with `unknown`                    | 'unknown'             |
-| any `date` field                                   | '0000-00-00'          |
-| any `timestamp` field                              | '0000-00-00 00:00:00' |
-| any `tinyint`, `int`, `float` or `decimal` field   | -1                   |
+| Field                                            | Unknown Value         |
+|--------------------------------------------------|-----------------------|
+| any `varchar` or `text` field                    | 'unknown'             |
+| any `enum` field with `unknown`                  | 'unknown'             |
+| any `date` field                                 | '1111-11-11'          |
+| any `timestamp` field                            | '1971-11-11 11:11:11' |
+| any `tinyint`, `int`, `float` or `decimal` field | -1                    |
+
+If you're wondering about the odd `date` and `timestamp` unknown values, it's
+because MySQL requires that these be actual valid points in time; and, as an
+extra caveat, `timestamp` has a set range with the minimum being the first
+second of the year 1970. Thankfully, all the `timestamp` fields are things which
+you'd expect are quite recent (you'd hope someone's last meal wasn't in the
+1970s!) so hopefully this shouldn't pose a problem. 
 
 Any `bool` fields will NOT accept 'unknown' values, usually because they are
 things that are controlled by the hospital (e.g. whether the patient was
