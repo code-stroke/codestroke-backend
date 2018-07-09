@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS `case_assessments` (
   `dysarthria` tinyint DEFAULT NULL,
   `neglect` tinyint DEFAULT NULL,
   `rankin_conscious` tinyint DEFAULT NULL,
-  `likely_lvo` enum('no', 'yes', 'unknown') DEFAULT NULL,
+  `likely_lvo` bool DEFAULT NULL,
   FOREIGN KEY (case_id) REFERENCES cases(case_id)
   ON DELETE CASCADE
   ON UPDATE CASCADE
@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS `case_managements` (
   `recent_lumbar_puncture` bool DEFAULT NULL,
   `post_acs_pericarditis` bool DEFAULT NULL,
   `pregnant` bool DEFAULT NULL,
-  `thrombolysis_time_given` datetime DEFAULT NULL,
+  `thrombolysis_time_given` timestamp DEFAULT NULL,
   `ecr` bool DEFAULT NULL,
   `surgical_rx` bool DEFAULT NULL,
   `conservative_rx` bool DEFAULT NULL,

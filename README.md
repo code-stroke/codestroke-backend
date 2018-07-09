@@ -70,6 +70,18 @@ for the following field data types.
 | any `timestamp` field                              | '0000-00-00 00:00:00' |
 | any `tinyint`, `int`, `float` or `decimal` field   | -1                   |
 
+Any `bool` fields will NOT accept 'unknown' values, usually because they are
+things that are controlled by the hospital (e.g. whether the patient was
+registered) or are event-based (e.g. `likely_lvo`).
+
+I duly apologise, but you will have to follow the schema very carefully to make
+sure you put in the correct data type to accommodate for allowing both a NULL
+value and an 'unknown' value where it makes sense. This means some of the fields
+which you'd expect to be a boolean will instead accept 'yes' or 'no' rather than
+typical 1 or 0 (since using `ENUM` for numeric data is rather tricky given the
+ambiguity between value and indexing). Hopefully there'll be a better workaround
+in the future!
+
 ### Route Listing
 
 - `/cases/` with GET: get all cases with their basic patient details.
