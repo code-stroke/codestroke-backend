@@ -62,9 +62,6 @@ def add_case():
         add_query = 'insert into {} '.format(info_table) + add_params[0]
         cursor.execute(add_query, add_params[1])
 
-    hospital_query = 'insert into case_hospitals (case_id, hospital_id) values (%s, %s)'
-    cursor.execute(hospital_query, (case_id, request.get_json().get('hospital_id')))
-
     mysql.connection.commit()
 
     notify.add_message('case_incoming', case_id, {'eta_mins': True}) # PLACEHOLDER for eta
