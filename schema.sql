@@ -1,51 +1,35 @@
 CREATE DATABASE IF NOT EXISTS `codestroke$codestroke`;
 USE `codestroke$codestroke`;
 
-CREATE TABLE IF NOT EXISTS `hospitals` (
-  `id` int NOT NULL PRIMARY KEY,
-  `name` varchar(30) NOT NULL,
-  `city` varchar(30),
-  `state` varchar(5),
-  `postcode` varchar(30),
-  `latitude` text,
-  `longitude` text
-);
-
 CREATE TABLE IF NOT EXISTS `clinicians` (
   `id` int NOT NULL PRIMARY KEY,
   `first_name` varchar(30) DEFAULT NULL,
   `last_name` varchar(30) DEFAULT NULL,
   `username` varchar(20) NOT NULL,
   `pwhash` text NOT NULL,
-  `hospital_id` int,
   `role` int,
   `creation_date` date,
-  `email` varchar(40),
-  FOREIGN KEY (hospital_id) REFERENCES hospitals(id)
+  `email` varchar(40)
 );
 
 CREATE TABLE IF NOT EXISTS `cases` (
   `case_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `first_name` varchar(30) NOT NULL,
-  `last_name` varchar(30) NOT NULL,
-  `dob` date NOT NULL,
+  `first_name` varchar(30) DEFAULT NULL,
+  `last_name` varchar(30) DEFAULT NULL,
+  `dob` date DEFAULT NULL,
   `address` text DEFAULT NULL,
   `gender` enum('f', 'm', 'u') DEFAULT NULL,
-  `last_well` datetime DEFAULT NULL,
+  `last_well` timestamp NULL DEFAULT NULL,
   `nok` varchar(40) DEFAULT NULL,
   `nok_phone` varchar(16) DEFAULT NULL,
   `medicare_no` varchar(12) DEFAULT NULL,
+  `initial_location_lat` decimal DEFAULT NULL,
+  `initial_location_long` decimal DEFAULT NULL,
+  `eta` timestamp NULL DEFAULT NULL,
   `status` enum('incoming', 'active', 'completed') DEFAULT 'incoming',
-  `status_time` timestamp DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS `case_hospitals` (
-  `case_id` int NOT NULL,
-  `hospital_id` int NOT NULL,
-  FOREIGN KEY (case_id) REFERENCES cases(case_id)
-  ON DELETE CASCADE
-  ON UPDATE CASCADE,
-  FOREIGN KEY (hospital_id) REFERENCES hospitals(id)
+  `incoming_timestamp` timestamp DEFAULT CURRENT_TIMESTAMP,
+  `active_timestamp` timestamp NULL DEFAULT NULL,
+  `completed_timestamp` timestamp NULL DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS `case_histories` (
@@ -53,10 +37,10 @@ CREATE TABLE IF NOT EXISTS `case_histories` (
   `pmhx` text DEFAULT NULL,
   `meds` text DEFAULT NULL,
   `anticoags` bool DEFAULT NULL,
-  `anticoags_last_dose` datetime DEFAULT NULL,
+  `anticoags_last_dose` timestamp NULL DEFAULT NULL,
   `hopc` text DEFAULT NULL,
   `weight` float DEFAULT NULL,
-  `last_meal` datetime DEFAULT NULL,
+  `last_meal` timestamp NULL DEFAULT NULL,
   FOREIGN KEY (case_id) REFERENCES cases(case_id)
   ON DELETE CASCADE
   ON UPDATE CASCADE
