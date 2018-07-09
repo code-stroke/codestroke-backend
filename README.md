@@ -4,13 +4,11 @@ Backend code for codestroke in early development - June-July sprint edition!
 
 ## Getting Started
 
-### Prequisites
+### Locally Hosting the Backend
 
 1. Python
 2. Some sort of [virtual environment](https://virtualenv.pypa.io/en/stable/) (not essential but highly recommended)
 3. An `app.conf` file containing database details as described in Quick Start. 
-
-### Quick Start
 
 For a quick start:
 
@@ -29,6 +27,10 @@ For a quick start:
 For local testing purposes, navigate to `http://127.0.0.1:5000/create_db` to
 initialise the database (*local only*).
 
+### Using the Hosted API
+
+The backend API is currently hosted on PythonAnywhere and can be accessed at [http://codestroke.pythonanywhere.com/](http://codestroke.pythonanywhere.com/).
+
 ## API Details
 
 Just a note - ensure that the requests are sent to the routes *with* the
@@ -42,25 +44,31 @@ debugger mode stating that this can't be done reliably. Better safe than sorry!
 Please have a look at `schema.sql` which has the main patient database schema
 that the backend is based on. 
 
-### Authentication (DRAFT)
+Some of the values do NOT have to be manually sent and will be automatically
+filled by the backend. These include:
 
-For every request decorated with `@requires_auth`, you will need to be
-authenticated. 
+- `eta`
+- `incoming_timestamp`
+- `active_timestamp`
+- `completed_timestampe`
 
-The authentication workflow as it currently stands is as follows:
+A note on NULLs and 'unknown'/'u': generally, NULLs are supposed to indicate
+that the field has been initialised but not yet seen, whereas 'unknown' (or 'u'
+for gender) is supposed to indicate that the field has both been initialised and
+seen, but the value is simply not known. It is easy to set these 'unknowns'
+explicitly for categorical fields with the `ENUM` data type, but for other
+fields this is less so.
 
-1. Send a POST request to `/login/` with `username` and `password` (FOR TESTING
-   ONLY) data to receive an access token from the server as well as some user
-   information that will likely be needed by the frontend (e.g. name, role).
-2. For OneSignal integration, you should subscribe the user and tag their device
-   with their role upon login, and send this to the OneSignal API.
-3. Once you've received the access token, you will need to send an Authorization
-   header with the username and access token with every request that
-   requires authentication. 
-4. Send a POST request to `/logout/` with the `username` and `token` data to
-   reset the token to `NULL` on the server, which will invalidate the current
-   access token. For OneSignal integration, you should unsubscribe the user's
-   device upon logging out.
+So, as a (for-the-time-being) workaround, please send these values for 'unknown'
+for the following field data types.
+
+| Field                                              | Unknown Value         |
+|----------------------------------------------------|-----------------------|
+| any `varchar` or `text` field                      | 'unknown'             |
+| any `enum` field with `unknown`                    | 'unknown'             |
+| any `date` field                                   | '0000-00-00'          |
+| any `timestamp` field                              | '0000-00-00 00:00:00' |
+| any `tinyint`, `int`, `float` or `decimal` field   | -1                   |
 
 ### Route Listing
 
@@ -104,13 +112,13 @@ An example of an acceptable body for the POST request is (ensuring the content
 type is specified in the header as JSON):
 
 ```
-{"first_name":"Claire", "last_name":"Li", "dob":"2000-01-01", "address":"2 Street, Suburb", "gender":"0", "last_well":"2000-01-01 00:00:00", "anticoags":"0", "hospital_id":"1"}
+{"first_name":"Claire", "last_name":"Li", "dob":"2000-01-01", "address":"2 Street, Suburb", "gender":"f", "last_well":"2000-01-01 00:00:00", "anticoags":"yes"}
 ```
 
 and, using cURL:
 
 ```
-curl -X POST -H 'Content-Type: application/json' -i 'http://127.0.0.1:5000/cases/add/' --data '{"first_name":"Claire", "last_name":"Li", "dob":"2000-01-01", "address":"2 Street, Suburb", "gender":"0", "last_well":"2000-01-01 00:00:00", "anticoags":"0", "hospital_id":"1"}'
+curl -X POST -H 'Content-Type: application/json' -i 'http://127.0.0.1:5000/cases/add/' --data '{"first_name":"Claire", "last_name":"Li", "dob":"2000-01-01", "address":"2 Street, Suburb", "gender":"f", "last_well":"2000-01-01 00:00:00", "anticoags":"yes"}'
 ```
 
 ### ED Usage
@@ -142,4 +150,26 @@ changes.
 
 For development purposes, you can delete a patient by accessing the
 `/cases/<case_id>/` route and sending a delete request. 
+
+## Future Notes
+
+### Authentication (DRAFT)
+
+For every request decorated with `@requires_auth`, you will need to be
+authenticated. 
+
+The authentication workflow as it currently stands is as follows:
+
+1. Send a POST request to `/login/` with `username` and `password` (FOR TESTING
+   ONLY) data to receive an access token from the server as well as some user
+   information that will likely be needed by the frontend (e.g. name, role).
+2. For OneSignal integration, you should subscribe the user and tag their device
+   with their role upon login, and send this to the OneSignal API.
+3. Once you've received the access token, you will need to send an Authorization
+   header with the username and access token with every request that
+   requires authentication. 
+4. Send a POST request to `/logout/` with the `username` and `token` data to
+   reset the token to `NULL` on the server, which will invalidate the current
+   access token. For OneSignal integration, you should unsubscribe the user's
+   device upon logging out.
 

@@ -10,10 +10,10 @@ CREATE TABLE IF NOT EXISTS `clinicians` (
   `token` text DEFAULT NULL,
   `token_changed_time` timestamp NULL DEFAULT NULL,
   `role` enum('paramedic', 'ed_clinician', 'radiographer',
-  	      'stroke_team', 'radiologist', 'stroke_ward',
-	      'neuroint', 'angio_nurse', 'anaesthetist',
-	      'admin') DEFAULT NULL,
-  `email` varchar(40),
+       	      'stroke_team', 'radiologist', 'stroke_ward',
+	            'neuroint', 'angio_nurse', 'anaesthetist',
+	            'admin') DEFAULT NULL,
+  `email` varchar(40) DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS `cases` (
@@ -27,8 +27,8 @@ CREATE TABLE IF NOT EXISTS `cases` (
   `nok` varchar(40) DEFAULT NULL,
   `nok_phone` varchar(16) DEFAULT NULL,
   `medicare_no` varchar(12) DEFAULT NULL,
-  `initial_location_lat` decimal DEFAULT NULL,
-  `initial_location_long` decimal DEFAULT NULL,
+  `initial_location_lat` decimal(10,8) DEFAULT NULL,
+  `initial_location_long` decimal(11,8) DEFAULT NULL,
   `eta` timestamp NULL DEFAULT NULL,
   `status` enum('incoming', 'active', 'completed') DEFAULT 'incoming',
   `incoming_timestamp` timestamp DEFAULT CURRENT_TIMESTAMP,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS `case_histories` (
   `case_id` int NOT NULL PRIMARY KEY,
   `pmhx` text DEFAULT NULL,
   `meds` text DEFAULT NULL,
-  `anticoags` bool DEFAULT NULL,
+  `anticoags` enum('no', 'yes', 'unknown') DEFAULT NULL,
   `anticoags_last_dose` timestamp NULL DEFAULT NULL,
   `hopc` text DEFAULT NULL,
   `weight` float DEFAULT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS `case_assessments` (
   `bp_systolic` int DEFAULT NULL,
   `bp_diastolic` int DEFAULT NULL,
   `heart_rate` int DEFAULT NULL,
-  `heart_rhythm` enum('regular', 'irregular') DEFAULT NULL,
+  `heart_rhythm` enum('regular', 'irregular', 'unknown') DEFAULT NULL,
   `rr` int DEFAULT NULL,
   `o2sats` int DEFAULT NULL,
   `temp` int DEFAULT NULL,
@@ -69,8 +69,8 @@ CREATE TABLE IF NOT EXISTS `case_assessments` (
   `arm_motor_impair` tinyint DEFAULT NULL,
   `leg_motor_impair` tinyint DEFAULT NULL,
   `head_gaze_deviate` tinyint DEFAULT NULL,
-  `hemiparesis` enum('left', 'right') DEFAULT NULL,
-  `cannula` bool DEFAULT NULL,
+  `hemiparesis` enum('left', 'right', 'unknown') DEFAULT NULL,
+  `cannula` enum('no', 'yes', 'unknown') DEFAULT NULL,
   `conscious_level` tinyint DEFAULT NULL,
   `month_age` tinyint DEFAULT NULL,
   `blink_squeeze` tinyint DEFAULT NULL,
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS `case_assessments` (
   `dysarthria` tinyint DEFAULT NULL,
   `neglect` tinyint DEFAULT NULL,
   `rankin_conscious` tinyint DEFAULT NULL,
-  `likely_lvo` bool DEFAULT NULL,
+  `likely_lvo` enum('no', 'yes', 'unknown') DEFAULT NULL,
   FOREIGN KEY (case_id) REFERENCES cases(case_id)
   ON DELETE CASCADE
   ON UPDATE CASCADE
