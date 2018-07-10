@@ -20,7 +20,10 @@ For a quick start:
    locally. As a minimum, you should specify `MYSQL_HOST`, `MYSQL_USER` and
    `MYSQL_PASSWORD`, as well as `MYSQL_CURSORCLASS='DictCursor'`. For
    notifications, you will also need to specify the REST API Key for OneSignal
-   as `OS_REST_API_KEY` and the OneSignal App ID as `OS_APP_ID`. 
+   as `OS_REST_API_KEY` and the OneSignal App ID as `OS_APP_ID`. For estimating
+   time of arrivals of patients, you will need to specify
+   ``GOOGLE_DISTANCE_API_KEY` (the API key for the Google Distance Matrix API),
+   `HOSPITAL_LAT` and `HOSPITAL_LONG`. 
 5. Run `python app.py` from this directory.
 6. Navigate to `http://127.0.0.1:5000` in your web browser.
 
@@ -50,7 +53,7 @@ filled by the backend. These include:
 - `eta`
 - `incoming_timestamp`
 - `active_timestamp`
-- `completed_timestampe`
+- `completed_timestamp`
 
 A note on NULLs and 'unknown'/'u': generally, NULLs are supposed to indicate
 that the field has been initialised but not yet seen, whereas 'unknown' (or 'u'
