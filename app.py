@@ -55,7 +55,10 @@ def add_case():
                                      time_now())
             args_cases['eta'] = eta
         else:
+            eta = 'UNKNOWN' # for notification
             print('Debug line: initial location field latitude or longitude null.')
+    else:
+        eta='UNKNOWN'
 
     add_params = ext.add_(args_cases)
     add_query = 'insert into cases ' + add_params[0]
@@ -76,8 +79,7 @@ def add_case():
 
     mysql.connection.commit()
 
-    notify.add_message('case_incoming', case_id, {'eta_mins': True}) # PLACEHOLDER for eta
-
+    notify.add_message('case_incoming', case_id, {'eta_mins': eta})
     return jsonify({'success': True, 'case_id': case_id})
 
 @app.route('/cases/<int:case_id>/', methods=(['DELETE']))

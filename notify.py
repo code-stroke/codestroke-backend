@@ -9,7 +9,7 @@ from datetime import datetime
 notify_types = {
     "case_incoming": {
         "targets": None,
-        "msg_base": "INCOMING PATIENT ETA {eta_mins} MINUTES"
+        "msg_base": "INCOMING PATIENT ETA {eta_mins}"
     },
     "case_acknowledged": {
         "targets": None,
