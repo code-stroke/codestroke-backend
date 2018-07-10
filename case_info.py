@@ -13,7 +13,7 @@ def get_case_info(info_table, case_id):
     print(results)
 
     if info_table == '_managements': # TODO Think about whether might move this to hooks?
-        cursor = connect_()
+        cursor = ext.connect_()
         query = 'select {} from {} where case_id=%s'
         extra_fields = [('dob', 'cases'),
                         ('large_vessel_occlusion', 'case_radiologies'),
