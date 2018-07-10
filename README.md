@@ -131,13 +131,13 @@ An example of an acceptable body for the POST request is (ensuring the content
 type is specified in the header as JSON):
 
 ```
-{"first_name":"Claire", "last_name":"Li", "dob":"2000-01-01", "address":"2 Street, Suburb", "gender":"f", "last_well":"2000-01-01 00:00:00", "anticoags":"yes", "initial_location_lat": "-37.9150", "initial_location_long": "145.1300"}
+{"first_name":"Claire", "last_name":"Li", "dob":"2000-01-01", "address":"2 Street, Suburb", "gender":"f", "last_well":"2000-01-01 00:00:00", "initial_location_lat": "-37.9150", "initial_location_long": "145.1300"}
 ```
 
 and, using cURL:
 
 ```
-curl -X POST -H 'Content-Type: application/json' -i 'http://127.0.0.1:5000/cases/add/' --data '{"first_name":"Claire", "last_name":"Li", "dob":"2000-01-01", "address":"2 Street, Suburb", "gender":"f", "last_well":"2000-01-01 00:00:00", "anticoags":"yes", "initial_location_lat": "-37.9150", "initial_location_long": "145.1300"}'
+curl -X POST -H 'Content-Type: application/json' -i 'http://127.0.0.1:5000/cases/add/' --data '{"first_name":"Claire", "last_name":"Li", "dob":"2000-01-01", "address":"2 Street, Suburb", "gender":"f", "last_well":"2000-01-01 00:00:00", "initial_location_lat": "-37.9150", "initial_location_long": "145.1300"}'
 ```
 
 ### ED Usage
