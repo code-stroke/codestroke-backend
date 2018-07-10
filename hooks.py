@@ -1,4 +1,5 @@
 import datetime
+import decimal
 from pytz import timezone
 import notify
 import extensions as ext
@@ -10,7 +11,10 @@ def fetch(result):
 
 def _process_fetch(key, value):
 
-    if isinstance(value, datetime.datetime):
+    if isinstance(value, decimal.Decimal):
+        return str(value)
+
+    elif isinstance(value, datetime.datetime):
         return value.strftime("%Y-%m-%d %H:%M")
 
     elif isinstance(value, datetime.date):
