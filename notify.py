@@ -9,7 +9,7 @@ from datetime import datetime
 notify_types = {
     "case_incoming": {
         "targets": None,
-        "msg_base": "INCOMING PATIENT ETA {eta_mins}"
+        "msg_base": "INCOMING PATIENT ETA {eta}"
     },
     "case_acknowledged": {
         "targets": None,
@@ -105,7 +105,7 @@ def package_message(case_id, args):
     info['gender'] = case_info['gender'].upper()
     # TODO Be exclusive with which arguments are provided based on notification type
     if args:
-        info['eta_mins'] = 30 if 'eta_mins' in args.keys() else None# PLACEHOLDER until this is clarified how to calculate
+        info['eta'] = args['eta'] if 'eta' in args.keys() else None# PLACEHOLDER until this is clarified how to calculate
         info['hospital_name'] = 'Austin' if 'hospital_name' in args.keys() else None# PLACEHOLDER until hospital id and hospital name linked
         info['ct_num'] = args['ct_num'] if 'ct_num' in args.keys() else None
     return info

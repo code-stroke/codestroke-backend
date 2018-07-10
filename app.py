@@ -79,7 +79,7 @@ def add_case():
 
     mysql.connection.commit()
 
-    notify.add_message('case_incoming', case_id, {'eta_mins': eta})
+    notify.add_message('case_incoming', case_id, {'eta': eta})
     return jsonify({'success': True, 'case_id': case_id})
 
 @app.route('/cases/<int:case_id>/', methods=(['DELETE']))
