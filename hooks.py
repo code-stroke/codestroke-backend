@@ -4,9 +4,9 @@ from pytz import timezone
 import notify
 import extensions as ext
 
-def fetch(result):
+def fetch(result, table):
     rows = list(result)
-    rows= list(map(lambda x: {k:_process_fetch(k,v) for (k,v) in x.items()}, rows))
+    rows = list(map(lambda x: {k:_process_fetch(k,v) for (k,v) in x.items()}, rows))
     return rows
 
 def _process_fetch(key, value):

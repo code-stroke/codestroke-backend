@@ -47,7 +47,7 @@ def select_query_result_(qargs, table):
     cursor.execute("select * from {}".format(table) + query[0], query[1])
     result = cursor.fetchall()
     if result:
-        filtered = hooks.fetch(result)
+        filtered = hooks.fetch(result, table)
         return {"result":filtered}
     return {"result":None}
 

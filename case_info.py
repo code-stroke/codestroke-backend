@@ -9,7 +9,27 @@ case_info = Blueprint('case_info', __name__, url_prefix='/case<info_table>')
 @case_info.route('/<int:case_id>/', methods=(['GET']))
 def get_case_info(info_table, case_id):
     qargs = {"case_id":case_id}
-    return jsonify(ext.select_query_result_(qargs, 'case' + info_table))
+    results = ext.select_query_result_(qargs, 'case' + info_table)
+    print(results)
+
+    if info_table == '_managements': # TODO Think about whether might move this to hooks?
+        cursor = connect_()
+        query = 'select {} from {} where case_id=%s'
+        extra_fields = [('dob', 'cases'),
+                        ('large_vessel_occlusion', 'case_radiologies'),
+                        ('last_well', 'cases'),
+                        ('ich_found', 'case_radiologies')
+        ]
+        for field in extra_fields:
+            cursor.execute(query.format(field[0], field[1]), (case_id, ))
+            field_result = cursor.fetchall()
+            print(field_result)
+            field_val = field_result[0][field[0]]
+            if field == 'last_well':
+                field_val = field_val.strftime("%Y-%m-%d %H:%M")
+            results['result'][0][field[0]] = field_val
+
+    return jsonify(results)
 
 @case_info.route('/<int:case_id>/', methods=(['PUT']))
 def edit_case_info(info_table, case_id):
