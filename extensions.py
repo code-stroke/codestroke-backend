@@ -1,6 +1,9 @@
 from flask import jsonify
 from flask_mysqldb import MySQL, MySQLdb
+from flask import current_app as app
+import requests
 import hooks
+import datetime
 
 mysql = MySQL()
 
@@ -116,3 +119,24 @@ def get_all_case_info_(case_id):
     result = cursor.fetchall()
     print(result)
     return result[0]
+
+def calculate_eta_(origin_lat, origin_long, dest_lat, dest_long, start_time_string):
+    endpoint = 'https://maps.googleapis.com/maps/api/distancematrix/json'
+    payload = {'mode': 'driving'
+               'origins': ','.join([origin_lat, origin_long]),
+               'destinations': ','.join([dest_lat, dest_long]),
+               'key': app.config['GOOGLE_DISTANCE_API_KEY']
+    }
+    response = requests.get(endpoint, params=payload)
+    data = response.json()
+    print(data) #debug only
+    time_to_dest = data['rows'][0]['elements'][0]['duration']['value'] # in seconds
+    start_time = datetime.datetime.strptime(start_time_string, '%Y-%m-%d %H:%M')
+    eta = start_time + datetime.timedelta(0, time_to_dest)
+    eta_string = eta.strftime('%Y-%m-%d %H:%M')
+    return eta_string
+
+
+
+
+

@@ -8,6 +8,7 @@ import extensions as ext
 from extensions import mysql
 import getpass, datetime, urllib.request
 import notify
+from hooks import time_now
 
 app = Flask(__name__)
 app.config.from_pyfile('app.conf')
@@ -40,10 +41,21 @@ def get_cases():
 @app.route('/cases/', methods=(['POST']))
 def add_case():
     # TODO Safe error handling
-    # Patient details, history and hospital_id MUST be submitted
     cursor = ext.connect_()
     cols_cases = ext.get_cols_('cases')
     args_cases = ext.get_args_(cols_cases, request.get_json())
+
+    # calculate eta
+    if all(x in args_cases.keys() for x in ['initial_location_lat', 'initial_location_long']): # just in case
+        init_lat = args_cases['initial_location_lat']
+        init_long = args_cases['initial_location_long']
+        if None not in [init_lat, init_long]:
+            eta = ext.calculate_eta_(init_lat, init_long,
+                                     app.config['HOSPITAL_LAT'], app.config['HOSPITAL_LONG'],
+                                     time_now())
+            args_cases['eta'] = eta
+        else:
+            print('Debug line: initial location field latitude or longitude null.')
 
     add_params = ext.add_(args_cases)
     add_query = 'insert into cases ' + add_params[0]

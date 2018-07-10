@@ -29,7 +29,7 @@ def put(info_table, case_id, new_data, prior_data):
         return (key in new_data.keys() and _data_is_new(key))
 
     if _check('status'):
-        new_data['status_time'] = _time_now()
+        new_data['status_time'] = time_now()
 
         if new_data['status'] == 'active':
             notify.add_message('case_arrived', case_id)
@@ -57,6 +57,6 @@ def put(info_table, case_id, new_data, prior_data):
     return new_data
 
 
-def _time_now():
+def time_now():
     # TODO Make more flexible in the future
     return datetime.datetime.now(timezone('Australia/Melbourne')).strftime('%Y-%m-%d %H:%M')
