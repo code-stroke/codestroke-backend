@@ -122,7 +122,7 @@ def get_all_case_info_(case_id):
 
 def calculate_eta_(origin_lat, origin_long, dest_lat, dest_long, start_time_string):
     endpoint = 'https://maps.googleapis.com/maps/api/distancematrix/json'
-    payload = {'mode': 'driving'
+    payload = {'mode': 'driving',
                'origins': ','.join([origin_lat, origin_long]),
                'destinations': ','.join([dest_lat, dest_long]),
                'key': app.config['GOOGLE_DISTANCE_API_KEY']
