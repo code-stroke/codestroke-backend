@@ -25,9 +25,9 @@ def get_case_info(info_table, case_id):
             field_result = cursor.fetchall()
             print(field_result)
             field_val = field_result[0][field[0]]
-            if field[0] == 'dob':
+            if field[0] == 'dob' and field[0]:
                 field_val = field_val.isoformat()
-            elif field[0] == 'last_well':
+            elif field[0] == 'last_well' and field[0]:
                 field_val = field_val.strftime("%Y-%m-%d %H:%M")
             results['result'][0][field[0]] = field_val
 
