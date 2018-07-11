@@ -8,11 +8,12 @@ case_info = Blueprint('case_info', __name__, url_prefix='/case<info_table>')
 
 @case_info.route('/<int:case_id>/', methods=(['GET']))
 def get_case_info(info_table, case_id):
+    info_table = 'case' + info_table
     qargs = {"case_id":case_id}
-    results = ext.select_query_result_(qargs, 'case' + info_table)
+    results = ext.select_query_result_(qargs, info_table)
     print(results)
 
-    if info_table == '_managements': # TODO Think about whether might move this to hooks?
+    if info_table == 'case_managements': # TODO Think about whether might move this to hooks?
         cursor = ext.connect_()
         query = 'select {} from {} where case_id=%s'
         extra_fields = [('dob', 'cases'),
@@ -23,7 +24,6 @@ def get_case_info(info_table, case_id):
         for field in extra_fields:
             cursor.execute(query.format(field[0], field[1]), (case_id, ))
             field_result = cursor.fetchall()
-            print(field_result)
             field_val = field_result[0][field[0]]
             if field[0] == 'dob' and field_val:
                 field_val = field_val.isoformat()

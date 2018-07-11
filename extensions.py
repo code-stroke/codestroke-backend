@@ -52,7 +52,7 @@ def select_query_result_(qargs, table):
     return {"result":None}
 
 def select_(d):
-    """ Generates a MySQL select statement from a query dictionary. 
+    """ Generates a MySQL select statement from a query dictionary.
     """
     clause = ""
     l = []
@@ -69,7 +69,7 @@ def select_(d):
             where_done = True
         else:
             clause += " and " + cond
-            
+
         l.append(v)
     return clause, tuple(l,)
 
@@ -81,7 +81,7 @@ def update_(d):
     return clause, tup
 
 def add_(d):
-    """ Generates list of insert arguments and values. 
+    """ Generates list of insert arguments and values.
         Must be preceded by "insert into <table> "
     """
     cols = '(' + ', '.join(['{}'.format(k) for k in d.keys()]) + ')'
@@ -93,7 +93,7 @@ def add_(d):
 def get_args_(args, d):
     qargs = {}
     for arg in args:
-        if d.get(arg):
+        if d.get(arg) is not None:
             qargs[arg] = d.get(arg)
     return qargs
 
