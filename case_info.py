@@ -13,7 +13,7 @@ def get_case_info(info_table, case_id):
     results = ext.select_query_result_(qargs, info_table)
     print(results)
 
-    if info_table == 'case_managements': # TODO Think about whether might move this to hooks?
+    if info_table == 'case_managements' and results['result'] is not None: # TODO Think about whether might move this to hooks?
         cursor = ext.connect_()
         query = 'select {} from {} where case_id=%s'
         extra_fields = [('dob', 'cases'),
