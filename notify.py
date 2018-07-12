@@ -49,7 +49,7 @@ def add_message(notify_type, case_id, args=None):
     """ Add notification with arguments.
 
     Args:
-        notify_type: a notification type as specified in notify_types dict. 
+        notify_type: a notification type as specified in notify_types dict.
         case_id: ID of case which will used to get arguments.
         args: dictionary of arguments for packaging with package_message.
     """
@@ -69,11 +69,13 @@ def add_message(notify_type, case_id, args=None):
     if targets == None:
         payload = {"app_id": app.config['OS_APP_ID'],
                    "included_segments": ["All"],
+                   "data": {"case_id": case_id},
 	           "contents": {"en": msg}}
     # TODO Test filter-specific messages once roles implemented
     else:
         payload = {"app_id": config['OS_APP_ID'],
                    "filters": filterize(targets),
+                   "data": {"case_id": case_id},
 	           "contents": {"en": msg}}
 
     print(json.dumps(payload))
