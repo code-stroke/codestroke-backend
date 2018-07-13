@@ -11,7 +11,6 @@ def get_case_info(info_table, case_id):
     info_table = 'case' + info_table
     qargs = {"case_id":case_id}
     results = ext.select_query_result_(qargs, info_table)
-    print(results)
 
     if info_table == 'case_managements' and results['result'] is not None: # TODO Think about whether might move this to hooks?
         cursor = ext.connect_()
@@ -53,6 +52,7 @@ def edit_case_info(info_table, case_id):
 
     query_string = "update {} ".format(info_table) + query[0] + " where case_id=%s"
     #cursor.execute("update %s " + query[0] + " where case_id=%s", (info_table,)+query[1]+(case_id,))
+    print(query_string)
     cursor.execute(query_string, query[1]+(case_id,))
     mysql.connection.commit()
     return jsonify({"success": True,

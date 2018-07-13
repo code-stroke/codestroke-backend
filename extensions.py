@@ -93,7 +93,7 @@ def add_(d):
 def get_args_(args, d):
     qargs = {}
     for arg in args:
-        if d.get(arg) is not None:
+        if arg in d:
             qargs[arg] = d.get(arg)
     return qargs
 
