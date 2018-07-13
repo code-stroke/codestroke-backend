@@ -33,12 +33,13 @@ def put(info_table, case_id, new_data, prior_data):
         return (key in new_data.keys() and _data_is_new(key))
 
     if _check('status'):
-        new_data['status_time'] = time_now()
 
         if new_data['status'] == 'active':
+            new_data['active_timestamp'] = time_now()
             notify.add_message('case_arrived', case_id)
 
         if new_data['status'] == 'completed':
+            new_data['completed_timestamp'] = time_now()
             notify.add_message('case_completed', case_id)
 
     if _check('likely_lvo') and new_data['likely_lvo']:
