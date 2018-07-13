@@ -110,10 +110,10 @@ CREATE TABLE IF NOT EXISTS `case_radiologies` (
   `ct2` bool DEFAULT 0,
   `ct3` bool DEFAULT 0,
   `arrived_to_ct` bool DEFAULT 0,
-  `ct_complete` bool DEFAULT 0,
+  `ct_complete` bool DEFAULT NULL,
   `ich_found` bool DEFAULT NULL,
   `do_cta_ctp` bool DEFAULT NULL,
-  `cta_ctp_complete` bool DEFAULT 0,
+  `cta_ctp_complete` bool DEFAULT NULL,
   `large_vessel_occlusion` bool DEFAULT NULL,
   FOREIGN KEY (case_id) REFERENCES cases(case_id)
   ON DELETE CASCADE

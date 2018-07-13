@@ -70,13 +70,18 @@ def add_message(notify_type, case_id, args=None):
         payload = {"app_id": app.config['OS_APP_ID'],
                    "included_segments": ["All"],
                    "data": {"case_id": case_id},
-	           "contents": {"en": msg}}
+                   "chrome_web_icon": "./images/{}.png".format(notify_type),
+                   "small_icon": "./images/{}.png".format(notify_type),
+	               "contents": {"en": msg}}
     # TODO Test filter-specific messages once roles implemented
     else:
         payload = {"app_id": config['OS_APP_ID'],
                    "filters": filterize(targets),
                    "data": {"case_id": case_id},
-	           "contents": {"en": msg}}
+                   "chrome_web_icon": "./images/{}.png".format(notify_type),
+                   "small_icon": "./images/{}.png".format(notify_type),
+	               "contents": {"en": msg}
+	               }
 
     print(json.dumps(payload))
 
