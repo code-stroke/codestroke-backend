@@ -45,7 +45,10 @@ def put(info_table, case_id, new_data, prior_data):
         notify.add_message('likely_lvo', case_id)
 
     if info_table == 'case_radiologies':
-        [notify.add_message('ct_ready', case_id, {'ct_num': num}) for num in [1, 2, 3] if _check('ct{}'.format(num))]
+        for num in [1, 2, 3]:
+            if _check('ct{}'.format(num)):
+                if new_data['ct{}'.format(num)]:
+                    notify.add_message('ct_ready', case_id, {'ct_num': num})
 
         if _check('ct_complete') and new_data['ct_complete']:
             notify.add_message('ctb_completed', case_id)
