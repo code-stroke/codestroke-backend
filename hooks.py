@@ -32,6 +32,13 @@ def put(info_table, case_id, new_data, prior_data):
         # since PUT, must check prior data
         return (key in new_data.keys() and _data_is_new(key))
 
+    def _str_to_null(value):
+        if value == "":
+            return None
+        return value
+
+    new_data = {k: _str_to_null(v) for k, v in new_data.items()}
+
     if _check('status'):
 
         if new_data['status'] == 'active':
