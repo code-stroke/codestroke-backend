@@ -151,11 +151,11 @@ CREATE TABLE IF NOT EXISTS `event_log` (
   `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `event_type` enum('add', 'edit') NOT NULL,
   `event_data` text DEFAULT NULL,
-  `signoff_first_name` varchar(30) NOT NULL,
-  `signoff_last_name` varchar(30) NOT NULL,
+  `signoff_first_name` varchar(30) DEFAULT NULL,
+  `signoff_last_name` varchar(30) DEFAULT NULL,
   `signoff_role` enum('paramedic', 'ed_clinician', 'radiographer',
                       'stroke_team', 'radiologist', 'stroke_ward',
 	                    'neuroint', 'angio_nurse', 'anaesthetist',
-	                    'other', 'admin') NOT NULL DEFAULT 'other',
+	                    'other', 'admin') DEFAULT NULL,
   `event_timestamp`  timestamp DEFAULT CURRENT_TIMESTAMP
 )

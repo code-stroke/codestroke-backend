@@ -43,6 +43,7 @@ def put(info_table, case_id, new_data, prior_data):
 
     # process new_data to only edited data
     edited_data = {key: new_data[key] for key in new_data.keys() if _data_is_new(key)}
+    additional_data = {k: new_data.get(k) for k in ['signoff_first_name', 'signoff_last_name', 'signoff_role']}
     edited_keys = edited_data.keys()
 
     if 'status' in edited_keys:
@@ -50,29 +51,30 @@ def put(info_table, case_id, new_data, prior_data):
 
         if edited_data['status'] == 'active':
             edited_data['active_timestamp'] = time_now()
-            notify.add_message('case_arrived', case_id)
+            notify.add_message('case_arrived', case_id, additional_data)
 
         if edited_data['status'] == 'completed':
             edited_data['completed_timestamp'] = time_now()
-            notify.add_message('case_completed', case_id)
+            notify.add_message('case_completed', case_id, additional_data)
 
     if 'likely_lvo' in edited_keys and edited_data['likely_lvo']:
-        notify.add_message('likely_lvo', case_id)
+        notify.add_message('likely_lvo', case_id, additional_data)
 
     if info_table == 'case_radiologies':
         if 'ct_available' in edited_keys and 'ct_available_loc' in edited_keys and edited_data['ct_available']:
-            notify.add_message('ct_available', case_id, {'ct_available_loc': edited_data['ct_available_loc']})
+            additional_data['ct_available_loc'] = edited_data.get('ct_available_loc')
+            notify.add_message('ct_available', case_id, additional_data)
 
         if 'ct_complete' in edited_keys and edited_data['ct_complete']:
-            notify.add_message('ctb_completed', case_id)
+            notify.add_message('ctb_completed', case_id, additional_data)
 
         if 'do_cta_ctp' in edited_keys and edited_data['do_cta_ctp']:
-            notify.add_message('do_cta_ctp', case_id)
+            notify.add_message('do_cta_ctp', case_id, additional_data)
 
     if info_table == 'case_managements':
 
         if 'ecr' in edited_keys and edited_data['ecr']:
-            notify.add_message('ecr_activated', case_id)
+            notify.add_message('ecr_activated', case_id, additional_data)
 
     return edited_data
 
