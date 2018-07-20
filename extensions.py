@@ -95,10 +95,6 @@ def get_args_(args, d):
     for arg in args:
         if d.get(arg) is not None:
             qargs[arg] = d.get(arg)
-    # TEMPORARY SIGNOFF FUNCTIONALITY ONLY
-    qargs['signoff_first_name'] = d.get('signoff_first_name')
-    qargs['signoff_last_name'] = d.get('signoff_last_name')
-    qargs['signoff_role'] = d.get('signoff_role')
     return qargs
 
 def get_cols_(table):

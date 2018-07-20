@@ -8,6 +8,7 @@ import extensions as ext
 from extensions import mysql
 import getpass, datetime, urllib.request
 import notify
+import json
 from hooks import time_now
 
 app = Flask(__name__)
@@ -79,7 +80,19 @@ def add_case():
 
     mysql.connection.commit()
 
+    # POST ADDITION HOOKS
     notify.add_message('case_incoming', case_id, {'eta': eta})
+
+    cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role']
+    args_event = ext.get_args_(cols_event, request.get_json())
+    if None not in test.values():
+        event_params = ext.add_(args_event)
+        event_params['event_type'] = 'add'
+        event_params['event_data'] = json.dumps(args_cases)
+        event_query = 'insert into event_log ' + event_params[0]
+        cursor.execute(event_query, event_params[1])
+        mysql.connection.commit()
+
     return jsonify({'success': True, 'case_id': case_id})
 
 @app.route('/cases/<int:case_id>/', methods=(['DELETE']))
