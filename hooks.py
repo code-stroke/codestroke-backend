@@ -60,7 +60,7 @@ def put(info_table, case_id, new_data, prior_data):
         notify.add_message('likely_lvo', case_id)
 
     if info_table == 'case_radiologies':
-        if 'ct_available' in edited_keys and 'ct_available_loc' in edited_keys:
+        if 'ct_available' in edited_keys and 'ct_available_loc' in edited_keys and edited_data['ct_available']:
             notify.add_message('ct_available', case_id, {'ct_available_loc': edited_data['ct_available_loc']})
 
         if 'ct_complete' in edited_keys and edited_data['ct_complete']:
