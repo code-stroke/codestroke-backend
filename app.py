@@ -95,7 +95,7 @@ def delete_case(case_id):
 def acknowledge_case(case_id):
     # Get notification ID from POST request (TODO check how notification sender is recorded...or implement this)
     # Match notification ID to sender
-    notify.add_message('case_acknowledged', case_id, {'hospital_name': 'Austin Hospital'}) # PLACEHOLDER HOSPITAL
+    notify.add_message('case_acknowledged', case_id, {'hospital_name': app.config['HOSPITAL_NAME']})
     return jsonify({'success': True})
 
 if __name__ == '__main__':
