@@ -66,8 +66,6 @@ def put(info_table, case_id, new_data, prior_data):
         if 'ecr' in edited_keys and edited_data['ecr']:
             notify.add_message('ecr_activated', case_id)
 
-    
-
     return edited_data
 
 
