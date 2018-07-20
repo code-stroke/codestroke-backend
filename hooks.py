@@ -34,6 +34,12 @@ def put(info_table, case_id, new_data, prior_data):
     # def _check(key):
     #     # since PUT, must check prior data
     #     return (key in new_data.keys() and _data_is_new(key))
+    def _str_to_null(value):
+        if value == "":
+            return None
+        return value
+
+    new_data = {k: _str_to_null(v) for k, v in new_data.items()}
 
     # process new_data to only edited data
     edited_data = {key: new_data[key] for key in new_data.keys() if _data_is_new(key)}
@@ -43,9 +49,11 @@ def put(info_table, case_id, new_data, prior_data):
         edited_data['status_time'] = time_now()
 
         if edited_data['status'] == 'active':
+            edited_data['active_timestamp'] = time_now()
             notify.add_message('case_arrived', case_id)
 
         if edited_data['status'] == 'completed':
+            edited_data['completed_timestamp'] = time_now()
             notify.add_message('case_completed', case_id)
 
     if 'likely_lvo' in edited_keys and edited_data['likely_lvo']:

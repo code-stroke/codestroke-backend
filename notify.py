@@ -69,7 +69,6 @@ def add_message(notify_type, case_id, args=None):
     targets = notify_types[notify_type]['targets']
 
     payload = {"app_id": app.config['OS_APP_ID'],
-               "included_segments": ["All"],
                "data": {"case_id": case_id},
                "headings": {"en": title},
 	           "contents": {"en": msg}}
