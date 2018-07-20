@@ -13,7 +13,7 @@ notify_types = {
     },
     "case_acknowledged": {
         "targets": None,
-        "msg_base": "ACKNOWLEDGED BY {hospital_name},"
+        "msg_base": "ACKNOWLEDGED BY {hospital_name}"
     },
     "case_arrived": {
         "targets": None,
@@ -61,24 +61,24 @@ def add_message(notify_type, case_id, args=None):
 
     # TODO Handle if required args not present
     msg_prefix = "{initials} {age}{gender} -- "
+    msg_suffix = "Signed off by {signoff_first_name} {signoff_last_name} ({signoff_role})."
     packaged = package_message(case_id, args)
-    msg = (msg_prefix + notify_types[notify_type]['msg_base']).format(**packaged)
+    msg = (msg_prefix + notify_types[notify_type]['msg_base'] + msg_suffix).format(**packaged)
+    title = "NOTIF REGARDING {initials} {age}{gender}".format(**packaged)
 
     targets = notify_types[notify_type]['targets']
 
-    if targets == None:
-        payload = {"app_id": app.config['OS_APP_ID'],
-                   "included_segments": ["All"],
-                   "data": {"case_id": case_id},
-	           "contents": {"en": msg}}
-    # TODO Test filter-specific messages once roles implemented
-    else:
-        payload = {"app_id": config['OS_APP_ID'],
-                   "filters": filterize(targets),
-                   "data": {"case_id": case_id},
+    payload = {"app_id": app.config['OS_APP_ID'],
+               "included_segments": ["All"],
+               "data": {"case_id": case_id},
+               "headings": {"en": title},
 	           "contents": {"en": msg}}
 
-    print(json.dumps(payload))
+    if targets == None:
+        payload["included_segments"] = ["All"]
+    # TODO Test filter-specific messages once roles implemented
+    else:
+        payload["filters"] = filterize(targets)
 
     req = requests.post("https://onesignal.com/api/v1/notifications", headers=header, data=json.dumps(payload))
     print(req.reason, req.text, req.json()) # debugging
@@ -107,7 +107,6 @@ def package_message(case_id, args):
     info['gender'] = case_info['gender'].upper()
     # TODO Be exclusive with which arguments are provided based on notification type
     if args:
-        info['eta'] = args['eta'] if 'eta' in args.keys() else None# PLACEHOLDER until this is clarified how to calculate
-        info['hospital_name'] = 'Austin' if 'hospital_name' in args.keys() else None# PLACEHOLDER until hospital id and hospital name linked
-        info['ct_num'] = args['ct_num'] if 'ct_num' in args.keys() else None
+        for field in ['eta', 'hospital_name', 'ct_available_loc', 'signoff_first_name', 'signoff_last_name', 'signoff_role']:
+            info[field] = args[field] if field in args.keys() else None
     return info
