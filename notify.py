@@ -64,7 +64,7 @@ def add_message(notify_type, case_id, args=None):
     msg_suffix = "\nSigned off by {signoff_first_name} {signoff_last_name} ({signoff_role})."
     packaged = package_message(case_id, args)
     msg = (msg_prefix + notify_types[notify_type]['msg_base'] + msg_suffix).format(**packaged)
-    title = "MSG REGARDING {initials} {age}{gender}".format(**packaged)
+    title = "MSG RE: {initials} {age}{gender}".format(**packaged)
 
     targets = notify_types[notify_type]['targets']
 

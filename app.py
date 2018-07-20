@@ -81,12 +81,12 @@ def add_case():
     mysql.connection.commit()
 
     # POST ADDITION HOOKS
-    notify.add_message('case_incoming', case_id, {'eta': eta})
-
     cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role']
     args_event = ext.get_args_(cols_event, request.get_json())
 
+    print(args_event)
     if None in args_event.values():
+        print('Unknown signoff')
         args_event['signoff_first_name'] = 'Unsigned'
         args_event['signoff_last_name'] = 'Unsigned'
         args_event['signoff_role'] = 'Unsigned'
@@ -98,6 +98,10 @@ def add_case():
     event_query = 'insert into event_log ' + event_params[0]
     cursor.execute(event_query, event_params[1])
     mysql.connection.commit()
+
+    args_event['eta'] = eta
+
+    notify.add_message('case_incoming', case_id, args_event)
 
     return jsonify({'success': True, 'case_id': case_id})
 

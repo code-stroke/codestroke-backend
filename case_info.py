@@ -3,6 +3,7 @@ from flask_mysqldb import MySQL, MySQLdb
 import extensions as ext
 from extensions import mysql
 import hooks
+import json
 
 case_info = Blueprint('case_info', __name__, url_prefix='/case<info_table>')
 
@@ -45,6 +46,16 @@ def edit_case_info(info_table, case_id):
     # Will be much easier to implement this hook as a PATCH request
     # as will not have to check the previous stored data
     prior = ext.select_query_result_({"case_id":case_id}, info_table)['result'][0]
+
+    cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role']
+    args_event = ext.get_args_(cols_event, request.get_json())
+    if None in args_event.values():
+        args_event['signoff_first_name'] = 'Unsigned'
+        args_event['signoff_last_name'] = 'Unsigned'
+        args_event['signoff_role'] = 'Unsigned'
+
+    qargs = {**qargs, **args_event}
+
     qargs = hooks.put(info_table, case_id, qargs, prior)
 
     query = ext.update_(qargs)
@@ -56,15 +67,6 @@ def edit_case_info(info_table, case_id):
     mysql.connection.commit()
 
     # Event logging
-
-    cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role']
-    args_event = ext.get_args_(cols_event, request.get_json())
-
-    if None in args_event.values():
-        args_event['signoff_first_name'] = 'Unsigned'
-        args_event['signoff_last_name'] = 'Unsigned'
-        args_event['signoff_role'] = 'Unsigned'
-
     qargs['info_table'] = info_table
     args_event['event_type'] = 'add'
     args_event['event_data'] = json.dumps(qargs)
