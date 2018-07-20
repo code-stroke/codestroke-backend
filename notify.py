@@ -23,9 +23,9 @@ notify_types = {
         "targets": None,
         "msg_base": "LIKELY LVO, ECR NOT CONFIRMED"
     },
-    "ct_ready": {
+    "ct_available": {
         "targets": None,
-        "msg_base": "CT {ct_num}, READY"
+        "msg_base": "CT in {ct_available_loc}, AVAILABLE"
     },
     "ctb_completed": {
         "targets": None,
