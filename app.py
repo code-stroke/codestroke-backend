@@ -86,7 +86,7 @@ def add_case():
     cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role']
     args_event = ext.get_args_(cols_event, request.get_json())
 
-    if None in test.values():
+    if None in args_event.values():
         args_event['signoff_first_name'] = 'Unsigned'
         args_event['signoff_last_name'] = 'Unsigned'
         args_event['signoff_role'] = 'Unsigned'
