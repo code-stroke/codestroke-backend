@@ -68,7 +68,8 @@ def edit_case_info(info_table, case_id):
 
     # Event logging
     qargs['info_table'] = info_table
-    args_event['event_type'] = 'add'
+    qargs['case_id'] = case_id
+    args_event['event_type'] = 'edit'
     args_event['event_data'] = json.dumps(qargs)
 
     event_params = ext.add_(args_event)

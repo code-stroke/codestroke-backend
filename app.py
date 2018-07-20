@@ -91,6 +91,7 @@ def add_case():
         args_event['signoff_role'] = 'Unsigned'
 
     args_event['event_type'] = 'add'
+    args_cases['case_id'] = case_id
     args_event['event_data'] = json.dumps(args_cases)
 
     event_params = ext.add_(args_event)
