@@ -85,13 +85,19 @@ def add_case():
 
     cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role']
     args_event = ext.get_args_(cols_event, request.get_json())
-    if None not in test.values():
-        event_params = ext.add_(args_event)
-        event_params['event_type'] = 'add'
-        event_params['event_data'] = json.dumps(args_cases)
-        event_query = 'insert into event_log ' + event_params[0]
-        cursor.execute(event_query, event_params[1])
-        mysql.connection.commit()
+
+    if None in test.values():
+        args_event['signoff_first_name'] = 'Unsigned'
+        args_event['signoff_last_name'] = 'Unsigned'
+        args_event['signoff_role'] = 'Unsigned'
+
+    args_event['event_type'] = 'add'
+    args_event['event_data'] = json.dumps(args_cases)
+
+    event_params = ext.add_(args_event)
+    event_query = 'insert into event_log ' + event_params[0]
+    cursor.execute(event_query, event_params[1])
+    mysql.connection.commit()
 
     return jsonify({'success': True, 'case_id': case_id})
 
