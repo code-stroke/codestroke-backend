@@ -146,3 +146,16 @@ CREATE TABLE IF NOT EXISTS `case_managements` (
   ON DELETE CASCADE
   ON UPDATE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS `event_log` (
+  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `event_type` enum('add', 'edit', 'delete', 'status_change') NOT NULL,
+  `event_data` text DEFAULT NULL,
+  `signoff_first_name` varchar(30) NOT NULL,
+  `signoff_last_name` varchar(30) NOT NULL,
+  `signoff_role` enum('paramedic', 'ed_clinician', 'radiographer',
+                      'stroke_team', 'radiologist', 'stroke_ward',
+	                    'neuroint', 'angio_nurse', 'anaesthetist',
+	                    'admin') NOT NULL,
+  `event_timestamp`  timestamp DEFAULT CURRENT_TIMESTAMP
+)
