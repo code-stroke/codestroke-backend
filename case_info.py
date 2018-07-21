@@ -69,6 +69,20 @@ def edit_case_info(info_table, case_id):
     mysql.connection.commit()
 
     # Event logging
+
+    # Get first name and last name
+    if info_table != 'cases':# TODO Think about whether might move this to hooks?
+        cursor = ext.connect_()
+        query = 'select {} from {} where case_id=%s'
+        extra_fields = [('first_name', 'cases'),
+                        ('last_name', 'cases')
+        ]
+        for field in extra_fields:
+            cursor.execute(query.format(field[0], field[1]), (case_id, ))
+            field_result = cursor.fetchall()
+            field_val = field_result[0][field[0]]
+            qargs[field[0]] = field_val
+
     qargs['info_table'] = info_table
     qargs['case_id'] = case_id
     args_event['event_type'] = 'edit'
