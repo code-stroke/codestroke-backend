@@ -97,9 +97,9 @@ def add_case():
 
     if not args_event:
         print('Unknown signoff')
-        args_event['signoff_first_name'] = 'Unsigned'
-        args_event['signoff_last_name'] = 'Unsigned'
-        args_event['signoff_role'] = 'Unsigned'
+        args_event['signoff_first_name'] = None
+        args_event['signoff_last_name'] = None
+        args_event['signoff_role'] = None
 
     args_event['event_type'] = 'add'
     args_cases['case_id'] = case_id

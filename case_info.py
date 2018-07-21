@@ -52,9 +52,9 @@ def edit_case_info(info_table, case_id):
     cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role']
     args_event = ext.get_args_(cols_event, request.get_json())
     if not args_event:
-        args_event['signoff_first_name'] = 'Unsigned'
-        args_event['signoff_last_name'] = 'Unsigned'
-        args_event['signoff_role'] = 'Unsigned'
+        args_event['signoff_first_name'] = None
+        args_event['signoff_last_name'] = None
+        args_event['signoff_role'] = None
 
     qargs = {**qargs, **args_event}
 
