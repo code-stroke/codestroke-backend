@@ -4,6 +4,7 @@ from flask_mysqldb import MySQL, MySQLdb
 from passlib.hash import pbkdf2_sha256
 from case_info import case_info
 from login import users, requires_auth
+from global_login import requires_global_auth
 import extensions as ext
 from extensions import mysql
 import getpass, datetime, urllib.request

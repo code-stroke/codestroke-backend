@@ -23,7 +23,9 @@ For a quick start:
    API Key for OneSignal as `OS_REST_API_KEY` and the OneSignal App ID as
    `OS_APP_ID`. For estimating time of arrivals of patients, you will need to
    specify `GOOGLE_DISTANCE_API_KEY` (the API key for the Google Distance Matrix
-   API), `HOSPITAL_LAT` and `HOSPITAL_LONG`.
+   API), `HOSPITAL_LAT` and `HOSPITAL_LONG`. For the testing phase, you'll also
+   need to specify the password has as `GLOBAL_PW_HASH` which is the
+   `pbkdf2_sha256` hash of your chosen password.
 5. Run `python app.py` from this directory.
 6. Navigate to `http://127.0.0.1:5000` in your web browser.
 
@@ -91,6 +93,28 @@ which you'd expect to be a boolean will instead accept 'yes' or 'no' rather than
 typical 1 or 0 (since using `ENUM` for numeric data is rather tricky given the
 ambiguity between value and indexing). Hopefully there'll be a better workaround
 in the future!
+
+### Authentication and Signoffs
+
+With any endpoint decorated with `requires_global_auth` (which should be most,
+if not, all endpoints), you'll need to send an Authorisation header with an
+agreed password (the hash of which is stored in the app config file). The
+username is not checked and can be anything (but for consistency's sake, make it
+'global'. It doesn't really matter). If you do not send this header, or the
+password is wrong, you will get `success = false` and `error_type = 'auth'` as
+your response (otherwise you'll get `success = true` and the actual data back). 
+
+A further note is that with every POST and PUT request, there are (technically
+optional, but much preferred if they're filled) three additional parameters to
+identify who made the request:
+
+1. `signoff_first_name`
+2. `signoff_last_name`
+3. `signoff_role` (which *must* be one of the types listed as a role in the
+   schema)
+   
+If these are not specified, the data will still be sent but the event will be
+logged as unsigned and the notification will be shown as unsigned as well. 
 
 ### Route Listing
 
@@ -171,9 +195,9 @@ changes.
 ### Deleting Patients
 
 For development purposes, you can delete a patient by accessing the
-`/cases/<case_id>/` route and sending a delete request. 
+`/cases/<case_id>/` route and sending a DELETE request. 
 
-## Future Notes
+## Future Notes (NOT for current version)
 
 ### Authentication (DRAFT)
 

@@ -7,7 +7,7 @@ def check_auth(username, password):
         return True
     return False
 
-def requires_global_login(f):
+def requires_global_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
