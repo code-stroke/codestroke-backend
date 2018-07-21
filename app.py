@@ -38,6 +38,7 @@ def create_db():
     #    return jsonify({"status":"error",}), 400
 
 @app.route('/cases/', methods=(['GET']))
+@requires_global_auth
 def get_cases():
     return jsonify(ext.select_query_result_({}, 'cases'))
 
