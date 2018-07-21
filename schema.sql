@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `cases` (
   `last_name` varchar(30) DEFAULT NULL,
   `dob` date DEFAULT NULL,
   `address` text DEFAULT NULL,
-  `gender` enum('f', 'm', 'u') DEFAULT NULL,
+  `gender` enum('f', 'm', 'u') DEFAULT 'u',
   `last_well` timestamp NULL DEFAULT NULL,
   `nok` varchar(40) DEFAULT NULL,
   `nok_phone` varchar(16) DEFAULT NULL,

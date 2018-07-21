@@ -100,12 +100,18 @@ def package_message(case_id, args):
     info = {}
     # Just to simplify, assume first name and last name are each one word
     # Will probably have to modify later to account for two-word first or last names
-    info['initials'] = case_info['first_name'][0].upper() + case_info['last_name'][0].upper()
+    try:
+        info['initials'] = case_info['first_name'][0].upper() + case_info['last_name'][0].upper()
+    except AttributeError:
+        info['initials'] = 'Full Name Unknown'
     try:
         info['age'] = (datetime.now() - datetime.combine(case_info['dob'], datetime.min.time())).days // 365
     except TypeError: # handle dob being None
         info['age'] = ''
-    info['gender'] = case_info['gender'].upper()
+    try:
+        info['gender'] = case_info['gender'].upper()
+    except AttributeError:
+        info['gender'] = 'U'
     # TODO Be exclusive with which arguments are provided based on notification type
     if args:
         for field in ['eta', 'hospital_name', 'ct_available_loc', 'signoff_first_name', 'signoff_last_name', 'signoff_role']:
