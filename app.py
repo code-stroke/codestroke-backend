@@ -20,12 +20,13 @@ mysql.init_app(app)
 app.register_blueprint(case_info)
 app.register_blueprint(users)
 
+@requires_global_auth
 @app.route('/')
 def index():
     if ext.check_database_():
         return jsonify({'success': True})
     else:
-        return jsonify({'success': False})
+        return jsonify({'success': False, 'error_type': 'database'})
 
 @app.route('/create_db/')
 def create_db():
