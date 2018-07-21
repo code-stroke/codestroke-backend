@@ -197,6 +197,11 @@ changes.
 For development purposes, you can delete a patient by accessing the
 `/cases/<case_id>/` route and sending a DELETE request. 
 
+### Event Log
+
+All the patient additions and edits are logged in the database with a timestamp.
+The route to GET the event log is at `/event_log/`.
+
 ## Future Notes (NOT for current version)
 
 ### Authentication (DRAFT)

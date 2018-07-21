@@ -127,5 +127,5 @@ def acknowledge_case(case_id):
 if __name__ == '__main__':
     app.run(debug = True)
 
-@app.route('/event_log/', methods=(['POST']))
+@app.route('/event_log/', methods=(['GET']))
     return jsonify(ext.select_query_result_({}, 'event_log'))
