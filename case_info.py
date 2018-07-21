@@ -31,6 +31,8 @@ def get_case_info(info_table, case_id):
                 field_val = field_val.strftime("%Y-%m-%d %H:%M")
             results['result'][0][field[0]] = field_val
 
+    results['success'] = True
+
     return jsonify(results)
 
 @case_info.route('/<int:case_id>/', methods=(['PUT']))
@@ -76,7 +78,7 @@ def edit_case_info(info_table, case_id):
     event_query = 'insert into event_log ' + event_params[0]
     cursor.execute(event_query, event_params[1])
     mysql.connection.commit()
-    
+
     return jsonify({"success": True,
                     "message":"added"})
 

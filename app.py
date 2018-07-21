@@ -40,7 +40,9 @@ def create_db():
 @app.route('/cases/', methods=(['GET']))
 @requires_global_auth
 def get_cases():
-    return jsonify(ext.select_query_result_({}, 'cases'))
+    result = ext.select_query_result_({}, 'cases')
+    result['success'] = True
+    return jsonify(result)
 
 @app.route('/cases/', methods=(['POST']))
 def add_case():
@@ -128,4 +130,7 @@ if __name__ == '__main__':
     app.run(debug = True)
 
 @app.route('/event_log/', methods=(['GET']))
-    return jsonify(ext.select_query_result_({}, 'event_log'))
+def get_event_log():
+    result = ext.select_query_result_({}, 'event_log')
+    result['success'] = True
+    return jsonify(result)
