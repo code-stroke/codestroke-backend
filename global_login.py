@@ -1,6 +1,7 @@
 from flask import request, jsonify
 from flask import current_app as app
 from passlib.hash import pbkdf2_sha256
+from functools import wraps
 
 def check_auth(username, password):
     if pbkdf2_sha256.verify(password, app.config['GLOBAL_PW_HASH']):
