@@ -47,7 +47,6 @@ def put(info_table, case_id, new_data, prior_data):
     edited_keys = edited_data.keys()
 
     if 'status' in edited_keys:
-        edited_data['status_time'] = time_now()
 
         if edited_data['status'] == 'active':
             edited_data['active_timestamp'] = time_now()

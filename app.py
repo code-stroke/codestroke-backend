@@ -66,6 +66,12 @@ def add_case():
     else:
         eta='UNKNOWN'
 
+    notify_type = 'case_incoming'
+
+    if args_cases['status'].lower() == 'active' and 'active_timestamp' not in args_cases.keys():
+        notify_type = 'case_arrived'
+        args_cases['active_timestamp'] = time_now()
+
     add_params = ext.add_(args_cases)
     add_query = 'insert into cases ' + add_params[0]
     cursor.execute(add_query, add_params[1])
@@ -106,7 +112,7 @@ def add_case():
 
     args_event['eta'] = eta
 
-    notify.add_message('case_incoming', case_id, args_event)
+    notify.add_message(notify_type, case_id, args_event)
 
     return jsonify({'success': True, 'case_id': case_id})
 
