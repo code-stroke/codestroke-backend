@@ -20,8 +20,8 @@ mysql.init_app(app)
 app.register_blueprint(case_info)
 app.register_blueprint(users)
 
-@requires_global_auth
 @app.route('/')
+@requires_global_auth
 def index():
     if ext.check_database_():
         return jsonify({'success': True})
@@ -86,7 +86,7 @@ def add_case():
     cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role']
     args_event = ext.get_args_(cols_event, request.get_json())
 
-    if not args_event: 
+    if not args_event:
         print('Unknown signoff')
         args_event['signoff_first_name'] = 'Unsigned'
         args_event['signoff_last_name'] = 'Unsigned'
