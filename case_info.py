@@ -60,6 +60,9 @@ def edit_case_info(info_table, case_id):
 
     qargs = hooks.put(info_table, case_id, qargs, prior)
 
+    if not qargs:
+        return jsonify({"success": True, "message": "no change"})
+
     query = ext.update_(qargs)
     #try:
 
