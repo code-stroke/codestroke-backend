@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request, redirect, url_for, session, flash, Blueprint
 from flask_mysqldb import MySQL, MySQLdb
+from global_login import requires_global_auth
 import extensions as ext
 from extensions import mysql
 import hooks
@@ -8,6 +9,7 @@ import json
 case_info = Blueprint('case_info', __name__, url_prefix='/case<info_table>')
 
 @case_info.route('/<int:case_id>/', methods=(['GET']))
+@requires_global_auth
 def get_case_info(info_table, case_id):
     info_table = 'case' + info_table
     qargs = {"case_id":case_id}
@@ -36,6 +38,7 @@ def get_case_info(info_table, case_id):
     return jsonify(results)
 
 @case_info.route('/<int:case_id>/', methods=(['PUT']))
+@requires_global_auth
 def edit_case_info(info_table, case_id):
     # TODO Requires safer error handling
     # TODO Check table exists and exit if not (safety)

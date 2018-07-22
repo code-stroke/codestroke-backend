@@ -29,6 +29,7 @@ def index():
         return jsonify({'success': False, 'error_type': 'database'})
 
 @app.route('/create_db/')
+@requires_global_auth
 def create_db():
     #try:
     ext.execute_sqlfile_('schema.sql')
@@ -45,6 +46,7 @@ def get_cases():
     return jsonify(result)
 
 @app.route('/cases/', methods=(['POST']))
+@requires_global_auth
 def add_case():
     # TODO Safe error handling
     cursor = ext.connect_()
@@ -117,6 +119,7 @@ def add_case():
     return jsonify({'success': True, 'case_id': case_id})
 
 @app.route('/cases/<int:case_id>/', methods=(['DELETE']))
+@requires_global_auth
 def delete_case(case_id):
     cursor = ext.connect_()
     query = 'delete from cases where case_id = %s'
@@ -126,6 +129,7 @@ def delete_case(case_id):
     return jsonify({'success': True})
 
 @app.route('/acknowledge/<int:case_id>/', methods=(['POST']))
+@requires_global_auth
 def acknowledge_case(case_id):
     # Get notification ID from POST request (TODO check how notification sender is recorded...or implement this)
     # Match notification ID to sender
@@ -136,6 +140,7 @@ if __name__ == '__main__':
     app.run(debug = True)
 
 @app.route('/event_log/', methods=(['GET']))
+@requires_global_auth
 def get_event_log():
     result = ext.select_query_result_({}, 'event_log')
     result['success'] = True
