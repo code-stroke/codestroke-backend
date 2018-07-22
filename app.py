@@ -48,6 +48,10 @@ def get_cases():
 @app.route('/cases/', methods=(['POST']))
 @requires_global_auth
 def add_case():
+    if not request.get_json():
+        return jsonify({'success': False,
+                        'error_type': 'request',
+                        'debugmsg': 'No data in request.'})
     # TODO Safe error handling
     cursor = ext.connect_()
     cols_cases = ext.get_cols_('cases')
@@ -70,9 +74,10 @@ def add_case():
 
     notify_type = 'case_incoming'
 
-    if args_cases['status'].lower() == 'active' and 'active_timestamp' not in args_cases.keys():
-        notify_type = 'case_arrived'
-        args_cases['active_timestamp'] = time_now()
+    if 'status' in args_cases.keys():
+        if args_cases.get('status').lower() == 'active' and 'active_timestamp' not in args_cases.keys():
+            notify_type = 'case_arrived'
+            args_cases['active_timestamp'] = time_now()
 
     add_params = ext.add_(args_cases)
     add_query = 'insert into cases ' + add_params[0]

@@ -40,6 +40,10 @@ def get_case_info(info_table, case_id):
 @case_info.route('/<int:case_id>/', methods=(['PUT']))
 @requires_global_auth
 def edit_case_info(info_table, case_id):
+    if not request.get_json():
+        return jsonify({'success': False,
+                        'error_type': 'request',
+                        'debugmsg': 'No data in request.'})
     # TODO Requires safer error handling
     # TODO Check table exists and exit if not (safety)
     info_table = 'case' + info_table
