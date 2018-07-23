@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS `case_radiologies` (
   `case_id` int NOT NULL PRIMARY KEY,
   `ct_available` bool DEFAULT NULL,
   `ct_available_loc` varchar(30) DEFAULT NULL,
-  `arrived_to_ct` bool DEFAULT 0,
+  `arrived_to_ct` bool DEFAULT NULL,
   `ct_complete` bool DEFAULT NULL,
   `ich_found` bool DEFAULT NULL,
   `do_cta_ctp` bool DEFAULT NULL,
