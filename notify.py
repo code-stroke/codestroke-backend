@@ -8,39 +8,44 @@ from datetime import datetime
 # targets MUST be a list (or other iterable) or None
 notify_types = {
     "case_incoming": {
-        "targets": None,
+        "targets": ["ed_clinician"],
         "msg_base": "INCOMING PATIENT ETA {eta}"
     },
     "case_acknowledged": {
-        "targets": None,
+        "targets": ["paramedic", "radiographer", "stroke_team",
+                    "radiologist"],
         "msg_base": "ACKNOWLEDGED BY {hospital_name}"
     },
     "case_arrived": {
-        "targets": None,
+        "targets": ["ed_clinician", "radiographer", "stroke_team",
+                    "stroke_ward]"],
         "msg_base": "ACTIVE PATIENT ARRIVAL IN ED"
     },
     "likely_lvo": {
-        "targets": None,
+        "targets": ["ed_clinician", "neuroint", "angio_nurse",
+                    "radiographer", "anaesthetist"],
         "msg_base": "LIKELY LVO, ECR NOT CONFIRMED"
     },
     "ct_available": {
-        "targets": None,
+        "targets": ["ed_clinician", "stroke_team"],
         "msg_base": "CT in {ct_available_loc}, AVAILABLE"
     },
     "ctb_completed": {
-        "targets": None,
+        "targets": ["stroke_team", "radiologist"],
         "msg_base": "CTB Completed"
     },
     "do_cta_ctp": {
-        "targets": None,
+        "targets": ["radiographer", "stroke_team", "radiologist"],
         "msg_base": "PROCEED TO CTA/CTP"
     },
     "ecr_activated": {
-        "targets": None,
+        "targets": ["ed_clinician", "radiologist", "stroke_team",
+                    "stroke_ward", "neuroint", "angio_nurse",
+                    "radiographer", "anaesthetist"],
         "msg_base": "ECR ACTIVATED"
     },
     "case_completed": {
-        "targets": None,
+        "targets": ["stroke_team", "stroke_ward"],
         "msg_base": "CASE COMPLETED"
     },
 }
