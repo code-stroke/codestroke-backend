@@ -144,9 +144,49 @@ def acknowledge_case(case_id):
 if __name__ == '__main__':
     app.run(debug = True)
 
-@app.route('/event_log/', methods=(['GET']))
+@app.route('/event_log/limit/', methods=(['GET']))
 @requires_global_auth
-def get_event_log():
+def get_event_log_limit():
+    start = request.args.get('start')
+    number = request.args.get('number')
+    if isinstance(start, int) and isinstance(number, int):
+        cursor = ext.connect_()
+        query = 'select * from event_log limit{},{}'.format(start, number)
+        cursor.execute(query)
+        result = cursor.fetchall()
+        if result:
+            result['success'] = True
+        else:
+            result = {'result': None, 'success': True}
+    else:
+        result = {'success': False, 'error_type': 'parameters', 'debugmsg': 'Insufficient params.'}
+    return jsonify(result)
+
+@app.route('/event_log/all/', methods=(['GET']))
+@requires_global_auth
+def get_event_log_all():
     result = ext.select_query_result_({}, 'event_log')
     result['success'] = True
+    return jsonify(result)
+
+@app.route('/event_log/date/', methods=(['GET']))
+@requires_global_auth
+def get_event_log_date():
+    start_string = request.args.get('start')
+    end_string = request.args.get('end')
+    try:
+        date_format = "%Y-%m-%d"
+        start_date = datetime.datetime.strptime(start_string, date_format).date()
+        end_date = datetime.datetime.strptime(end_string, date_format).date()
+    except:
+        result = {'success': False, 'error_type': 'parameters', 'debugmsg': 'Date improperly formatted.'}
+        return jsonify(result)
+    cursor = ext.connect_()
+    query = 'select * from event_log where event_timestamp >= %s and event_timestamp <= %s'
+    cursor.execute(query, (start_date, end_date))
+    result = cursor.fetchall()
+    if result:
+        result['success'] = True
+    else:
+        result = {'result': None, 'success': True}
     return jsonify(result)
