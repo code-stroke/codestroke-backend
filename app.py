@@ -10,7 +10,7 @@ from extensions import mysql
 import getpass, datetime, urllib.request
 import notify
 import json
-from hooks import time_now
+import hooks
 
 app = Flask(__name__)
 app.config.from_pyfile('app.conf')
@@ -64,7 +64,7 @@ def add_case():
         if None not in [init_lat, init_long]:
             eta = ext.calculate_eta_(init_lat, init_long,
                                      app.config['HOSPITAL_LAT'], app.config['HOSPITAL_LONG'],
-                                     time_now())
+                                     hooks.time_now())
             args_cases['eta'] = eta
         else:
             eta = 'UNKNOWN' # for notification
@@ -77,7 +77,7 @@ def add_case():
     if 'status' in args_cases.keys():
         if args_cases.get('status').lower() == 'active' and 'active_timestamp' not in args_cases.keys():
             notify_type = 'case_arrived'
-            args_cases['active_timestamp'] = time_now()
+            args_cases['active_timestamp'] = hooks.time_now()
 
     add_params = ext.add_(args_cases)
     add_query = 'insert into cases ' + add_params[0]
@@ -147,20 +147,26 @@ if __name__ == '__main__':
 @app.route('/event_log/limit/', methods=(['GET']))
 @requires_global_auth
 def get_event_log_limit():
-    start = request.args.get('start')
-    number = request.args.get('number')
-    if isinstance(start, int) and isinstance(number, int):
+    try:
+        start = int(request.args.get('start'))
+        number = int(request.args.get('number'))
+    except:
+        output = {'success': False, 'error_type': 'parameters', 'debugmsg': 'Insufficient or invalid params.'}
+        return jsonify(result)
+    if start and number:
         cursor = ext.connect_()
-        query = 'select * from event_log limit{},{}'.format(start, number)
+        query = 'select * from event_log order by id desc limit {},{}'.format(start, number)
+        print(query)
         cursor.execute(query)
         result = cursor.fetchall()
+        print(result)
         if result:
-            result['success'] = True
+            filtered = hooks.fetch(result, 'event_log')
+            print(filtered)
+            output = {'result': filtered, 'success': True}
         else:
-            result = {'result': None, 'success': True}
-    else:
-        result = {'success': False, 'error_type': 'parameters', 'debugmsg': 'Insufficient params.'}
-    return jsonify(result)
+            output = {'result': None, 'success': True}
+    return jsonify(output)
 
 @app.route('/event_log/all/', methods=(['GET']))
 @requires_global_auth
@@ -169,24 +175,25 @@ def get_event_log_all():
     result['success'] = True
     return jsonify(result)
 
-@app.route('/event_log/date/', methods=(['GET']))
+@app.route('/event_log/datetime/', methods=(['GET']))
 @requires_global_auth
 def get_event_log_date():
     start_string = request.args.get('start')
     end_string = request.args.get('end')
     try:
-        date_format = "%Y-%m-%d"
-        start_date = datetime.datetime.strptime(start_string, date_format).date()
-        end_date = datetime.datetime.strptime(end_string, date_format).date()
+        date_format = "%Y-%m-%dT%H:%M:%S"
+        start_datetime = datetime.datetime.strptime(start_string, date_format)
+        end_datetime = datetime.datetime.strptime(end_string, date_format)
     except:
-        result = {'success': False, 'error_type': 'parameters', 'debugmsg': 'Date improperly formatted.'}
+        output = {'success': False, 'error_type': 'parameters', 'debugmsg': 'Date improperly formatted.'}
         return jsonify(result)
     cursor = ext.connect_()
     query = 'select * from event_log where event_timestamp >= %s and event_timestamp <= %s'
-    cursor.execute(query, (start_date, end_date))
+    cursor.execute(query, (start_datetime, end_datetime))
     result = cursor.fetchall()
     if result:
-        result['success'] = True
+        filtered = hooks.fetch(result, 'event_log')
+        output = {'result': filtered, 'success': True}
     else:
-        result = {'result': None, 'success': True}
-    return jsonify(result)
+        output = {'result': None, 'success': True}
+    return jsonify(output)
