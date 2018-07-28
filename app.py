@@ -73,9 +73,11 @@ def add_case():
         eta='UNKNOWN'
 
     notify_type = 'case_incoming'
+    status = 'incoming'
 
     if 'status' in args_cases.keys():
         if args_cases.get('status').lower() == 'active' and 'active_timestamp' not in args_cases.keys():
+            status = 'active'
             notify_type = 'case_arrived'
             args_cases['active_timestamp'] = hooks.time_now()
 
@@ -110,7 +112,8 @@ def add_case():
 
     args_event['event_type'] = 'add'
     args_event['event_data'] = json.dumps(args_cases)
-    meta = {'case_id': case_id, 'first_name': args_cases.get('first_name'), 'last_name': args_cases.get('last_name')}
+    meta = {'case_id': case_id, 'first_name': args_cases.get('first_name'), 'last_name': args_cases.get('last_name'), 'status': status}
+    print(meta)
     args_event['event_metadata'] = json.dumps(meta)
 
     event_params = ext.add_(args_event)
@@ -153,10 +156,10 @@ def get_event_log_limit():
         number = int(request.args.get('number'))
     except:
         output = {'success': False, 'error_type': 'parameters', 'debugmsg': 'Insufficient or invalid params.'}
-        return jsonify(result)
+        return jsonify(output)
     if start and number:
         cursor = ext.connect_()
-        query = 'select * from event_log order by id desc limit {},{}'.format(start, number)
+        query = 'select * from event_log order by id desc limit {},{}'.format(start-1, number)
         print(query)
         cursor.execute(query)
         result = cursor.fetchall()
@@ -167,6 +170,8 @@ def get_event_log_limit():
             output = {'result': filtered, 'success': True}
         else:
             output = {'result': None, 'success': True}
+    else:
+        output = {'result': None, 'success': False, 'debugmsg': 'Positive integers for params only.'}
     return jsonify(output)
 
 @app.route('/event_log/all/', methods=(['GET']))

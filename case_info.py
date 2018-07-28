@@ -97,7 +97,7 @@ def edit_case_info(info_table, case_id):
     #         qargs[field[0]] = field_val
 
     meta = {'info_table': info_table, 'case_id': case_id,
-            'first_name': prior_meta.get('first_name'), 'last_name': prior_meta.get('last_name')}
+            'first_name': prior_meta.get('first_name'), 'last_name': prior_meta.get('last_name'), 'status': prior_meta.get('status')}
     #qargs['info_table'] = info_table
     #qargs['case_id'] = case_id
     args_event['event_type'] = 'edit'
