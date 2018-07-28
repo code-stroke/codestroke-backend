@@ -56,6 +56,9 @@ def edit_case_info(info_table, case_id):
     # as will not have to check the previous stored data
     prior = ext.select_query_result_({"case_id":case_id}, info_table)['result'][0]
 
+    # For event metadata logging
+    prior_meta = ext.select_query_result_({"case_id":case_id}, 'cases')['result'][0]
+
     cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role']
     args_event = ext.get_args_(cols_event, request.get_json())
     if not args_event:
@@ -81,22 +84,25 @@ def edit_case_info(info_table, case_id):
     # Event logging
 
     # Get first name and last name
-    if info_table != 'cases':# TODO Think about whether might move this to hooks?
-        cursor = ext.connect_()
-        query = 'select {} from {} where case_id=%s'
-        extra_fields = [('first_name', 'cases'),
-                        ('last_name', 'cases')
-        ]
-        for field in extra_fields:
-            cursor.execute(query.format(field[0], field[1]), (case_id, ))
-            field_result = cursor.fetchall()
-            field_val = field_result[0][field[0]]
-            qargs[field[0]] = field_val
+    # if info_table != 'cases':# TODO Think about whether might move this to hooks?
+    #     cursor = ext.connect_()
+    #     query = 'select {} from {} where case_id=%s'
+    #     extra_fields = [('first_name', 'cases'),
+    #                     ('last_name', 'cases')
+    #     ]
+    #     for field in extra_fields:
+    #         cursor.execute(query.format(field[0], field[1]), (case_id, ))
+    #         field_result = cursor.fetchall()
+    #         field_val = field_result[0][field[0]]
+    #         qargs[field[0]] = field_val
 
-    qargs['info_table'] = info_table
-    qargs['case_id'] = case_id
+    meta = {'info_table': info_table, 'case_id': case_id,
+            'first_name': prior_meta.get('first_name'), 'last_name': prior_meta.get('last_name')
+    #qargs['info_table'] = info_table
+    #qargs['case_id'] = case_id
     args_event['event_type'] = 'edit'
     args_event['event_data'] = json.dumps(qargs)
+    args_event['event_metadata'] = json.dumps(meta)
 
     event_params = ext.add_(args_event)
     event_query = 'insert into event_log ' + event_params[0]

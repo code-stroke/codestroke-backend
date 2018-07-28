@@ -109,8 +109,9 @@ def add_case():
         args_event['signoff_role'] = None
 
     args_event['event_type'] = 'add'
-    args_cases['case_id'] = case_id
     args_event['event_data'] = json.dumps(args_cases)
+    meta = {'case_id': case_id, 'first_name': args_cases.get('first_name'), 'last_name': args_cases.get('last_name')}
+    args_event['event_metadata'] = json.dumps(meta)
 
     event_params = ext.add_(args_event)
     event_query = 'insert into event_log ' + event_params[0]

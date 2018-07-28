@@ -151,6 +151,7 @@ CREATE TABLE IF NOT EXISTS `event_log` (
   `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `event_type` enum('add', 'edit') NOT NULL,
   `event_data` text DEFAULT NULL,
+  `event_metadata` text DEFAULT NULL,
   `signoff_first_name` varchar(30) DEFAULT NULL,
   `signoff_last_name` varchar(30) DEFAULT NULL,
   `signoff_role` enum('paramedic', 'ed_clinician', 'radiographer',
