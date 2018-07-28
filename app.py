@@ -114,7 +114,7 @@ def add_case():
     args_event['event_data'] = json.dumps(args_cases)
     meta = {'case_id': case_id, 'first_name': args_cases.get('first_name'),
             'last_name': args_cases.get('last_name'), 'status': status,
-            'gender': arg_cases.get('gender'), 'dob': arg_cases.get('dob'),
+            'gender': args_cases.get('gender'), 'dob': args_cases.get('dob'),
     }
     print(meta)
     args_event['event_metadata'] = json.dumps(meta)
