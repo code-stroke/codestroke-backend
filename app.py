@@ -145,7 +145,18 @@ def delete_case(case_id):
 def acknowledge_case(case_id):
     # Get notification ID from POST request (TODO check how notification sender is recorded...or implement this)
     # Match notification ID to sender
-    notify.add_message('case_acknowledged', case_id, {'hospital_name': app.config['HOSPITAL_NAME']})
+    cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role']
+    args_event = ext.get_args_(cols_event, request.get_json())
+
+    if not args_event:
+        print('Unknown signoff')
+        args_event['signoff_first_name'] = None
+        args_event['signoff_last_name'] = None
+        args_event['signoff_role'] = None
+
+    args_event['hospital_name'] = app.config['HOSPITAL_NAME']
+
+    notify.add_message('case_acknowledged', case_id, args_event)
     return jsonify({'success': True})
 
 if __name__ == '__main__':
