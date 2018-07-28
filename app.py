@@ -206,7 +206,7 @@ def get_event_log_date():
         end_datetime = datetime.datetime.strptime(end_string, date_format)
     except:
         output = {'success': False, 'error_type': 'parameters', 'debugmsg': 'Date improperly formatted.'}
-        return jsonify(result)
+        return jsonify(output)
     cursor = ext.connect_()
     query = 'select * from event_log where event_timestamp >= %s and event_timestamp <= %s'
     cursor.execute(query, (start_datetime, end_datetime))
