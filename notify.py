@@ -18,7 +18,7 @@ notify_types = {
     },
     "case_arrived": {
         "targets": ["ed_clinician", "radiographer", "stroke_team",
-                    "stroke_ward]"],
+                    "stroke_ward"],
         "msg_base": "ACTIVE PATIENT ARRIVAL IN ED"
     },
     "likely_lvo": {
