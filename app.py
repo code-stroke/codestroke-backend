@@ -174,13 +174,10 @@ def get_event_log_limit():
     if start and number:
         cursor = ext.connect_()
         query = 'select * from event_log order by id desc limit {},{}'.format(start-1, number)
-        print(query)
         cursor.execute(query)
         result = cursor.fetchall()
-        print(result)
         if result:
             filtered = hooks.fetch(result, 'event_log')
-            print(filtered)
             output = {'result': filtered, 'success': True}
         else:
             output = {'result': None, 'success': True}
@@ -191,9 +188,16 @@ def get_event_log_limit():
 @app.route('/event_log/all/', methods=(['GET']))
 @requires_global_auth
 def get_event_log_all():
-    result = ext.select_query_result_({}, 'event_log')
-    result['success'] = True
-    return jsonify(result)
+    cursor = ext.connect_()
+    query = 'select * from event_log order by id desc'
+    cursor.execute(query)
+    result = cursor.fetchall()
+    if result:
+        filtered = hooks.fetch(result, 'event_log')
+        output = {'result': filtered, 'success': True}
+    else:
+        output = {'result': None, 'success': True}
+    return jsonify(output)
 
 @app.route('/event_log/datetime/', methods=(['GET']))
 @requires_global_auth
@@ -208,7 +212,7 @@ def get_event_log_date():
         output = {'success': False, 'error_type': 'parameters', 'debugmsg': 'Date improperly formatted.'}
         return jsonify(output)
     cursor = ext.connect_()
-    query = 'select * from event_log where event_timestamp >= %s and event_timestamp <= %s'
+    query = 'select * from event_log where event_timestamp >= %s and event_timestamp <= %s order by id desc'
     cursor.execute(query, (start_datetime, end_datetime))
     result = cursor.fetchall()
     if result:
