@@ -38,6 +38,14 @@ notify_types = {
         "targets": ["radiographer", "stroke_team", "radiologist"],
         "msg_base": "PROCEED TO CTA/CTP"
     },
+    "cta_ctp_complete": {
+        "targets": ["radiographer", "stroke_team", "radiologist", "stroke_team", "stroke_ward"],
+        "msg_base": "CTA/CTP COMPLETE"
+    },	
+    "large_vessel_occlusion": {
+        "targets": ["radiographer", "stroke_team", "radiologist", "stroke_team", "stroke_ward"],
+        "msg_base": "LARGE VESSEL OCCLUSION"
+    },	
     "ecr_activated": {
         "targets": ["ed_clinician", "radiologist", "stroke_team",
                     "stroke_ward", "neuroint", "angio_nurse",
