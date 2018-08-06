@@ -69,6 +69,12 @@ def put(info_table, case_id, new_data, prior_data):
 
         if 'do_cta_ctp' in edited_keys and edited_data['do_cta_ctp']:
             notify.add_message('do_cta_ctp', case_id, additional_data)
+            
+        if 'cta_ctp_complete' in edited_keys and edited_data['cta_ctp_complete']:
+            notify.add_message('cta_ctp_complete', case_id, additional_data)   
+            
+        if 'large_vessel_occlusion' in edited_keys and edited_data['large_vessel_occlusion']:
+            notify.add_message('large_vessel_occlusion', case_id, additional_data)               
 
     if info_table == 'case_managements':
 
