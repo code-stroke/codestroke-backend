@@ -14,7 +14,7 @@ notify_types = {
     "case_acknowledged": {
         "targets": ["paramedic", "radiographer", "stroke_team",
                     "radiologist"],
-        "msg_base": "ACKNOWLEDGED BY {hospital_name}"
+        "msg_base": "CASE ACKNOWLEDGED"
     },
     "case_arrived": {
         "targets": ["ed_clinician", "radiographer", "stroke_team",
@@ -41,11 +41,11 @@ notify_types = {
     "cta_ctp_complete": {
         "targets": ["radiographer", "stroke_team", "radiologist", "stroke_team", "stroke_ward"],
         "msg_base": "CTA/CTP COMPLETE"
-    },	
+    },
     "large_vessel_occlusion": {
         "targets": ["radiographer", "stroke_team", "radiologist", "stroke_team", "stroke_ward"],
         "msg_base": "LARGE VESSEL OCCLUSION"
-    },	
+    },
     "ecr_activated": {
         "targets": ["ed_clinician", "radiologist", "stroke_team",
                     "stroke_ward", "neuroint", "angio_nurse",
