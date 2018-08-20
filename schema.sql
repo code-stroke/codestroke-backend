@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS `codestroke$codestroke`;
-USE `codestroke$codestroke`;
+CREATE DATABASE IF NOT EXISTS `codestrokezero$codestroke`;
+USE `codestrokezero$codestroke`;
 
 CREATE TABLE IF NOT EXISTS `clinicians` (
   `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
