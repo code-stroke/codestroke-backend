@@ -29,8 +29,8 @@ For a quick start:
    10. `HOSPITAL_LONG` (for ETAs)
    11. `HOSPITAL_NAME`
    12. `GLOBAL_PW_HASH` (the `pbkdf2_sha256` hash of your chosen password)
-   13. `PAGER_SERVER_ADDRESS` (the address for the internal pager server)
-   14. `PAGER_SERVER_IP` (the port for the internal pager server)
+   13. `PAGER_SERVER_IP` (the address for the internal pager server)
+   14. `PAGER_SERVER_PORT` (the port for the internal pager server)
    15. `PAGER_NUMBER` (the pager number for notifications to be sent to)
 5. Run `python app.py` from this directory.
 6. Navigate to `http://127.0.0.1:5000` in your web browser (or wherever else you
