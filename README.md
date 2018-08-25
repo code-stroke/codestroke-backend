@@ -15,19 +15,26 @@ For a quick start:
 1. Ensure you have Python installed (the latest 3.x version).
 2. Setup and activate your virtual environment.
 3. Run `pip install -r requirements.txt` from this directory.
-4. Ensure you have the file `app.conf` in this directory. You should configure
-   your `app.conf` file with your MySQL database settings if you're running this
-   locally. As a minimum, you should specify `MYSQL_HOST`, `MYSQL_USER` and
-   `MYSQL_PASSWORD`, as well as `MYSQL_CURSORCLASS='DictCursor'` and
-   `HOSPITAL_NAME`. For notifications, you will also need to specify the REST
-   API Key for OneSignal as `OS_REST_API_KEY` and the OneSignal App ID as
-   `OS_APP_ID`. For estimating time of arrivals of patients, you will need to
-   specify `GOOGLE_DISTANCE_API_KEY` (the API key for the Google Distance Matrix
-   API), `HOSPITAL_LAT` and `HOSPITAL_LONG`. For the testing phase, you'll also
-   need to specify the password has as `GLOBAL_PW_HASH` which is the
-   `pbkdf2_sha256` hash of your chosen password.
+4. Ensure you have the file `app.conf` in this directory. You should specify the
+   following variables (all as strings):
+   1. `MYSQL_HOST`
+   2. `MYSQL_USER`
+   3. `MYSQL_PASSWORD`
+   4. `MYSQL_CURSORCLASS='DictCursor`
+   5. `HOPISTAL_NAME`
+   6. `OS_REST_API_KEY` (for OneSignal)
+   7. `OS_APP_ID` (for OneSignal)
+   8. `GOOGLE_DISTANCE_API_KEY` (for the Google Distance Matrix API for estimating ETAs)
+   9. `HOSPITAL_LAT` (for ETAs)
+   10. `HOSPITAL_LONG` (for ETAs)
+   11. `HOSPITAL_NAME`
+   12. `GLOBAL_PW_HASH` (the `pbkdf2_sha256` hash of your chosen password)
+   13. `PAGER_SERVER_ADDRESS` (the address for the internal pager server)
+   14. `PAGER_SERVER_IP` (the port for the internal pager server)
+   15. `PAGER_NUMBER` (the pager number for notifications to be sent to)
 5. Run `python app.py` from this directory.
-6. Navigate to `http://127.0.0.1:5000` in your web browser.
+6. Navigate to `http://127.0.0.1:5000` in your web browser (or wherever else you
+   have set the server to host from).
 
 For local testing purposes, navigate to `http://127.0.0.1:5000/create_db` to
 initialise the database (*local only*).
