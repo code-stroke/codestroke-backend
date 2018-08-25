@@ -3,6 +3,7 @@ import json
 from flask import current_app as app
 import extensions as ext
 from datetime import datetime
+import socket
 
 # TODO move this to external data format later once debugged
 # targets MUST be a list (or other iterable) or None
@@ -66,8 +67,6 @@ def add_message(notify_type, case_id, args=None):
         case_id: ID of case which will used to get arguments.
         args: dictionary of arguments for packaging with package_message.
     """
-    # TODO Will probably need to specify targets as extra argument if dependent on
-    # notification ID e.g. acknowledge, but may try to get around this instead.
 
     header = {"Content-Type": "application/json; charset=utf-8",
               "Authorization": "Basic {}".format(app.config['OS_REST_API_KEY'])}
@@ -90,12 +89,29 @@ def add_message(notify_type, case_id, args=None):
 
     if targets == None:
         payload["included_segments"] = ["All"]
-    # TODO Test filter-specific messages once roles implemented
     else:
         payload["filters"] = filterize(targets)
 
     req = requests.post("https://onesignal.com/api/v1/notifications", headers=header, data=json.dumps(payload))
     print(req.reason, req.text, req.json()) # debugging
+
+    # Pager Notification
+    pager_server_ip = app.config.get('PAGER_SERVER_IP')
+    pager_server_port = app.config.get('PAGER_SERVER_PORT')
+    pager_number = app.config.get('PAGER_NUMBER')
+    if pager_server_ip and pager_server_port and pager_number:
+        pager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        pager_socket.connect((pager_server_ip, pager_server_port))
+        pager_socket.sendall(pager_format(msg, pager_number))
+        data = pager_socket.receive(8)
+        print(data)
+        pager_socket.close()
+
+def pager_format(message, pager_number_string):
+    prefix = "m04"
+    suffix = "0"
+    formatted = "".join([prefix, pager_number_string.zfill(10), message, suffix])
+    return formatted.encode()
 
 def filterize(targets):
     filter_list = []
