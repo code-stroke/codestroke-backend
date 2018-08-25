@@ -101,7 +101,7 @@ def add_message(notify_type, case_id, args=None):
     pager_number = app.config.get('PAGER_NUMBER')
     if pager_server_ip and pager_server_port and pager_number:
         pager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        pager_socket.connect((pager_server_ip, pager_server_port))
+        pager_socket.connect((pager_server_ip, int(pager_server_port)))
         pager_socket.sendall(pager_format(msg, pager_number))
         data = pager_socket.receive(8)
         print(data)
