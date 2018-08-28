@@ -120,9 +120,10 @@ def get_all_case_info_(case_id):
     print(result)
     return result[0]
 
-def calculate_eta_(origin_lat, origin_long, dest_lat, dest_long, start_time_string):
+def calculate_eta_(origin_lat, origin_long, dest_lat, dest_long, start_time_string,
+                   extra_seconds=0):
     origin_lat = str(origin_lat)
-    origin_long = str(origin_long)    
+    origin_long = str(origin_long)
     endpoint = 'https://maps.googleapis.com/maps/api/distancematrix/json'
     payload = {'mode': 'driving',
                'origins': ','.join([origin_lat, origin_long]),
@@ -135,7 +136,7 @@ def calculate_eta_(origin_lat, origin_long, dest_lat, dest_long, start_time_stri
     try:
         time_to_dest = data['rows'][0]['elements'][0]['duration']['value'] # in seconds
         start_time = datetime.datetime.strptime(start_time_string, '%Y-%m-%d %H:%M')
-        eta = start_time + datetime.timedelta(0, time_to_dest)
+        eta = start_time + datetime.timedelta(seconds=(int(time_to_dest) + extra_seconds))
         eta_string = eta.strftime('%Y-%m-%d %H:%M')
     except KeyError:
         eta_string = None

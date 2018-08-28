@@ -145,11 +145,25 @@ def delete_case(case_id):
 def acknowledge_case(case_id):
     # Get notification ID from POST request (TODO check how notification sender is recorded...or implement this)
     # Match notification ID to sender
-    cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role']
+    cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role',
+                  'initial_location_lat', 'initial_location_long']
     args_event = ext.get_args_(cols_event, request.get_json())
 
+    if all(x in args_event.keys() for x in ['initial_location_lat', 'initial_location_long']):
+        init_lat = args_event['initial_location_lat']
+        init_long = args_event['initial_location_long']
+        if None not in [init_lat, init_long]:
+            eta = ext.calculate_eta_(init_lat, init_long,
+                                     app.config['HOSPITAL_LAT'], app.config['HOSPITAL_LONG'],
+                                     hooks.time_now(), extra_seconds=600)
+            args_event['eta'] = eta
+        else:
+            eta = 'UNKNOWN' # for notification
+            print('Debug line: initial location field latitude or longitude null.')
+    else:
+        eta='UNKNOWN'
+
     if not args_event:
-        print('Unknown signoff')
         args_event['signoff_first_name'] = None
         args_event['signoff_last_name'] = None
         args_event['signoff_role'] = None
