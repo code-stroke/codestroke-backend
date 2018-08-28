@@ -15,7 +15,7 @@ notify_types = {
     "case_acknowledged": {
         "targets": ["paramedic", "radiographer", "stroke_team",
                     "radiologist"],
-        "msg_base": "ACKNOWLEDGED BY {hospital_name}"
+        "msg_base": "ACKNOWLEDGED BY {hospital_name}: ETA {eta}"
     },
     "case_arrived": {
         "targets": ["ed_clinician", "radiographer", "stroke_team",
