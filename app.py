@@ -156,12 +156,12 @@ def acknowledge_case(case_id):
             eta = ext.calculate_eta_(init_lat, init_long,
                                      app.config['HOSPITAL_LAT'], app.config['HOSPITAL_LONG'],
                                      hooks.time_now(), extra_seconds=600)
-            args_event['eta'] = eta
         else:
             eta = 'UNKNOWN' # for notification
             print('Debug line: initial location field latitude or longitude null.')
     else:
         eta='UNKNOWN'
+    args_event['eta'] = eta
 
     if not args_event:
         args_event['signoff_first_name'] = None

@@ -8,7 +8,7 @@ Backend code for codestroke in early development - June-July sprint edition!
 
 1. Python
 2. Some sort of [virtual environment](https://virtualenv.pypa.io/en/stable/) (not essential but highly recommended)
-3. An `app.conf` file containing database details as described in Quick Start. 
+3. An `app.conf` file containing database details as described in Quick Start.
 
 For a quick start:
 
@@ -32,6 +32,7 @@ For a quick start:
    13. `PAGER_SERVER_IP` (the address for the internal pager server)
    14. `PAGER_SERVER_PORT` (the port for the internal pager server)
    15. `PAGER_NUMBER` (the pager number for notifications to be sent to)
+   16. `MINIMUM_VERSION` (the minimum acceptable frontend version)
 5. Run `python app.py` from this directory.
 6. Navigate to `http://127.0.0.1:5000` in your web browser (or wherever else you
    have set the server to host from).
@@ -54,7 +55,7 @@ debugger mode stating that this can't be done reliably. Better safe than sorry!
 ### Database Schema
 
 Please have a look at `schema.sql` which has the main patient database schema
-that the backend is based on. 
+that the backend is based on.
 
 Some of the values do NOT have to be manually sent and will be automatically
 filled by the backend. These include:
@@ -87,7 +88,7 @@ because MySQL requires that these be actual valid points in time; and, as an
 extra caveat, `timestamp` has a set range with the minimum being the first
 second of the year 1970. Thankfully, all the `timestamp` fields are things which
 you'd expect are quite recent (you'd hope someone's last meal wasn't in the
-1970s!) so hopefully this shouldn't pose a problem. 
+1970s!) so hopefully this shouldn't pose a problem.
 
 Any `bool` fields will NOT accept 'unknown' values, usually because they are
 things that are controlled by the hospital (e.g. whether the patient was
@@ -109,7 +110,7 @@ agreed password (the hash of which is stored in the app config file). The
 username is not checked and can be anything (but for consistency's sake, make it
 'global'. It doesn't really matter). If you do not send this header, or the
 password is wrong, you will get `success = false` and `error_type = 'auth'` as
-your response (otherwise you'll get `success = true` and the actual data back). 
+your response (otherwise you'll get `success = true` and the actual data back).
 
 A further note is that with every POST and PUT request, there are (technically
 optional, but much preferred if they're filled) three additional parameters to
@@ -119,9 +120,9 @@ identify who made the request:
 2. `signoff_last_name`
 3. `signoff_role` (which *must* be one of the types listed as a role in the
    schema)
-   
+
 If these are not specified, the data will still be sent but the event will be
-logged as unsigned and the notification will be shown as unsigned as well. 
+logged as unsigned and the notification will be shown as unsigned as well.
 
 ### Route Listing
 
@@ -202,7 +203,7 @@ changes.
 ### Deleting Patients
 
 For development purposes, you can delete a patient by accessing the
-`/cases/<case_id>/` route and sending a DELETE request. 
+`/cases/<case_id>/` route and sending a DELETE request.
 
 ### Event Log
 
@@ -214,7 +215,7 @@ The route to GET the event log is at `/event_log/`.
 ### Authentication (DRAFT)
 
 For every request decorated with `@requires_auth`, you will need to be
-authenticated. 
+authenticated.
 
 The authentication workflow as it currently stands is as follows:
 
@@ -225,7 +226,7 @@ The authentication workflow as it currently stands is as follows:
    with their role upon login, and send this to the OneSignal API.
 3. Once you've received the access token, you will need to send an Authorization
    header with the username and access token with every request that
-   requires authentication. 
+   requires authentication.
 4. Send a POST request to `/logout/` with the `username` and `token` data to
    reset the token to `NULL` on the server, which will invalidate the current
    access token. For OneSignal integration, you should unsubscribe the user's

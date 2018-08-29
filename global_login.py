@@ -16,5 +16,15 @@ def requires_global_auth(f):
             return jsonify({'success': False,
                             'error_type': 'auth',
                             'debugmsg': 'Authentication failed',})
+        data = request.get_json()
+        print(data)
+        if data:
+            if data.get('version'):
+                version = data.get('version')
+                print(version)
+                if float(version) < float(app.config['MINIMUM_VERSION']):
+                    return jsonify({'success': False,
+                                    'error_type': 'version',
+                                    'debugmsg': 'Version incompatible'})
         return f(*args, **kwargs)
     return decorated
