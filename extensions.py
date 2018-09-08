@@ -9,7 +9,7 @@ mysql = MySQL()
 
 def connect_():
     cursor = mysql.connection.cursor()
-    cursor.execute('use codestrokezero$codestroke')
+    cursor.execute('use codestroke$codestroke')
     cursor.execute('set time_zone = "+10:00"')
     return cursor
 
@@ -25,7 +25,7 @@ def execute_sqlfile_(sqlfile):
 
 def check_database_():
     cursor = connect_()
-    check_query = "show databases like 'codestrokezero$codestroke'"
+    check_query = "show databases like 'codestroke$codestroke'"
     cursor.execute(check_query)
     return cursor.fetchall()
 
@@ -33,7 +33,7 @@ def valid_table_(table):
     cursor = connect_()
     cursor.execute('show tables')
     result = cursor.fetchall()
-    tables_list = [item['Tables_in_codestrokezero$codestroke'] for item in result]
+    tables_list = [item['Tables_in_codestroke$codestroke'] for item in result]
     if table in tables_list:
         return True
     else:
@@ -109,7 +109,7 @@ def get_all_case_info_(case_id):
     cursor = connect_()
     cursor.execute('show tables')
     result = cursor.fetchall()
-    tables_list = [item['Tables_in_codestrokezero$codestroke'] for item in result]
+    tables_list = [item['Tables_in_codestroke$codestroke'] for item in result]
     case_info_tables = filter(lambda x: x.startswith('case_'), tables_list)
     query = 'select * from cases ' + \
             ' '.join(['left join {} using (case_id)'.format(tbl) for tbl in case_info_tables]) + \
