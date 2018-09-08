@@ -41,33 +41,6 @@ def register_user():
 
     return jsonify({'success': True})
 
-@users.route('/login/', methods=['POST'])
-def user_login():
-    # for testing only; TODO change to accepting pwhash instead of password
-    args = ext.get_args_(['username', 'password'], request.get_json())
-
-    query = 'select pwhash from clinicians where username = %s'
-    cursor = ext.connect_()
-    cursor.execute(query, (args['username'],))
-    result = cursor.fetchall()
-
-    if result:
-        pwhash = result[0]['pwhash']
-        if pbkdf2_sha256.verify(args['password'], pwhash):
-            query = 'select first_name, last_name, role from clinicians where username = %s'
-            cursor.execute(query, (args['username'],))
-            result = cursor.fetchall()
-            user_result = result[0]
-            user_info = {'signoff_' + k: user_result[k] for k in user_result.keys()}
-            return jsonify({'success': True,
-                            'user_info': user_info})
-        else:
-            return jsonify({'success': False,
-                            'debugmsg': 'Password incorrect.'})
-    else:
-        return jsonify({'success': False,
-                        'debugmsg': 'Username incorrect'})
-
 def check_auth(username, password):
     cursor = ext.connect_()
     query = 'select pwhash from clinicians where username = %s'
@@ -110,4 +83,10 @@ def requires_auth(f):
 
         return f(*args, **kwargs)
     return decorated
+
+@requires_auth
+@users.route('/login/', methods=['GET'])
+def user_login(user_info):
+    return jsonify({'success': True,
+                    'user_info': user_info})
 
