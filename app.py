@@ -175,7 +175,7 @@ def acknowledge_case(case_id):
     args_event = {}
 
     prior_meta = ext.select_query_result_({"case_id":case_id}, 'cases')['result'][0]
-    meta = {'info_table': info_table, 'case_id': case_id,
+    meta = {'case_id': case_id,
             'first_name': prior_meta.get('first_name'),
             'last_name': prior_meta.get('last_name'),
             'status': prior_meta.get('status'),
