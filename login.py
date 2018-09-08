@@ -77,12 +77,26 @@ def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
-        auth_check = check_auth(auth.username, auth.password)
+        if auth:
+            auth_check = check_auth(auth.username, auth.password)
+        else:
+            auth_check = (False, None)
         if not auth or not auth_check[0]:
             return jsonify({'success': False,
                             'login': False,
                             'debugmsg': 'Authentication failed',})
         kwargs['user_info'] = auth_check[1]
+        data = request.get_json()
+        print(data)
+        if data:
+            if data.get('version'):
+                version = data.get('version')
+                print(version)
+                if float(version) < float(app.config['MINIMUM_VERSION']):
+                    return jsonify({'success': False,
+                                    'error_type': 'version',
+                                    'debugmsg': 'Version incompatible'})
+ 
         return f(*args, **kwargs)
     return decorated
 
