@@ -113,8 +113,16 @@ and the actual data back).
 
 Users are registered at the `/register/` endpoint which accepts POST requests
 with first name, last name, role, username and password details. You can access
-the `/login/` endpoint with the Authentication header to view these details for
-a user. 
+the `/login/` endpoint with the Authentication header to view the first name,
+last name and role of a user (note that these will be returned as
+`signoff_first_name`, `signoff_last_name` and `signoff_role`, however at
+registration, you should send them as `first_name`, `last_name` and `role`
+instead). 
+
+At the present time, login persistence will purely be done from the frontend for
+simplicity. In the future, we will move to a more secure login workflow. 
+
+All passwords are hashed in the database.
 
 ### Route Listing
 
