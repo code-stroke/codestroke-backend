@@ -172,7 +172,8 @@ def acknowledge_case(case_id):
 
     notify.add_message('case_acknowledged', case_id, args_ack)
 
-    args_event = {}
+    cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role']
+    args_event = ext.get_args_(cols_event, request.get_json())
 
     prior_meta = ext.select_query_result_({"case_id":case_id}, 'cases')['result'][0]
     meta = {'case_id': case_id,
