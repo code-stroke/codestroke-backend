@@ -4,6 +4,7 @@ from extensions import mysql
 from uuid import uuid4
 from passlib.hash import pbkdf2_sha256
 import extensions as ext
+from flask import current_app as app
 
 users = Blueprint('users', __name__)
 
@@ -12,14 +13,24 @@ def register_user():
     fields = ['username', 'password', 'first_name', 'last_name', 'role']
     args = ext.get_args_(fields, request.get_json())
 
-    if not fields.get('username') or not fields.get('password'):
+    if not args.get('username') or not args.get('password'):
         return jsonify({'success': False,
-                        'message': 'Must provide usernamen and password'
+                        'debugmsg': 'Must provide username and password'
         })
 
     cursor = ext.connect_()
 
-    pwhash = pbkdf2_sha256.hash(fields.get('password'))
+    query = 'select username from clinicians'
+    cursor.execute(query)
+    result = cursor.fetchall()
+    taken = [item['username'] for item in result]
+    if args.get('username') in taken:
+        return jsonify({'success': False,
+                        'error_type': 'username',
+                        'debugmsg': 'Username is already taken.'
+                        })
+
+    pwhash = pbkdf2_sha256.hash(args.get('password'))
     args['pwhash'] = pwhash
     del args['password']
 
@@ -66,7 +77,7 @@ def check_auth(username, password):
         pwhash = result[0]['pwhash']
         if pbkdf2_sha256.verify(password, pwhash):
             query = 'select first_name, last_name, role from clinicians where username = %s'
-            cursor.execute(query, (args['username'],))
+            cursor.execute(query, (username,))
             result = cursor.fetchall()
             user_result = result[0]
             user_info = {'signoff_' + k: user_result[k] for k in user_result.keys()}
@@ -83,7 +94,7 @@ def requires_auth(f):
             auth_check = (False, None)
         if not auth or not auth_check[0]:
             return jsonify({'success': False,
-                            'login': False,
+                            'error_type': 'auth',
                             'debugmsg': 'Authentication failed',})
         kwargs['user_info'] = auth_check[1]
         data = request.get_json()
@@ -96,7 +107,7 @@ def requires_auth(f):
                     return jsonify({'success': False,
                                     'error_type': 'version',
                                     'debugmsg': 'Version incompatible'})
- 
+
         return f(*args, **kwargs)
     return decorated
 

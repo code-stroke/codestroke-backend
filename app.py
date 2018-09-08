@@ -163,7 +163,10 @@ def acknowledge_case(case_id, user_info):
     # Get notification ID from POST request (TODO check how notification sender is recorded...or implement this)
     # Match notification ID to sender
     cols_ack = ['initial_location_lat', 'initial_location_long']
-    args_ack = ext.get_args_(cols_ack, request.get_json())
+    if request.get_json():
+        args_ack = ext.get_args_(cols_ack, request.get_json())
+    else:
+        args_ack = {}
 
     for key in ['signoff_first_name', 'signoff_last_name', 'signoff_role']:
         args_ack[key] = user_info[key]
@@ -205,6 +208,7 @@ def acknowledge_case(case_id, user_info):
     args_event['event_data'] = json.dumps(args_ack)
     args_event['event_metadata'] = json.dumps(meta)
 
+    cursor = ext.connect_()
     event_params = ext.add_(args_event)
     event_query = 'insert into event_log ' + event_params[0]
     cursor.execute(event_query, event_params[1])
