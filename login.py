@@ -84,8 +84,8 @@ def requires_auth(f):
         return f(*args, **kwargs)
     return decorated
 
-@requires_auth
 @users.route('/login/', methods=['GET'])
+@requires_auth
 def user_login(user_info):
     return jsonify({'success': True,
                     'user_info': user_info})
