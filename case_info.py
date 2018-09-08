@@ -39,7 +39,7 @@ def get_case_info(info_table, case_id, user_info):
 
 @case_info.route('/<int:case_id>/', methods=(['PUT']))
 @requires_auth
-def edit_case_info(info_table, case_id):
+def edit_case_info(info_table, case_id, user_info):
     if not request.get_json():
         return jsonify({'success': False,
                         'error_type': 'request',
