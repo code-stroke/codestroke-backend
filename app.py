@@ -133,11 +133,38 @@ def add_case():
 @app.route('/cases/<int:case_id>/', methods=(['DELETE']))
 @requires_global_auth
 def delete_case(case_id):
+
+    cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role']
+    args_event = ext.get_args_(cols_event, request.get_json())
+    if not args_event:
+        args_event['signoff_first_name'] = None
+        args_event['signoff_last_name'] = None
+        args_event['signoff_role'] = None
+
+    prior_meta = ext.select_query_result_({"case_id":case_id}, 'cases')['result'][0]
+    meta = {'case_id': case_id,
+            'first_name': prior_meta.get('first_name'),
+            'last_name': prior_meta.get('last_name'),
+            'status': prior_meta.get('status'),
+            'gender': prior_meta.get('gender'),
+            'dob': prior_meta.get('dob'),
+    }
+
+    args_event['event_type'] = 'delete'
+    args_event['event_data'] = json.dumps({})
+    args_event['event_metadata'] = json.dumps(meta)
+
     cursor = ext.connect_()
     query = 'delete from cases where case_id = %s'
     cursor.execute(query, (case_id,))
     mysql.connection.commit()
     # TODO Implement check that was deleted
+
+    event_params = ext.add_(args_event)
+    event_query = 'insert into event_log ' + event_params[0]
+    cursor.execute(event_query, event_params[1])
+    mysql.connection.commit()
+
     return jsonify({'success': True})
 
 @app.route('/acknowledge/<int:case_id>/', methods=(['POST']))
