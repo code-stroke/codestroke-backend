@@ -104,25 +104,17 @@ in the future!
 
 ### Authentication and Signoffs
 
-With any endpoint decorated with `requires_global_auth` (which should be most,
-if not, all endpoints), you'll need to send an Authorisation header with an
-agreed password (the hash of which is stored in the app config file). The
-username is not checked and can be anything (but for consistency's sake, make it
-'global'. It doesn't really matter). If you do not send this header, or the
-password is wrong, you will get `success = false` and `error_type = 'auth'` as
-your response (otherwise you'll get `success = true` and the actual data back).
+With any endpoint decorated with `requires_auth` (which should be most,
+endpoints except for registration and database creation), you'll need to send an
+Authorisation header with a registered user's username and password. If you do not
+send this header, or the password is wrong, you will get `success = false` and
+`error_type = 'auth'` as your response (otherwise you'll get `success = true`
+and the actual data back).
 
-A further note is that with every POST and PUT request, there are (technically
-optional, but much preferred if they're filled) three additional parameters to
-identify who made the request:
-
-1. `signoff_first_name`
-2. `signoff_last_name`
-3. `signoff_role` (which *must* be one of the types listed as a role in the
-   schema)
-
-If these are not specified, the data will still be sent but the event will be
-logged as unsigned and the notification will be shown as unsigned as well.
+Users are registered at the `/register/` endpoint which accepts POST requests
+with first name, last name, role, username and password details. You can access
+the `/login/` endpoint with the Authentication header to view these details for
+a user. 
 
 ### Route Listing
 
