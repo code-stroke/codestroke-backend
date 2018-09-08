@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS `case_managements` (
 
 CREATE TABLE IF NOT EXISTS `event_log` (
   `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `event_type` enum('add', 'edit') NOT NULL,
+  `event_type` varchar(20) NOT NULL,
   `event_data` text DEFAULT NULL,
   `event_metadata` text DEFAULT NULL,
   `signoff_first_name` varchar(30) DEFAULT NULL,
