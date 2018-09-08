@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, redirect, url_for, session, flash, Blueprint
 from flask_mysqldb import MySQL, MySQLdb
-from global_login import requires_global_auth
+from login import requires_auth
 import extensions as ext
 from extensions import mysql
 import hooks
@@ -9,8 +9,8 @@ import json
 case_info = Blueprint('case_info', __name__, url_prefix='/case<info_table>')
 
 @case_info.route('/<int:case_id>/', methods=(['GET']))
-@requires_global_auth
-def get_case_info(info_table, case_id):
+@requires_auth
+def get_case_info(info_table, case_id, user_info):
     info_table = 'case' + info_table
     qargs = {"case_id":case_id}
     results = ext.select_query_result_(qargs, info_table)
@@ -38,7 +38,7 @@ def get_case_info(info_table, case_id):
     return jsonify(results)
 
 @case_info.route('/<int:case_id>/', methods=(['PUT']))
-@requires_global_auth
+@requires_auth
 def edit_case_info(info_table, case_id):
     if not request.get_json():
         return jsonify({'success': False,
@@ -59,13 +59,7 @@ def edit_case_info(info_table, case_id):
     # For event metadata logging
     prior_meta = ext.select_query_result_({"case_id":case_id}, 'cases')['result'][0]
 
-    cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role']
-    args_event = ext.get_args_(cols_event, request.get_json())
-    if not args_event:
-        args_event['signoff_first_name'] = None
-        args_event['signoff_last_name'] = None
-        args_event['signoff_role'] = None
-
+    args_event = user_info
     qargs = {**qargs, **args_event}
 
     qargs = hooks.put(info_table, case_id, qargs, prior)
@@ -80,21 +74,6 @@ def edit_case_info(info_table, case_id):
     #cursor.execute("update %s " + query[0] + " where case_id=%s", (info_table,)+query[1]+(case_id,))
     cursor.execute(query_string, query[1]+(case_id,))
     mysql.connection.commit()
-
-    # Event logging
-
-    # Get first name and last name
-    # if info_table != 'cases':# TODO Think about whether might move this to hooks?
-    #     cursor = ext.connect_()
-    #     query = 'select {} from {} where case_id=%s'
-    #     extra_fields = [('first_name', 'cases'),
-    #                     ('last_name', 'cases')
-    #     ]
-    #     for field in extra_fields:
-    #         cursor.execute(query.format(field[0], field[1]), (case_id, ))
-    #         field_result = cursor.fetchall()
-    #         field_val = field_result[0][field[0]]
-    #         qargs[field[0]] = field_val
 
     meta = {'info_table': info_table, 'case_id': case_id,
             'first_name': prior_meta.get('first_name'),

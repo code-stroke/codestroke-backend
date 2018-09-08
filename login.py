@@ -46,7 +46,8 @@ def user_login():
             query = 'select first_name, last_name, role from clinicians where username = %s'
             cursor.execute(query, (args['username'],))
             result = cursor.fetchall()
-            user_info = result[0]
+            user_result = result[0]
+            user_info = {'signoff_' + k: user_result[k] for k in user_result.keys()}
             return jsonify({'success': True,
                             'user_info': user_info})
         else:
@@ -67,7 +68,8 @@ def check_auth(username, password):
             query = 'select first_name, last_name, role from clinicians where username = %s'
             cursor.execute(query, (args['username'],))
             result = cursor.fetchall()
-            user_info = result[0]
+            user_result = result[0]
+            user_info = {'signoff_' + k: user_result[k] for k in user_result.keys()}
             return True, user_info
     return False, None
 

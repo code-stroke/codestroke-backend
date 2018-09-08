@@ -4,7 +4,6 @@ from flask_mysqldb import MySQL, MySQLdb
 from passlib.hash import pbkdf2_sha256
 from case_info import case_info
 from login import users, requires_auth
-from global_login import requires_global_auth
 import extensions as ext
 from extensions import mysql
 import getpass, datetime, urllib.request
@@ -21,15 +20,14 @@ app.register_blueprint(case_info)
 app.register_blueprint(users)
 
 @app.route('/')
-@requires_global_auth
-def index():
+@requires_auth
+def index(user_info):
     if ext.check_database_():
         return jsonify({'success': True})
     else:
         return jsonify({'success': False, 'error_type': 'database'})
 
 @app.route('/create_db/')
-@requires_global_auth
 def create_db():
     #try:
     ext.execute_sqlfile_('schema.sql')
@@ -39,15 +37,15 @@ def create_db():
     #    return jsonify({"status":"error",}), 400
 
 @app.route('/cases/', methods=(['GET']))
-@requires_global_auth
-def get_cases():
+@requires_auth
+def get_cases(user_info):
     result = ext.select_query_result_({}, 'cases')
     result['success'] = True
     return jsonify(result)
 
 @app.route('/cases/', methods=(['POST']))
-@requires_global_auth
-def add_case():
+@requires_auth
+def add_case(user_info):
     if not request.get_json():
         return jsonify({'success': False,
                         'error_type': 'request',
@@ -101,14 +99,7 @@ def add_case():
     mysql.connection.commit()
 
     # POST ADDITION HOOKS
-    cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role']
-    args_event = ext.get_args_(cols_event, request.get_json())
-
-    if not args_event:
-        print('Unknown signoff')
-        args_event['signoff_first_name'] = None
-        args_event['signoff_last_name'] = None
-        args_event['signoff_role'] = None
+    args_event = user_info
 
     args_event['event_type'] = 'add'
     args_event['event_data'] = json.dumps(args_cases)
@@ -131,11 +122,10 @@ def add_case():
     return jsonify({'success': True, 'case_id': case_id})
 
 @app.route('/cases/<int:case_id>/', methods=(['DELETE']))
-@requires_global_auth
-def delete_case(case_id):
+@requires_auth
+def delete_case(case_id, user_info):
 
-    cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role']
-    args_event = ext.get_args_(cols_event, request.get_json())
+    args_event = user_info
     if not args_event:
         args_event['signoff_first_name'] = None
         args_event['signoff_last_name'] = None
@@ -168,13 +158,15 @@ def delete_case(case_id):
     return jsonify({'success': True})
 
 @app.route('/acknowledge/<int:case_id>/', methods=(['POST']))
-@requires_global_auth
-def acknowledge_case(case_id):
+@requires_auth
+def acknowledge_case(case_id, user_info):
     # Get notification ID from POST request (TODO check how notification sender is recorded...or implement this)
     # Match notification ID to sender
-    cols_ack = ['signoff_first_name', 'signoff_last_name', 'signoff_role',
-                  'initial_location_lat', 'initial_location_long']
+    cols_ack = ['initial_location_lat', 'initial_location_long']
     args_ack = ext.get_args_(cols_ack, request.get_json())
+
+    for key in ['signoff_first_name', 'signoff_last_name', 'signoff_role']:
+        args_ack[key] = user_info[key]
 
     if all(x in args_ack.keys() for x in ['initial_location_lat', 'initial_location_long']):
         init_lat = args_ack['initial_location_lat']
@@ -199,10 +191,7 @@ def acknowledge_case(case_id):
 
     notify.add_message('case_acknowledged', case_id, args_ack)
 
-    args_event = {}
-    args_event['signoff_first_name'] = args_ack.get('signoff_first_name')
-    args_event['signoff_last_name'] = args_ack.get('signoff_last_name')
-    args_event['signoff_role'] = args_ack.get('signoff_role')
+    args_event = user_info
 
     prior_meta = ext.select_query_result_({"case_id":case_id}, 'cases')['result'][0]
     meta = {'case_id': case_id,
@@ -227,8 +216,8 @@ if __name__ == '__main__':
     app.run(debug = True)
 
 @app.route('/event_log/limit/', methods=(['GET']))
-@requires_global_auth
-def get_event_log_limit():
+@requires_auth
+def get_event_log_limit(user_info):
     try:
         start = int(request.args.get('start'))
         number = int(request.args.get('number'))
@@ -250,8 +239,8 @@ def get_event_log_limit():
     return jsonify(output)
 
 @app.route('/event_log/all/', methods=(['GET']))
-@requires_global_auth
-def get_event_log_all():
+@requires_auth
+def get_event_log_all(user_info):
     cursor = ext.connect_()
     query = 'select * from event_log order by id desc'
     cursor.execute(query)
@@ -264,8 +253,8 @@ def get_event_log_all():
     return jsonify(output)
 
 @app.route('/event_log/datetime/', methods=(['GET']))
-@requires_global_auth
-def get_event_log_date():
+@requires_auth
+def get_event_log_date(user_info):
     start_string = request.args.get('start')
     end_string = request.args.get('end')
     try:
