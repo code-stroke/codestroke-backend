@@ -145,13 +145,13 @@ def delete_case(case_id):
 def acknowledge_case(case_id):
     # Get notification ID from POST request (TODO check how notification sender is recorded...or implement this)
     # Match notification ID to sender
-    cols_event = ['signoff_first_name', 'signoff_last_name', 'signoff_role',
+    cols_ack = ['signoff_first_name', 'signoff_last_name', 'signoff_role',
                   'initial_location_lat', 'initial_location_long']
-    args_event = ext.get_args_(cols_event, request.get_json())
+    args_ack = ext.get_args_(cols_ack, request.get_json())
 
-    if all(x in args_event.keys() for x in ['initial_location_lat', 'initial_location_long']):
-        init_lat = args_event['initial_location_lat']
-        init_long = args_event['initial_location_long']
+    if all(x in args_ack.keys() for x in ['initial_location_lat', 'initial_location_long']):
+        init_lat = args_ack['initial_location_lat']
+        init_long = args_ack['initial_location_long']
         if None not in [init_lat, init_long]:
             eta = ext.calculate_eta_(init_lat, init_long,
                                      app.config['HOSPITAL_LAT'], app.config['HOSPITAL_LONG'],
@@ -161,16 +161,36 @@ def acknowledge_case(case_id):
             print('Debug line: initial location field latitude or longitude null.')
     else:
         eta='UNKNOWN'
-    args_event['eta'] = eta
+    args_ack['eta'] = eta
 
-    if not args_event:
-        args_event['signoff_first_name'] = None
-        args_event['signoff_last_name'] = None
-        args_event['signoff_role'] = None
+    if not args_ack:
+        args_ack['signoff_first_name'] = None
+        args_ack['signoff_last_name'] = None
+        args_ack['signoff_role'] = None
 
-    args_event['hospital_name'] = app.config['HOSPITAL_NAME']
+    args_ack['hospital_name'] = app.config['HOSPITAL_NAME']
 
-    notify.add_message('case_acknowledged', case_id, args_event)
+    notify.add_message('case_acknowledged', case_id, args_ack)
+
+    args_event = {}
+
+    prior_meta = ext.select_query_result_({"case_id":case_id}, 'cases')['result'][0]
+    meta = {'info_table': info_table, 'case_id': case_id,
+            'first_name': prior_meta.get('first_name'),
+            'last_name': prior_meta.get('last_name'),
+            'status': prior_meta.get('status'),
+            'gender': prior_meta.get('gender'),
+            'dob': prior_meta.get('dob'),
+    }
+    args_event['event_type'] = 'acknowledge'
+    args_event['event_data'] = json.dumps(args_ack)
+    args_event['event_metadata'] = json.dumps(meta)
+
+    event_params = ext.add_(args_event)
+    event_query = 'insert into event_log ' + event_params[0]
+    cursor.execute(event_query, event_params[1])
+    mysql.connection.commit()
+
     return jsonify({'success': True})
 
 if __name__ == '__main__':
