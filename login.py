@@ -7,6 +7,29 @@ import extensions as ext
 
 users = Blueprint('users', __name__)
 
+@users.route('/register/', methods=['POST'])
+def register_user():
+    fields = ['username', 'password', 'first_name', 'last_name', 'role']
+    args = ext.get_args_(fields, request.get_json())
+
+    if not fields.get('username') or not fields.get('password'):
+        return jsonify({'success': False,
+                        'message': 'Must provide usernamen and password'
+        })
+
+    cursor = ext.connect_()
+
+    pwhash = pbkdf2_sha256.hash(fields.get('password'))
+    args['pwhash'] = pwhash
+    del args['password']
+
+    add_params = ext.add_(args)
+    add_query = 'insert into clinicians ' + add_params[0]
+    cursor.execute(add_query, add_params[1])
+    mysql.connection.commit()
+
+    return jsonify({'success': True})
+
 @users.route('/login/', methods=['POST'])
 def user_login():
     # for testing only; TODO change to accepting pwhash instead of password
@@ -20,21 +43,11 @@ def user_login():
     if result:
         pwhash = result[0]['pwhash']
         if pbkdf2_sha256.verify(args['password'], pwhash):
-
-            token = uuid4()
-            query = '''update clinicians 
-                       set token = %s, token_changed_time = current_timestamp 
-                       where username = %s'''
-            cursor.execute(query, (token, args['username']))
-            mysql.connection.commit()
-            
             query = 'select first_name, last_name, role from clinicians where username = %s'
             cursor.execute(query, (args['username'],))
             result = cursor.fetchall()
             user_info = result[0]
-            
             return jsonify({'success': True,
-                            'token': token,
                             'user_info': user_info})
         else:
             return jsonify({'success': False,
@@ -42,52 +55,32 @@ def user_login():
     else:
         return jsonify({'success': False,
                         'debugmsg': 'Username incorrect'})
-        
-@users.route('/logout/', methods=['POST'])
-def user_logout():
-    args = ext.get_args_(['username', 'token'], request.get_json())
+
+def check_auth(username, password):
     cursor = ext.connect_()
-
-    query = 'select token from clinicians where username = %s'
-    cursor.execute(query, (args['username'],))
-    result = cursor.fetchall()
-
-    if result:
-        token = result[0]['token']
-        if token == args['token']:
-            query = '''update clinicians 
-                       set token = NULL, token_changed_time = current_timestamp 
-                       where username = %s'''
-            cursor.execute(query, (args['username'],))
-            mysql.connection.commit()
-            # TODO check result if necessary
-            return jsonify({'success': True})
-        else:
-            return jsonify({'success': False,
-                            'debugmsg': 'Wrong token.'})
-    else:
-        return jsonify({'success': False,
-                        'debugmsg': 'Unknown username'})
-
-def check_auth(username, token):
-    cursor = ext.connect_()
-    query = 'select token from clinicians where username = %s'
+    query = 'select pwhash from clinicians where username = %s'
     cursor.execute(query, (username,))
     result = cursor.fetchall()
     if result:
-        db_token = result[0]['token']
-        if db_token == token:
-            return True
-    return False
-        
+        pwhash = result[0]['pwhash']
+        if pbkdf2_sha256.verify(password, pwhash):
+            query = 'select first_name, last_name, role from clinicians where username = %s'
+            cursor.execute(query, (args['username'],))
+            result = cursor.fetchall()
+            user_info = result[0]
+            return True, user_info
+    return False, None
+
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
+        auth_check = check_auth(auth.username, auth.password)
+        if not auth or not auth_check[0]:
             return jsonify({'success': False,
                             'login': False,
                             'debugmsg': 'Authentication failed',})
+        kwargs['user_info'] = auth_check[1]
         return f(*args, **kwargs)
     return decorated
-            
+
