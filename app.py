@@ -4,6 +4,7 @@ from flask_mysqldb import MySQL, MySQLdb
 from passlib.hash import pbkdf2_sha256
 from case_info import case_info
 from login import users, requires_auth
+from event_log import event_log
 import extensions as ext
 from extensions import mysql
 import getpass, datetime, urllib.request
@@ -18,6 +19,7 @@ mysql.init_app(app)
 
 app.register_blueprint(case_info)
 app.register_blueprint(users)
+app.register_blueprint(event_log)
 
 @app.route('/')
 @requires_auth
@@ -25,7 +27,7 @@ def index(user_info):
     if ext.check_database_():
         return jsonify({'success': True})
     else:
-        return jsonify({'success': False, 'error_type': 'database'})
+        return jsonify({'success': False, 'error_type': 'database'}), 500
 
 @app.route('/create_db/')
 def create_db():
@@ -218,62 +220,3 @@ def acknowledge_case(case_id, user_info):
 if __name__ == '__main__':
     app.run(debug = True)
 
-@app.route('/event_log/limit/', methods=(['GET']))
-@requires_auth
-def get_event_log_limit(user_info):
-    try:
-        start = int(request.args.get('start'))
-        number = int(request.args.get('number'))
-    except:
-        output = {'success': False, 'error_type': 'parameters', 'debugmsg': 'Insufficient or invalid params.'}
-        return jsonify(output)
-    if start and number:
-        cursor = ext.connect_()
-        query = 'select * from event_log order by id desc limit {},{}'.format(start-1, number)
-        cursor.execute(query)
-        result = cursor.fetchall()
-        if result:
-            filtered = hooks.fetch(result, 'event_log')
-            output = {'result': filtered, 'success': True}
-        else:
-            output = {'result': None, 'success': True}
-    else:
-        output = {'result': None, 'success': False, 'debugmsg': 'Positive integers for params only.'}
-    return jsonify(output)
-
-@app.route('/event_log/all/', methods=(['GET']))
-@requires_auth
-def get_event_log_all(user_info):
-    cursor = ext.connect_()
-    query = 'select * from event_log order by id desc'
-    cursor.execute(query)
-    result = cursor.fetchall()
-    if result:
-        filtered = hooks.fetch(result, 'event_log')
-        output = {'result': filtered, 'success': True}
-    else:
-        output = {'result': None, 'success': True}
-    return jsonify(output)
-
-@app.route('/event_log/datetime/', methods=(['GET']))
-@requires_auth
-def get_event_log_date(user_info):
-    start_string = request.args.get('start')
-    end_string = request.args.get('end')
-    try:
-        date_format = "%Y-%m-%dT%H:%M:%S"
-        start_datetime = datetime.datetime.strptime(start_string, date_format)
-        end_datetime = datetime.datetime.strptime(end_string, date_format)
-    except:
-        output = {'success': False, 'error_type': 'parameters', 'debugmsg': 'Date improperly formatted.'}
-        return jsonify(output)
-    cursor = ext.connect_()
-    query = 'select * from event_log where event_timestamp >= %s and event_timestamp <= %s order by id desc'
-    cursor.execute(query, (start_datetime, end_datetime))
-    result = cursor.fetchall()
-    if result:
-        filtered = hooks.fetch(result, 'event_log')
-        output = {'result': filtered, 'success': True}
-    else:
-        output = {'result': None, 'success': True}
-    return jsonify(output)
