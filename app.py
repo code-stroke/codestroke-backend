@@ -4,7 +4,7 @@ from flask_mysqldb import MySQL, MySQLdb
 from passlib.hash import pbkdf2_sha256
 from case_info import case_info
 from login import users, requires_auth
-from event_log import event_log
+from event_log import event_log, log_event
 import extensions as ext
 from extensions import mysql
 import getpass, datetime, urllib.request
@@ -100,24 +100,14 @@ def add_case(user_info):
     mysql.connection.commit()
 
     # POST ADDITION HOOKS
-    args_event = user_info
-
-    args_event['event_type'] = 'add'
-    args_event['event_data'] = json.dumps(args_cases)
     meta = {'case_id': case_id, 'first_name': args_cases.get('first_name'),
             'last_name': args_cases.get('last_name'), 'status': status,
             'gender': args_cases.get('gender'), 'dob': args_cases.get('dob'),
     }
-    print(meta)
-    args_event['event_metadata'] = json.dumps(meta)
+    log_event('add', args_cases, meta, user_info)
 
-    event_params = ext.add_(args_event)
-    event_query = 'insert into event_log ' + event_params[0]
-    cursor.execute(event_query, event_params[1])
-    mysql.connection.commit()
-
+    args_event = user_info
     args_event['eta'] = eta
-
     notify.add_message(notify_type, case_id, args_event)
 
     return jsonify({'success': True, 'case_id': case_id})
@@ -125,12 +115,6 @@ def add_case(user_info):
 @app.route('/cases/<int:case_id>/', methods=(['DELETE']))
 @requires_auth
 def delete_case(case_id, user_info):
-
-    args_event = user_info
-    if not args_event:
-        args_event['signoff_first_name'] = None
-        args_event['signoff_last_name'] = None
-        args_event['signoff_role'] = None
 
     prior_meta = ext.select_query_result_({"case_id":case_id}, 'cases')['result'][0]
     meta = {'case_id': case_id,
@@ -141,20 +125,13 @@ def delete_case(case_id, user_info):
             'dob': prior_meta.get('dob'),
     }
 
-    args_event['event_type'] = 'delete'
-    args_event['event_data'] = json.dumps({})
-    args_event['event_metadata'] = json.dumps(meta)
-
     cursor = ext.connect_()
     query = 'delete from cases where case_id = %s'
     cursor.execute(query, (case_id,))
     mysql.connection.commit()
     # TODO Implement check that was deleted
 
-    event_params = ext.add_(args_event)
-    event_query = 'insert into event_log ' + event_params[0]
-    cursor.execute(event_query, event_params[1])
-    mysql.connection.commit()
+    log_event('delete', {}, meta, user_info)
 
     return jsonify({'success': True})
 
@@ -184,18 +161,14 @@ def acknowledge_case(case_id, user_info):
             print('Debug line: initial location field latitude or longitude null.')
     else:
         eta='UNKNOWN'
-    args_ack['eta'] = eta
 
+    args_ack['eta'] = eta
     if not args_ack:
         args_ack['signoff_first_name'] = None
         args_ack['signoff_last_name'] = None
         args_ack['signoff_role'] = None
-
     args_ack['hospital_name'] = app.config['HOSPITAL_NAME']
-
     notify.add_message('case_acknowledged', case_id, args_ack)
-
-    args_event = user_info
 
     prior_meta = ext.select_query_result_({"case_id":case_id}, 'cases')['result'][0]
     meta = {'case_id': case_id,
@@ -205,15 +178,7 @@ def acknowledge_case(case_id, user_info):
             'gender': prior_meta.get('gender'),
             'dob': prior_meta.get('dob'),
     }
-    args_event['event_type'] = 'acknowledge'
-    args_event['event_data'] = json.dumps(args_ack)
-    args_event['event_metadata'] = json.dumps(meta)
-
-    cursor = ext.connect_()
-    event_params = ext.add_(args_event)
-    event_query = 'insert into event_log ' + event_params[0]
-    cursor.execute(event_query, event_params[1])
-    mysql.connection.commit()
+    log_event('acknowledge', args_ack, meta, user_info)
 
     return jsonify({'success': True})
 

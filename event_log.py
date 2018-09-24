@@ -1,10 +1,30 @@
 from flask import Blueprint, request, jsonify
+from flask_mysqldb import MySQL, MySQLdb
 import extensions as ext
 from login import requires_auth
 import datetime
 import hooks
 
 event_log = Blueprint('event_log', __name__)
+
+def log_event(event_type, event_data, event_metadata, user_info):
+    args_event = user_info
+    if not user_info:
+        args_event = {}
+        args_event['signoff_first_name'] = None
+        args_event['signoff_last_name'] = None
+        args_event['signoff_role'] = None
+
+    args_event['event_type'] = event_type
+    args_event['event_data'] = json.dumps(event_data)
+    args_event['event_metadata'] = json.dumps(event_metadata)
+
+    cursor = ext.connect_()
+    event_params = ext.add_(args_event)
+    event_query = 'insert into event_log ' + event_params[0]
+    cursor.execute(event_query, event_params[1])
+    mysql.connection.commit()
+
 
 @event_log.route('/limit/', methods=(['GET']))
 @requires_auth
