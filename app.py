@@ -3,7 +3,7 @@ from flask_cors import CORS
 from flask_mysqldb import MySQL, MySQLdb
 from passlib.hash import pbkdf2_sha256
 from case_info import case_info
-from login import users, requires_auth
+from clinicians import clinicians, requires_clinician
 from event_log import event_log, log_event
 import extensions as ext
 from extensions import mysql
@@ -18,8 +18,8 @@ CORS(app)
 mysql.init_app(app)
 
 app.register_blueprint(case_info)
-app.register_blueprint(users)
-app.register_blueprint(event_log)
+app.register_blueprint(clinicians, url_prefix='/clinicians')
+app.register_blueprint(event_log, url_prefix='/event_log')
 
 @app.route('/')
 @requires_auth
