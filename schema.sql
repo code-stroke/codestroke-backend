@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS `codestroke$codestroke`;
-USE `codestroke$codestroke`;
+CREATE DATABASE IF NOT EXISTS `[DATABASE_NAME]`;
+USE `[DATABASE_NAME]`;
 
 CREATE TABLE IF NOT EXISTS `clinicians` (
   `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -7,14 +7,27 @@ CREATE TABLE IF NOT EXISTS `clinicians` (
   `last_name` varchar(30) DEFAULT NULL,
   `username` varchar(20) NOT NULL,
   `pwhash` text NOT NULL,
-  `token` text DEFAULT NULL,
-  `token_changed_time` timestamp NULL DEFAULT NULL,
   `role` enum('paramedic', 'ed_clinician', 'radiographer',
        	      'stroke_team', 'radiologist', 'stroke_ward',
 	            'neuroint', 'angio_nurse', 'anaesthetist',
 	            'admin') DEFAULT NULL,
+  `email` varchar(40) NOT NULL,
+  `phone` varchar(16) DEFAULT NULL,
+  `pairing_code` text NOT NULL,
+  `is_paired` bool DEFAULT 0,
+  `shared_secret` text DEFAULT NULL,
+  `is_password_set` bool DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS `admins` (
+  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `first_name` varchar(30) DEFAULT NULL,
+  `last_name` varchar(30) DEFAULT NULL,
+  `username` varchar(20) NOT NULL,
+  `pwhash` text NOT NULL,
   `email` varchar(40) DEFAULT NULL
 );
+
 
 CREATE TABLE IF NOT EXISTS `cases` (
   `case_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,

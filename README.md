@@ -33,6 +33,7 @@ For a quick start:
    14. `PAGER_SERVER_PORT` (the port for the internal pager server)
    15. `PAGER_NUMBER` (the pager number for notifications to be sent to)
    16. `MINIMUM_VERSION` (the minimum acceptable frontend version)
+   17. `DATABASE_NAME` (the name of the database in MySQL)
 5. Run `python app.py` from this directory.
 6. Navigate to `http://127.0.0.1:5000` in your web browser (or wherever else you
    have set the server to host from).

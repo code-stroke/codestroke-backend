@@ -9,7 +9,7 @@ mysql = MySQL()
 
 def connect_():
     cursor = mysql.connection.cursor()
-    cursor.execute('use codestroke$codestroke')
+    cursor.execute('use {}'.format(app.config.get('DATABASE_NAME')))
     cursor.execute('set time_zone = "+10:00"')
     return cursor
 
@@ -17,7 +17,11 @@ def execute_sqlfile_(sqlfile):
     cursor = mysql.connection.cursor()
     with open(sqlfile) as schema_file:
         schema_queries = filter(lambda x: not (x == ''),
-                                ' '.join(schema_file.read().splitlines()).split(';'))
+                                ' '.join(schema_file.read()\
+                                         .replace('[DATABASE_NAME]',
+                                                  app.config.get('DATABASE_NAME'))\
+                                         .splitlines())\
+                                .split(';'))
     for query in schema_queries:
         cursor.execute(query)
     mysql.connection.commit()
@@ -25,7 +29,7 @@ def execute_sqlfile_(sqlfile):
 
 def check_database_():
     cursor = connect_()
-    check_query = "show databases like 'codestroke$codestroke'"
+    check_query = "show databases like '{}'".format(app.config.get('DATABASE_NAME'))
     cursor.execute(check_query)
     return cursor.fetchall()
 
@@ -33,7 +37,7 @@ def valid_table_(table):
     cursor = connect_()
     cursor.execute('show tables')
     result = cursor.fetchall()
-    tables_list = [item['Tables_in_codestroke$codestroke'] for item in result]
+    tables_list = [item['Tables_in_{}'.format(app.config.get('DATABASE_NAME'))] for item in result]
     if table in tables_list:
         return True
     else:
@@ -109,7 +113,7 @@ def get_all_case_info_(case_id):
     cursor = connect_()
     cursor.execute('show tables')
     result = cursor.fetchall()
-    tables_list = [item['Tables_in_codestroke$codestroke'] for item in result]
+    tables_list = [item['Tables_in_{}'.format(app.config.get('DATABASE_NAME'))] for item in result]
     case_info_tables = filter(lambda x: x.startswith('case_'), tables_list)
     query = 'select * from cases ' + \
             ' '.join(['left join {} using (case_id)'.format(tbl) for tbl in case_info_tables]) + \
