@@ -150,9 +150,6 @@ def calculate_eta_(origin_lat, origin_long, dest_lat, dest_long, start_time_stri
 def add_user_(user_table, request_args):
     cursor = connect_()
     columns = get_cols_(user_table)
-    columns.remove('id')
-    columns.remove('pwhash')
-    columns.append('password')
     args = get_args_(columns, request_args)
 
     if not args.get('username') or not args.get('password'):

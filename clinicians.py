@@ -3,16 +3,67 @@ from functools import wraps
 from extensions import mysql
 from uuid import uuid4
 from passlib.hash import pbkdf2_sha256
+import secrets
 import extensions as ext
 from flask import current_app as app
 from admin import requires_admin
+import pyqrcode
+import smtplib
+import json
 
 clinicians = Blueprint('clinicians', __name__)
 
 @clinicians.route('/register/', methods=['POST'])
 @requires_admin
 def register_clinician():
-    pass
+    inputs = request.get_json()
+    if not inputs.get('email'):
+        return jsonify({'success': False, 'debugmsg': 'Must include email'}), 400
+    exclude = ['id', 'pwhash', 'pairing_code', 'is_paired', 'shared_secret', 'is_password_set']
+    args = {k:inputs[k] for k in inputs.keys() if k not in exclude}
+
+
+    temp_password = secrets.token_urlsafe(16)
+    pairing_code = secrets.token_urlsafe(16)
+    args['pwhash'] = pbkdf2_sha256.hash(temp_password)
+    args['pairing_code'] = pairing_code
+
+    ext.add_user_('clinicians', args)
+
+    qrdata = {}
+    qrdata['username'] = inputs.get('username')
+    qrdata['password'] = inputs.get('password')
+    qrdata['pairing_code'] = pairing_code
+    qrdata['backend_domain'] = app.config.get('BACKEND_DOMAIN')
+    qrdata['backend_id'] = app.config.get('BACKEND_ID')
+
+    qrstring = json.dumps(qrdata)
+
+    # TODO Convert qrstring to PNG/SVG qrcode and send in email
+    #qrcode = pyqrcode.create(json.dumps(qrstring)
+
+    # TODO CHANGE TO SMTP SERVER FROM CONFIG
+    # GMAIL FOR TESTING ONLY
+    server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    server.ehlo()
+    server.login(app.config.get('GMAIL_USER'), app.config.get('GMAIL_PASSWORD'))
+
+    # TODO Tidy up and move to resources
+    contents = """\
+    From: {}
+    To: {}
+    Subject: Codestroke Registration
+
+    Test registration email.
+    {}
+    """
+
+    server.sendmail(app.config.get('GMAIL_USER'), inputs.get('email'),
+                    contents.format(app.config.get('GMAIL_USER'), inputs.get('email'), qrstring)
+    )
+    server.close()
+    return jsonify({'success': True, 'destination': inputs.get('email')})
+
 
 @clinicians.route('/pair/', methods=['POST'])
 def pair_clinician():
