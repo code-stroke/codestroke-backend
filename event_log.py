@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_mysqldb import MySQL, MySQLdb
 import extensions as ext
-from login import requires_auth
+from clinicians import requires_clinician
 import datetime
 import hooks
 
@@ -27,7 +27,7 @@ def log_event(event_type, event_data, event_metadata, user_info):
 
 
 @event_log.route('/limit/', methods=(['GET']))
-@requires_auth
+@requires_clinician
 def get_event_log_limit(user_info):
     try:
         start = int(request.args.get('start'))
@@ -50,7 +50,7 @@ def get_event_log_limit(user_info):
     return jsonify(output)
 
 @event_log.route('/all/', methods=(['GET']))
-@requires_auth
+@requires_clinician
 def get_event_log_all(user_info):
     cursor = ext.connect_()
     query = 'select * from event_log order by id desc'
@@ -64,7 +64,7 @@ def get_event_log_all(user_info):
     return jsonify(output)
 
 @event_log.route('/datetime/', methods=(['GET']))
-@requires_auth
+@requires_clinician
 def get_event_log_date(user_info):
     start_string = request.args.get('start')
     end_string = request.args.get('end')

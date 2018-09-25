@@ -22,7 +22,7 @@ app.register_blueprint(clinicians, url_prefix='/clinicians')
 app.register_blueprint(event_log, url_prefix='/event_log')
 
 @app.route('/')
-@requires_auth
+@requires_clinician
 def index(user_info):
     if ext.check_database_():
         return jsonify({'success': True})
@@ -53,7 +53,7 @@ def get_cases(user_info=None):
     return jsonify(result)
 
 @app.route('/cases/', methods=(['POST']))
-@requires_auth
+@requires_clinician
 def add_case(user_info):
     if not request.get_json():
         return jsonify({'success': False,
@@ -121,7 +121,7 @@ def add_case(user_info):
     return jsonify({'success': True, 'case_id': case_id})
 
 @app.route('/cases/<int:case_id>/', methods=(['DELETE']))
-@requires_auth
+@requires_clinician
 def delete_case(case_id, user_info):
 
     prior_meta = ext.select_query_result_({"case_id":case_id}, 'cases')['result'][0]
@@ -144,7 +144,7 @@ def delete_case(case_id, user_info):
     return jsonify({'success': True})
 
 @app.route('/acknowledge/<int:case_id>/', methods=(['POST']))
-@requires_auth
+@requires_clinician
 def acknowledge_case(case_id, user_info):
     # Get notification ID from POST request (TODO check how notification sender is recorded...or implement this)
     # Match notification ID to sender
