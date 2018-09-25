@@ -10,7 +10,8 @@ admin = Blueprint('admin', __name__)
 
 @admin.route('/', methods=['POST'])
 def add_admin():
-    pass
+    ext.add_user_('admins', request.get_json())
+    return jsonify({'success': True})
 
 def check_admin(username, password):
     cursor = ext.connect_()

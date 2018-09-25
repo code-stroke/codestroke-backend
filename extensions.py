@@ -4,6 +4,7 @@ from flask import current_app as app
 import requests
 import hooks
 import datetime
+from passlib.hash import pbkdf2_sha256
 
 mysql = MySQL()
 
@@ -146,7 +147,35 @@ def calculate_eta_(origin_lat, origin_long, dest_lat, dest_long, start_time_stri
         eta_string = None
     return eta_string
 
+def add_user_(user_table, request_args):
+    cursor = connect_()
+    columns = get_cols_(user_table)
+    columns.remove('id')
+    columns.remove('pwhash')
+    columns.append('password')
+    args = get_args_(columns, request_args)
 
+    if not args.get('username') or not args.get('password'):
+        return jsonify({'success': False,
+                        'debugmsg': 'Must provide username and password'
+        })
 
+    query = 'select username from {}'.format(user_table)
+    cursor.execute(query)
+    result = cursor.fetchall()
+    taken = [item['username'] for item in result]
+    if args.get('username') in taken:
+        return jsonify({'success': False,
+                        'error_type': 'username',
+                        'debugmsg': 'Username is already taken.'
+                        })
 
+    pwhash = pbkdf2_sha256.hash(args.get('password'))
+    args['pwhash'] = pwhash
+    del args['password']
+
+    add_params = add_(args)
+    add_query = 'insert into {} '.format(user_table) + add_params[0]
+    cursor.execute(add_query, add_params[1])
+    mysql.connection.commit()
 
