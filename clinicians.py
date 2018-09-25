@@ -67,6 +67,35 @@ def register_clinician():
 
 @clinicians.route('/pair/', methods=['POST'])
 def pair_clinician():
+    inputs = request.get_json()
+    in_username = inputs.get('username')
+    in_password = inputs.get('password')
+    in_pairing_code = inputs.get('pairing_code')
+    in_backend_domain = inputs.get('backend_domain')
+    in_backend_id = inputs.get('backend_id')
+
+    if not in_username or not in_password:
+        return jsonify({'sucess': False, 'debugmsg': 'Username or password not given.'})
+
+    if in_backend_domain != app.config.get('backend_domain') or in_backend_id != app.config.get('backend_id'):
+        return jsonify({'sucess': False, 'debugmsg': 'Backend details did not match'})
+
+    cursor = ext.connect_()
+    query = 'select pwhash, pairing_code, is_paired from clinicians where username = %s'
+    cursor.execute(query, (in_username,))
+    result = cursor.fetchall()
+    if result:
+        pwhash = result[0]['pwhash']
+        pairing_code = result[0]['pairing_code']
+        is_paired = result[0]['is_paired']
+        if pbkdf2_sha256.verify(in_password, pwhash) and in_pairing_code == pairing_code and not is_paired:
+            shared_secret = secrets.token_urlsafe(16)
+            query = "update clinicians set is_paired = 1, shared_secret = %s where username = %s"
+            cursor.execute(query, (shared_secret, username))
+            mysql.connection.commit()
+            return jsonify({'success': True, 'shared_secret': shared_secret})
+    return jsonify({'success': False, 'debugmsg': 'Input parameters did not pass'})
+
     pass
 
 @clinicians.route('/set_password/', methods=['POST'])
