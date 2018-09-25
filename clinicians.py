@@ -10,6 +10,7 @@ from admin import requires_admin
 import pyqrcode
 import smtplib
 import json
+import onetimepass
 
 clinicians = Blueprint('clinicians', __name__)
 
@@ -111,14 +112,15 @@ def set_password(user_info):
     mysql.connection.commit()
     return jsonify({'success': True})
 
-def check_clinician(username, password):
+def check_clinician(username, password, token):
     cursor = ext.connect_()
-    query = 'select pwhash from clinicians where username = %s'
+    query = 'select pwhash, shared_secret from clinicians where username = %s'
     cursor.execute(query, (username,))
     result = cursor.fetchall()
     if result:
         pwhash = result[0]['pwhash']
-        if pbkdf2_sha256.verify(password, pwhash):
+        shared_secret = result[0]['shared_secret']
+        if pbkdf2_sha256.verify(password, pwhash) and onetimepass.valid_totp(token, shared_secret):
             query = 'select first_name, last_name, role from clinicians where username = %s'
             cursor.execute(query, (username,))
             result = cursor.fetchall()
@@ -133,7 +135,13 @@ def requires_clinician(f):
     def decorated(*args, **kwargs):
         auth = request.authorization
         if auth:
-            auth_check = check_clinician(auth.username, auth.password)
+            username = auth.username
+            password_token = auth.password.split(":")
+            # TODO NOTE password must not contain colon character!
+            password = password_token[0]
+            # TODO CHeck if token can contain colon characters:
+            token = ":".join(password_token.split(":")[1:]) 
+            auth_check = check_clinician(username, password, token)
         else:
             auth_check = (False, None)
         if not auth or not auth_check[0]:
