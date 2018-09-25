@@ -51,17 +51,6 @@ def requires_clinician(f):
                             'error_type': 'auth',
                             'debugmsg': 'Authentication failed',}), 401
         kwargs['user_info'] = auth_check[1]
-        data = request.get_json()
-        print(data)
-        if data:
-            if data.get('version'):
-                version = data.get('version')
-                print(version)
-                if float(version) < float(app.config['MINIMUM_VERSION']):
-                    return jsonify({'success': False,
-                                    'error_type': 'version',
-                                    'debugmsg': 'Version incompatible'})
-
         return f(*args, **kwargs)
     return decorated
 

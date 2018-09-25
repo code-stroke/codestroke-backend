@@ -38,6 +38,14 @@ def create_db():
     #    print(e)
     #    return jsonify({"status":"error",}), 400
 
+@app.route('/version/', methods=(['GET']))
+def get_version():
+    version = app.config.get('MINIMUM_VERSION')
+    if version:
+        return jsonify({'success': True, 'version': version})
+    else:
+        return jsonify({'success': False, 'debugmsg': 'Version not specified'}), 500
+
 @app.route('/cases/', methods=(['GET']))
 def get_cases(user_info=None):
     result = ext.select_query_result_({}, 'cases')
