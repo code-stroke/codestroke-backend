@@ -75,10 +75,10 @@ def pair_clinician():
     in_backend_id = inputs.get('backend_id')
 
     if not in_username or not in_password:
-        return jsonify({'sucess': False, 'debugmsg': 'Username or password not given.'})
+        return jsonify({'sucess': False, 'debugmsg': 'Username or password not given.'}), 400
 
     if in_backend_domain != app.config.get('backend_domain') or in_backend_id != app.config.get('backend_id'):
-        return jsonify({'sucess': False, 'debugmsg': 'Backend details did not match'})
+        return jsonify({'sucess': False, 'debugmsg': 'Backend details did not match'}), 401
 
     cursor = ext.connect_()
     query = 'select pwhash, pairing_code, is_paired from clinicians where username = %s'
@@ -94,13 +94,22 @@ def pair_clinician():
             cursor.execute(query, (shared_secret, username))
             mysql.connection.commit()
             return jsonify({'success': True, 'shared_secret': shared_secret})
-    return jsonify({'success': False, 'debugmsg': 'Input parameters did not pass'})
+    return jsonify({'success': False, 'debugmsg': 'Input parameters did not pass'}), 401
 
     pass
 
 @clinicians.route('/set_password/', methods=['POST'])
-def set_password:
-    pass
+@requires_clinician
+def set_password(user_info):
+    inputs = request.get_json()
+    new_password = inputs.get('new_password')
+    if not new_password:
+        return jsonify({'success': False, 'debugmsg': 'No new password given.'}), 400
+    cursor = ext.connect_()
+    query = "update clinicians set pwhash = %s, is_password_set = 1 where username = %s"
+    cursor.execute(query, (pbkdf2_sha256.hash(new_password), user_info.get('username')))
+    mysql.connection.commit()
+    return jsonify({'success': True})
 
 def check_clinician(username, password):
     cursor = ext.connect_()
@@ -115,6 +124,7 @@ def check_clinician(username, password):
             result = cursor.fetchall()
             user_result = result[0]
             user_info = {'signoff_' + k: user_result[k] for k in user_result.keys()}
+            user_info['username'] = username
             return True, user_info
     return False, None
 
