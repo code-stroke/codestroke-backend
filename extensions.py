@@ -151,13 +151,10 @@ def add_user_(user_table, request_args):
     cursor = connect_()
     columns = get_cols_(user_table)
     args = get_args_(columns, request_args)
-    print(columns)
-    print(args)
-    print(request_args)
 
-    if not args.get('username') or not request_args.get('password'):
+    if not args.get('username'):
         return jsonify({'success': False,
-                        'debugmsg': 'Must provide username and password'
+                        'debugmsg': 'Must provide username.'
         }), False
 
     query = 'select username from {}'.format(user_table)
@@ -170,8 +167,9 @@ def add_user_(user_table, request_args):
                         'debugmsg': 'Username is already taken.'
                         }), False
 
-    pwhash = pbkdf2_sha256.hash(request_args.get('password'))
-    args['pwhash'] = pwhash
+    if user_table == 'admins':
+        pwhash = pbkdf2_sha256.hash(request_args.get('password'))
+        args['pwhash'] = pwhash
 
     add_params = add_(args)
     add_query = 'insert into {} '.format(user_table) + add_params[0]

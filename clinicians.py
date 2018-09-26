@@ -11,6 +11,10 @@ import pyqrcode
 import smtplib
 import json
 import onetimepass
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+import io
 
 clinicians = Blueprint('clinicians', __name__)
 
@@ -29,14 +33,9 @@ def register_clinician():
     args['pwhash'] = pbkdf2_sha256.hash(temp_password)
     args['pairing_code'] = pairing_code
 
-    add_result = ext.add_user_('clinicians', args)
-
-    if not add_result[1]:
-        return add_result[0]
-
     qrdata = {}
     qrdata['username'] = inputs.get('username')
-    qrdata['password'] = inputs.get('password')
+    qrdata['password'] = temp_password
     qrdata['pairing_code'] = pairing_code
     qrdata['backend_domain'] = app.config.get('BACKEND_DOMAIN')
     qrdata['backend_id'] = app.config.get('BACKEND_ID')
@@ -44,28 +43,53 @@ def register_clinician():
     qrstring = json.dumps(qrdata)
 
     # TODO Convert qrstring to PNG/SVG qrcode and send in email
-    #qrcode = pyqrcode.create(json.dumps(qrstring)
+    qrcode = pyqrcode.create(json.dumps(qrstring))
+    buffer = io.BytesIO()
+    qrcode.png(buffer, scale=8)
 
     # TODO CHANGE TO SMTP SERVER FROM CONFIG
     # GMAIL FOR TESTING ONLY
-    server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    server = smtplib.SMTP('smtp.gmail.com', 587)
     server.ehlo()
+    server.starttls()
     server.login(app.config.get('GMAIL_USER'), app.config.get('GMAIL_PASSWORD'))
 
     # TODO Tidy up and move to resources
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = "Codestroke Registration"
+    msg['From'] = app.config.get('GMAIL_USER')
+    msg['To'] = inputs.get('email')
     contents = """\
-    From: {}
-    To: {}
-    Subject: Codestroke Registration
-
-    Test registration email.
-    {}
-    """
+    <html>
+        <head></head>
+            <body>
+            <p>Hi!<br>
+            <br>
+            You've been registered for Codestroke.<br>
+            <br>
+            The registration process is almost complete! Please scan the QR code attached with your phone to complete the registration process.
+            <br>
+            DEBUG ONLY: {}
+            <br>
+            <br>
+            Codestroke Team
+            </p>
+        </body>
+    </html>
+    """.format(qrstring)
+    html = MIMEText(contents, 'html')
+    msg.attach(html)
+    print(buffer.getvalue())
+    image = MIMEImage(buffer.getvalue(), name='QR', _subtype="png")
+    msg.attach(image)
 
     server.sendmail(app.config.get('GMAIL_USER'), inputs.get('email'),
-                    contents.format(app.config.get('GMAIL_USER'), inputs.get('email'), qrstring)
+                    msg.as_string()
     )
     server.close()
+    add_result = ext.add_user_('clinicians', args)
+    if not add_result[1]:
+        return add_result[0]
     return jsonify({'success': True, 'destination': inputs.get('email')})
 
 

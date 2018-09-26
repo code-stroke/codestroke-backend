@@ -13,7 +13,8 @@ def add_admin():
     inputs = request.get_json()
     exclude = ['id', 'pwhash']
     args = {k:inputs[k] for k in inputs.keys() if k not in exclude}
-    print(args)
+    if not inputs.get('password'):
+        return jsonify({'success': False, 'debugmsg': 'Must include password'}), 400
     add_result = ext.add_user_('admins', args)
     return add_result[0]
 
