@@ -45,7 +45,7 @@ def register_clinician():
     # TODO Convert qrstring to PNG/SVG qrcode and send in email
     qrcode = pyqrcode.create(json.dumps(qrstring))
     buffer = io.BytesIO()
-    qrcode.png(buffer, scale=8)
+    qrcode.png(buffer, scale=6)
 
     # TODO CHANGE TO SMTP SERVER FROM CONFIG
     # GMAIL FOR TESTING ONLY
@@ -105,7 +105,7 @@ def pair_clinician():
     if not in_username or not in_password:
         return jsonify({'sucess': False, 'debugmsg': 'Username or password not given.'}), 400
 
-    if in_backend_domain != app.config.get('backend_domain') or in_backend_id != app.config.get('backend_id'):
+    if in_backend_domain != app.config.get('BACKEND_DOMAIN') or in_backend_id != app.config.get('BACKEND_ID'):
         return jsonify({'sucess': False, 'debugmsg': 'Backend details did not match'}), 401
 
     cursor = ext.connect_()
@@ -119,7 +119,7 @@ def pair_clinician():
         if pbkdf2_sha256.verify(in_password, pwhash) and in_pairing_code == pairing_code and not is_paired:
             shared_secret = secrets.token_urlsafe(16)
             query = "update clinicians set is_paired = 1, shared_secret = %s where username = %s"
-            cursor.execute(query, (shared_secret, username))
+            cursor.execute(query, (shared_secret, in_username))
             mysql.connection.commit()
             return jsonify({'success': True, 'shared_secret': shared_secret})
     return jsonify({'success': False, 'debugmsg': 'Input parameters did not pass'}), 401
