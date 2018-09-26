@@ -151,11 +151,14 @@ def add_user_(user_table, request_args):
     cursor = connect_()
     columns = get_cols_(user_table)
     args = get_args_(columns, request_args)
+    print(columns)
+    print(args)
+    print(request_args)
 
-    if not args.get('username') or not args.get('password'):
+    if not args.get('username') or not request_args.get('password'):
         return jsonify({'success': False,
                         'debugmsg': 'Must provide username and password'
-        })
+        }), False
 
     query = 'select username from {}'.format(user_table)
     cursor.execute(query)
@@ -165,14 +168,16 @@ def add_user_(user_table, request_args):
         return jsonify({'success': False,
                         'error_type': 'username',
                         'debugmsg': 'Username is already taken.'
-                        })
+                        }), False
 
-    pwhash = pbkdf2_sha256.hash(args.get('password'))
+    pwhash = pbkdf2_sha256.hash(request_args.get('password'))
     args['pwhash'] = pwhash
-    del args['password']
 
     add_params = add_(args)
     add_query = 'insert into {} '.format(user_table) + add_params[0]
     cursor.execute(add_query, add_params[1])
+    print(add_query)
     mysql.connection.commit()
+
+    return jsonify({'success': True}), True
 

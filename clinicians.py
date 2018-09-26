@@ -6,7 +6,7 @@ from passlib.hash import pbkdf2_sha256
 import secrets
 import extensions as ext
 from flask import current_app as app
-from admin import requires_admin
+from admins import requires_admin
 import pyqrcode
 import smtplib
 import json
@@ -29,7 +29,10 @@ def register_clinician():
     args['pwhash'] = pbkdf2_sha256.hash(temp_password)
     args['pairing_code'] = pairing_code
 
-    ext.add_user_('clinicians', args)
+    add_result = ext.add_user_('clinicians', args)
+
+    if not add_result[1]:
+        return add_result[0]
 
     qrdata = {}
     qrdata['username'] = inputs.get('username')
@@ -99,19 +102,6 @@ def pair_clinician():
 
     pass
 
-@clinicians.route('/set_password/', methods=['POST'])
-@requires_clinician
-def set_password(user_info):
-    inputs = request.get_json()
-    new_password = inputs.get('new_password')
-    if not new_password:
-        return jsonify({'success': False, 'debugmsg': 'No new password given.'}), 400
-    cursor = ext.connect_()
-    query = "update clinicians set pwhash = %s, is_password_set = 1 where username = %s"
-    cursor.execute(query, (pbkdf2_sha256.hash(new_password), user_info.get('username')))
-    mysql.connection.commit()
-    return jsonify({'success': True})
-
 def check_clinician(username, password, token):
     cursor = ext.connect_()
     query = 'select pwhash, shared_secret from clinicians where username = %s'
@@ -140,7 +130,7 @@ def requires_clinician(f):
             # TODO NOTE password must not contain colon character!
             password = password_token[0]
             # TODO CHeck if token can contain colon characters:
-            token = ":".join(password_token.split(":")[1:]) 
+            token = ":".join(password_token.split(":")[1:])
             auth_check = check_clinician(username, password, token)
         else:
             auth_check = (False, None)
@@ -151,6 +141,19 @@ def requires_clinician(f):
         kwargs['user_info'] = auth_check[1]
         return f(*args, **kwargs)
     return decorated
+
+@clinicians.route('/set_password/', methods=['POST'])
+@requires_clinician
+def set_password(user_info):
+    inputs = request.get_json()
+    new_password = inputs.get('new_password')
+    if not new_password:
+        return jsonify({'success': False, 'debugmsg': 'No new password given.'}), 400
+    cursor = ext.connect_()
+    query = "update clinicians set pwhash = %s, is_password_set = 1 where username = %s"
+    cursor.execute(query, (pbkdf2_sha256.hash(new_password), user_info.get('username')))
+    mysql.connection.commit()
+    return jsonify({'success': True})
 
 @clinicians.route('/login/', methods=['GET'])
 @requires_clinician
