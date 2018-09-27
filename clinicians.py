@@ -10,7 +10,7 @@ from admins import requires_admin
 import pyqrcode
 import smtplib
 import json
-import onetimepass
+import pyotp
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
@@ -49,15 +49,17 @@ def register_clinician():
 
     # TODO CHANGE TO SMTP SERVER FROM CONFIG
     # GMAIL FOR TESTING ONLY
-    server = smtplib.SMTP('smtp.gmail.com', 587)
+    config_smtp = app.config.get('SMTP_SERVER')
+    print(config_smtp)
+    server = smtplib.SMTP(config_smtp, 587)
     server.ehlo()
     server.starttls()
-    server.login(app.config.get('GMAIL_USER'), app.config.get('GMAIL_PASSWORD'))
+    server.login(app.config.get('EMAIL_USER'), app.config.get('EMAIL_PASSWORD'))
 
     # TODO Tidy up and move to resources
     msg = MIMEMultipart('alternative')
     msg['Subject'] = "Codestroke Registration"
-    msg['From'] = app.config.get('GMAIL_USER')
+    msg['From'] = app.config.get('EMAIL_USER')
     msg['To'] = inputs.get('email')
     contents = """\
     <html>
@@ -83,7 +85,7 @@ def register_clinician():
     image = MIMEImage(buffer.getvalue(), name='QR', _subtype="png")
     msg.attach(image)
 
-    server.sendmail(app.config.get('GMAIL_USER'), inputs.get('email'),
+    server.sendmail(app.config.get('EMAIL_USER'), inputs.get('email'),
                     msg.as_string()
     )
     server.close()
@@ -117,7 +119,7 @@ def pair_clinician():
         pairing_code = result[0]['pairing_code']
         is_paired = result[0]['is_paired']
         if pbkdf2_sha256.verify(in_password, pwhash) and in_pairing_code == pairing_code and not is_paired:
-            shared_secret = secrets.token_urlsafe(16)
+            shared_secret = pyotp.random_base32()
             query = "update clinicians set is_paired = 1, shared_secret = %s where username = %s"
             cursor.execute(query, (shared_secret, in_username))
             mysql.connection.commit()
@@ -128,37 +130,65 @@ def pair_clinician():
 
 def check_clinician(username, password, token):
     cursor = ext.connect_()
-    query = 'select pwhash, shared_secret from clinicians where username = %s'
+    query = 'select pwhash, shared_secret, is_password_set from clinicians where username = %s'
     cursor.execute(query, (username,))
     result = cursor.fetchall()
     if result:
-        pwhash = result[0]['pwhash']
-        shared_secret = result[0]['shared_secret']
-        if pbkdf2_sha256.verify(password, pwhash) and onetimepass.valid_totp(token, shared_secret):
+        pwhash = result[0].get('pwhash')
+        shared_secret = result[0].get('shared_secret')
+        is_password_set = result[0].get('is_password_set')
+        if not shared_secret:
+            return False, None, None
+        totp = pyotp.TOTP(shared_secret)
+        if pbkdf2_sha256.verify(password, pwhash) and totp.verify(token):
             query = 'select first_name, last_name, role from clinicians where username = %s'
             cursor.execute(query, (username,))
             result = cursor.fetchall()
             user_result = result[0]
             user_info = {'signoff_' + k: user_result[k] for k in user_result.keys()}
             user_info['username'] = username
-            return True, user_info
-    return False, None
+            if is_password_set:
+                return True, user_info, True
+            else:
+                return True, user_info, False
+    return False, None, None
+
+def process_auth(auth):
+    username = auth.username
+    password_token = auth.password.split(":")
+    # TODO NOTE password must not contain colon character!
+    password = password_token[0]
+    # TODO CHeck if token can contain colon characters:
+    token = ":".join(password_token[1:])
+    return username, password, token
 
 def requires_clinician(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
         if auth:
-            username = auth.username
-            password_token = auth.password.split(":")
-            # TODO NOTE password must not contain colon character!
-            password = password_token[0]
-            # TODO CHeck if token can contain colon characters:
-            token = ":".join(password_token.split(":")[1:])
+            username, password, token = process_auth(auth)
             auth_check = check_clinician(username, password, token)
         else:
             auth_check = (False, None)
-        if not auth or not auth_check[0]:
+        if not auth or not auth_check[0] or not auth_check[2]:
+            return jsonify({'success': False,
+                            'error_type': 'auth',
+                            'debugmsg': 'Authentication failed',}), 401
+        kwargs['user_info'] = auth_check[1]
+        return f(*args, **kwargs)
+    return decorated
+
+def requires_unset(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if auth:
+            username, password, token = process_auth(auth)
+            auth_check = check_clinician(username, password, token)
+        else:
+            auth_check = (False, None)
+        if not auth or not auth_check[0] or auth_check[2]:
             return jsonify({'success': False,
                             'error_type': 'auth',
                             'debugmsg': 'Authentication failed',}), 401
@@ -167,7 +197,7 @@ def requires_clinician(f):
     return decorated
 
 @clinicians.route('/set_password/', methods=['POST'])
-@requires_clinician
+@requires_unset
 def set_password(user_info):
     inputs = request.get_json()
     new_password = inputs.get('new_password')

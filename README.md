@@ -34,6 +34,11 @@ For a quick start:
    15. `PAGER_NUMBER` (the pager number for notifications to be sent to)
    16. `MINIMUM_VERSION` (the minimum acceptable frontend version)
    17. `DATABASE_NAME` (the name of the database in MySQL)
+   18. `BACKEND_DOMAIN` (public address of backend server)
+   19. `BACKEND_ID` (unique ID of backend server generated on setup)
+   20. `SMTP_SERVER` (SMTP server used to email QR codes for registration)
+   21. `EMAIL_USER` (email username to log into SMTP server)
+   22. `EMAIL_PASSWORD` (email password to log into SMTP server)
 5. Run `python app.py` from this directory.
 6. Navigate to `http://127.0.0.1:5000` in your web browser (or wherever else you
    have set the server to host from).
@@ -103,25 +108,43 @@ typical 1 or 0 (since using `ENUM` for numeric data is rather tricky given the
 ambiguity between value and indexing). Hopefully there'll be a better workaround
 in the future!
 
-### Authentication and Signoffs
+### Authentication
 
-With any endpoint decorated with `requires_auth` (which should be most,
-endpoints except for registration and database creation), you'll need to send an
-Authorisation header with a registered user's username and password. If you do not
-send this header, or the password is wrong, you will get `success = false` and
-`error_type = 'auth'` as your response (otherwise you'll get `success = true`
-and the actual data back).
+There are three endpoint decorators:
 
-Users are registered at the `/register/` endpoint which accepts POST requests
-with first name, last name, role, username and password details. You can access
-the `/login/` endpoint with the Authentication header to view the first name,
-last name and role of a user (note that these will be returned as
-`signoff_first_name`, `signoff_last_name` and `signoff_role`, however at
-registration, you should send them as `first_name`, `last_name` and `role`
-instead). 
+1. `requires_clinician`, which requires a Basic Auth header for the request
+   containing the username, password and generated TOTP token formatted as
+   `username:password:token` for a fully registered user
+2. `requires_admin`, which requires a Basic Auth header for the request
+   containing the username and password for a registered admin as `username:password`
+3. `requires_unset`, which is the same as that for `requires_clinician`, but
+   requires that the password has been previously unset. This is only used
+   for one route during the registration process to change the temporary
+   password.
+
+Most endpoints will have the `requires_clinician` decorator.
+
+The registration process is as follows (note that this is subject to change,
+especially for routes marked with "no auth header"):
+
+1. If you have not done this prior, create an admin with a POST to `/admins/`  (no auth header)
+   with data e.g. `{"username": "admin", "password": "password", "first_name": "John", "last_name": "Smith", "email": "admin@example.com"}`
+2. Using an admin login, register a clinician with a POST to `/clinicians/register/` (`requires_admin`)
+   with data e.g. `{"username": "user", "first_name": "Test", "last_name": "User", "email": "user@example.com", "role": "ed_clinician", "phone": "0123456789"}`
+3. The user should check their supplied email and scan the QR code which contains
+   the required data to pair.
+4. The data should be sent to `/clinicians/pair` (no auth header) with the
+   QR code data, e.g. `{"username": "user", "password": "XXX", "pairing_code": "XXX", "backend_domain": "http://backend.com", "backend_id": "XXX"} `.
+   The first time this is sent, and the first time only, a `shared_secret` will be sent back which should be stored on the user's device.
+5. Send a POST request to `/clinicians/set_password/` (`requires_unset`) with
+   the full `username:password:token` header using the shared_secret with
+   a new password e.g. `{"new_password": "password"}`. This can only be done once.
+6. You should now be able to access routes marked with `requires_clinician`.
+   You can test this at the `/clinicians/login/` route (`requires_clinician`)
+   which will provide some profile details e.g. first name and last name for a user.
 
 At the present time, login persistence will purely be done from the frontend for
-simplicity. In the future, we will move to a more secure login workflow. 
+simplicity. In the future, we will move to a more secure login workflow.
 
 All passwords are hashed in the database.
 
@@ -209,27 +232,5 @@ For development purposes, you can delete a patient by accessing the
 ### Event Log
 
 All the patient additions and edits are logged in the database with a timestamp.
-The route to GET the event log is at `/event_log/`.
-
-## Future Notes (NOT for current version)
-
-### Authentication (DRAFT)
-
-For every request decorated with `@requires_auth`, you will need to be
-authenticated.
-
-The authentication workflow as it currently stands is as follows:
-
-1. Send a POST request to `/login/` with `username` and `password` (FOR TESTING
-   ONLY) data to receive an access token from the server as well as some user
-   information that will likely be needed by the frontend (e.g. name, role).
-2. For OneSignal integration, you should subscribe the user and tag their device
-   with their role upon login, and send this to the OneSignal API.
-3. Once you've received the access token, you will need to send an Authorization
-   header with the username and access token with every request that
-   requires authentication.
-4. Send a POST request to `/logout/` with the `username` and `token` data to
-   reset the token to `NULL` on the server, which will invalidate the current
-   access token. For OneSignal integration, you should unsubscribe the user's
-   device upon logging out.
+The route to GET the event log is at `/event_log/all/`.
 

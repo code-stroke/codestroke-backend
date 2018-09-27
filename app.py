@@ -49,6 +49,7 @@ def get_version():
         return jsonify({'success': False, 'debugmsg': 'Version not specified'}), 500
 
 @app.route('/cases/', methods=(['GET']))
+@requires_clinician
 def get_cases(user_info=None):
     result = ext.select_query_result_({}, 'cases')
     result['success'] = True
