@@ -146,7 +146,7 @@ def check_clinician(username, password, token):
             result = cursor.fetchall()
             user_result = result[0]
             user_info = {'signoff_' + k: user_result[k] for k in user_result.keys()}
-            user_info['username'] = username
+            user_info['signoff_username'] = username
             if is_password_set:
                 return True, user_info, True
             else:
