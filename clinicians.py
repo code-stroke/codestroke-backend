@@ -152,9 +152,9 @@ def requires_clinician(f):
         return f(*args, **kwargs)
     return decorated
 
-@clinicians.route('/login/', methods=['GET'])
+@clinicians.route('/verify/', methods=['GET'])
 @requires_clinician
-def user_login(user_info):
+def user_verify(user_info):
     return jsonify({'success': True,
                     'user_info': user_info})
 
