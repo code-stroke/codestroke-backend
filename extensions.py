@@ -46,7 +46,7 @@ def valid_table_(table):
 
 def select_query_result_(qargs, table):
     if not valid_table_(table):
-        return {"success":False, "message":"table {} not found".format(table)}
+        return {"success":False, 'error_type': 'table', "debugmsg":"table {} not found".format(table)}
     cursor = connect_()
     query = select_(qargs)
     cursor.execute("select * from {}".format(table) + query[0], query[1])
@@ -154,6 +154,7 @@ def add_user_(user_table, request_args):
 
     if not args.get('username'):
         return jsonify({'success': False,
+                        'error_type': 'request',
                         'debugmsg': 'Must provide username.'
         }), False
 

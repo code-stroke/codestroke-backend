@@ -44,7 +44,7 @@ def create_db():
 def get_version():
     version = app.config.get('MINIMUM_VERSION')
     if version:
-        return jsonify({'success': True, 'version': version})
+        return jsonify({'success': True, 'error_type': 'version', 'version': version})
     else:
         return jsonify({'success': False, 'debugmsg': 'Version not specified'}), 500
 

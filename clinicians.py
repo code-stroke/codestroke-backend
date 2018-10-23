@@ -23,7 +23,7 @@ clinicians = Blueprint('clinicians', __name__)
 def register_clinician():
     inputs = request.get_json()
     if not inputs.get('email'):
-        return jsonify({'success': False, 'debugmsg': 'Must include email'}), 400
+        return jsonify({'success': False, 'error_type': 'request', 'debugmsg': 'Must include email'}), 400
     exclude = ['id', 'pwhash', 'pairing_code', 'is_paired', 'shared_secret', 'is_password_set']
     args = {k:inputs[k] for k in inputs.keys() if k not in exclude}
 
@@ -105,10 +105,10 @@ def pair_clinician():
     in_backend_id = inputs.get('backend_id')
 
     if not in_username or not in_password:
-        return jsonify({'sucess': False, 'debugmsg': 'Username or password not given.'}), 400
+        return jsonify({'sucess': False, 'error_type': 'request', 'debugmsg': 'Username or password not given.'}), 400
 
     if in_backend_domain != app.config.get('BACKEND_DOMAIN') or in_backend_id != app.config.get('BACKEND_ID'):
-        return jsonify({'sucess': False, 'debugmsg': 'Backend details did not match'}), 401
+        return jsonify({'sucess': False, 'error_type': 'checkpoint', 'debugmsg': 'Backend details did not match'}), 401
 
     cursor = ext.connect_()
     query = 'select pwhash, pairing_code, is_paired from clinicians where username = %s'
@@ -124,7 +124,7 @@ def pair_clinician():
             cursor.execute(query, (shared_secret, in_username))
             mysql.connection.commit()
             return jsonify({'success': True, 'shared_secret': shared_secret})
-    return jsonify({'success': False, 'debugmsg': 'Input parameters did not pass'}), 401
+    return jsonify({'success': False, 'error_type': 'checkpoint', 'debugmsg': 'Input parameters did not pass'}), 401
 
     pass
 
