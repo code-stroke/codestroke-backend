@@ -47,6 +47,10 @@ def register_clinician():
     buffer = io.BytesIO()
     qrcode.png(buffer, scale=6)
 
+    add_result = ext.add_user_('clinicians', args)
+    if not add_result[1]:
+        return add_result[0]
+
     # TODO CHANGE TO SMTP SERVER FROM CONFIG
     # GMAIL FOR TESTING ONLY
     config_smtp = app.config.get('SMTP_SERVER')
@@ -89,11 +93,7 @@ def register_clinician():
                     msg.as_string()
     )
     server.close()
-    add_result = ext.add_user_('clinicians', args)
-    if not add_result[1]:
-        return add_result[0]
     return jsonify({'success': True, 'destination': inputs.get('email')})
-
 
 @clinicians.route('/pair/', methods=['POST'])
 def pair_clinician():
@@ -133,6 +133,7 @@ def check_clinician(username, password, token):
     query = 'select pwhash, shared_secret, is_password_set from clinicians where username = %s'
     cursor.execute(query, (username,))
     result = cursor.fetchall()
+    print(result)
     if result:
         pwhash = result[0].get('pwhash')
         shared_secret = result[0].get('shared_secret')
@@ -140,6 +141,8 @@ def check_clinician(username, password, token):
         if not shared_secret:
             return False, None, None
         totp = pyotp.TOTP(shared_secret)
+        print(totp.now())
+        print(pbkdf2_sha256.hash(password))
         if pbkdf2_sha256.verify(password, pwhash) and totp.verify(token):
             query = 'select first_name, last_name, role from clinicians where username = %s'
             cursor.execute(query, (username,))
@@ -154,12 +157,14 @@ def check_clinician(username, password, token):
     return False, None, None
 
 def process_auth(auth):
+    app.logger.info('test')
     username = auth.username
     password_token = auth.password.split(":")
     # TODO NOTE password must not contain colon character!
     password = password_token[0]
     # TODO CHeck if token can contain colon characters:
     token = ":".join(password_token[1:])
+    print([username, password, token])
     return username, password, token
 
 def requires_clinician(f):
@@ -171,10 +176,18 @@ def requires_clinician(f):
             auth_check = check_clinician(username, password, token)
         else:
             auth_check = (False, None)
-        if not auth or not auth_check[0] or not auth_check[2]:
+        if not auth:
             return jsonify({'success': False,
                             'error_type': 'auth',
-                            'debugmsg': 'Authentication failed',}), 401
+                            'debugmsg': 'Authentication header unable to be read.',}), 401
+        if not auth_check[0]:
+            return jsonify({'success': False,
+                            'error_type': 'auth',
+                            'debugmsg': 'Credentials did not pass.',}), 401
+        if not auth_check[2]:
+            return jsonify({'success': False,
+                            'error_type': 'auth',
+                            'debugmsg': 'Password has not been set.',}), 401
         kwargs['user_info'] = auth_check[1]
         return f(*args, **kwargs)
     return decorated
@@ -182,16 +195,25 @@ def requires_clinician(f):
 def requires_unset(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        app.logger.info('aaa')
         auth = request.authorization
         if auth:
             username, password, token = process_auth(auth)
             auth_check = check_clinician(username, password, token)
         else:
             auth_check = (False, None)
-        if not auth or not auth_check[0] or auth_check[2]:
+        if not auth:
             return jsonify({'success': False,
                             'error_type': 'auth',
-                            'debugmsg': 'Authentication failed',}), 401
+                            'debugmsg': 'Authentication header unable to be read.',}), 401
+        if not auth_check[0]:
+            return jsonify({'success': False,
+                            'error_type': 'auth',
+                            'debugmsg': 'Credentials did not pass.',}), 401
+        if auth_check[2]:
+            return jsonify({'success': False,
+                            'error_type': 'auth',
+                            'debugmsg': 'Password has already been set.',}), 401
         kwargs['user_info'] = auth_check[1]
         return f(*args, **kwargs)
     return decorated
@@ -205,7 +227,8 @@ def set_password(user_info):
         return jsonify({'success': False, 'debugmsg': 'No new password given.'}), 400
     cursor = ext.connect_()
     query = "update clinicians set pwhash = %s, is_password_set = 1 where username = %s"
-    cursor.execute(query, (pbkdf2_sha256.hash(new_password), user_info.get('username')))
+    cursor.execute(query, (pbkdf2_sha256.hash(new_password), user_info.get('signoff_username')))
+    print(user_info.get('username'))
     mysql.connection.commit()
     return jsonify({'success': True})
 
