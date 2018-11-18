@@ -15,6 +15,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 import io
+import datetime
 
 clinicians = Blueprint('clinicians', __name__)
 
@@ -123,7 +124,11 @@ def pair_clinician():
             query = "update clinicians set is_paired = 1, shared_secret = %s where username = %s"
             cursor.execute(query, (shared_secret, in_username))
             mysql.connection.commit()
-            return jsonify({'success': True, 'shared_secret': shared_secret})
+            totp = pyotp.TOTP(shared_secret, interval=300)
+            print("PAIRING DONE, TOTP FOLLOWS")
+            print(totp.now())
+            print("TOTP END")
+            return jsonify({'success': True, 'shared_secret': shared_secret, 'token': totp.now()})
     return jsonify({'success': False, 'error_type': 'checkpoint', 'debugmsg': 'Input parameters did not pass'}), 401
 
     pass
@@ -140,10 +145,11 @@ def check_clinician(username, password, token):
         is_password_set = result[0].get('is_password_set')
         if not shared_secret:
             return False, None, None
-        totp = pyotp.TOTP(shared_secret)
+        totp = pyotp.TOTP(shared_secret, interval=300)
+        print(datetime.datetime.now())
         print(totp.now())
         print(pbkdf2_sha256.hash(password))
-        if pbkdf2_sha256.verify(password, pwhash) and totp.verify(token):
+        if pbkdf2_sha256.verify(password, pwhash) and totp.verify(token, valid_window=2):
             query = 'select first_name, last_name, role from clinicians where username = %s'
             cursor.execute(query, (username,))
             result = cursor.fetchall()
