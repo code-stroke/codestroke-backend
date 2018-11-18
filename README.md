@@ -164,9 +164,7 @@ All passwords are hashed in the database.
 
 `<table_name>` can be one of:
 
-  - `cases` (the patient details) (noting that accessing this route without the
-    case id will instead return all cases, or will add a case depending on
-    request type)
+  - `cases` (the patient details) 
   - `case_histories`
   - `case_assessments`
   - `case_eds`
