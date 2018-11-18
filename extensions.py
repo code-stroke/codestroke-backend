@@ -46,7 +46,7 @@ def valid_table_(table):
 
 def select_query_result_(qargs, table):
     if not valid_table_(table):
-        return {"success":False, "message":"table {} not found".format(table)}
+        return {"success":False, 'error_type': 'table', "debugmsg":"table {} not found".format(table)}
     cursor = connect_()
     query = select_(qargs)
     cursor.execute("select * from {}".format(table) + query[0], query[1])
@@ -152,10 +152,11 @@ def add_user_(user_table, request_args):
     columns = get_cols_(user_table)
     args = get_args_(columns, request_args)
 
-    if not args.get('username') or not args.get('password'):
+    if not args.get('username'):
         return jsonify({'success': False,
-                        'debugmsg': 'Must provide username and password'
-        })
+                        'error_type': 'request',
+                        'debugmsg': 'Must provide username.'
+        }), False
 
     query = 'select username from {}'.format(user_table)
     cursor.execute(query)
@@ -165,14 +166,17 @@ def add_user_(user_table, request_args):
         return jsonify({'success': False,
                         'error_type': 'username',
                         'debugmsg': 'Username is already taken.'
-                        })
+                        }), False
 
-    pwhash = pbkdf2_sha256.hash(args.get('password'))
-    args['pwhash'] = pwhash
-    del args['password']
+    if user_table == 'admins':
+        pwhash = pbkdf2_sha256.hash(request_args.get('password'))
+        args['pwhash'] = pwhash
 
     add_params = add_(args)
     add_query = 'insert into {} '.format(user_table) + add_params[0]
     cursor.execute(add_query, add_params[1])
+    print(add_query)
     mysql.connection.commit()
+
+    return jsonify({'success': True}), True
 

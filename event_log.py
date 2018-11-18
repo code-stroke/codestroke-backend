@@ -1,9 +1,10 @@
 from flask import Blueprint, request, jsonify
-from flask_mysqldb import MySQL, MySQLdb
+from extensions import mysql
 import extensions as ext
 from clinicians import requires_clinician
 import datetime
 import hooks
+import json
 
 event_log = Blueprint('event_log', __name__)
 

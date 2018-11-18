@@ -171,5 +171,6 @@ CREATE TABLE IF NOT EXISTS `event_log` (
                       'stroke_team', 'radiologist', 'stroke_ward',
 	                    'neuroint', 'angio_nurse', 'anaesthetist',
 	                    'other', 'admin') DEFAULT NULL,
+  `signoff_username` text DEFAULT NULL,
   `event_timestamp`  timestamp DEFAULT CURRENT_TIMESTAMP
 )

@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request, redirect, url_for, session, flash, Blueprint
 from flask_mysqldb import MySQL, MySQLdb
 from flask import current_app as app
-from login import requires_auth
+from clinicians import requires_clinician
 import extensions as ext
 from extensions import mysql
 from event_log import log_event
@@ -11,7 +11,7 @@ import json
 case_info = Blueprint('case_info', __name__, url_prefix='/case<info_table>')
 
 @case_info.route('/<int:case_id>/', methods=(['GET']))
-@requires_auth
+@requires_clinician
 def get_case_info(info_table, case_id, user_info):
     info_table = 'case' + info_table
     qargs = {"case_id":case_id}
@@ -42,7 +42,7 @@ def get_case_info(info_table, case_id, user_info):
     return jsonify(results)
 
 @case_info.route('/<int:case_id>/', methods=(['PUT']))
-@requires_auth
+@requires_clinician
 def edit_case_info(info_table, case_id, user_info):
     if not request.get_json():
         return jsonify({'success': False,

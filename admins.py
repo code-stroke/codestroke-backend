@@ -6,15 +6,17 @@ from passlib.hash import pbkdf2_sha256
 import extensions as ext
 from flask import current_app as app
 
-admin = Blueprint('admin', __name__)
+admins = Blueprint('admins', __name__)
 
-@admin.route('/', methods=['POST'])
+@admins.route('/', methods=['POST'])
 def add_admin():
     inputs = request.get_json()
     exclude = ['id', 'pwhash']
     args = {k:inputs[k] for k in inputs.keys() if k not in exclude}
-    ext.add_user_('admins', args)
-    return jsonify({'success': True})
+    if not inputs.get('password'):
+        return jsonify({'success': False, 'error_type': 'request', 'debugmsg': 'Must include password'}), 400
+    add_result = ext.add_user_('admins', args)
+    return add_result[0]
 
 def check_admin(username, password):
     cursor = ext.connect_()

@@ -3,6 +3,7 @@ from flask_cors import CORS
 from flask_mysqldb import MySQL, MySQLdb
 from passlib.hash import pbkdf2_sha256
 from case_info import case_info
+from admins import admins
 from clinicians import clinicians, requires_clinician
 from event_log import event_log, log_event
 import extensions as ext
@@ -19,6 +20,7 @@ mysql.init_app(app)
 
 app.register_blueprint(case_info)
 app.register_blueprint(clinicians, url_prefix='/clinicians')
+app.register_blueprint(admins, url_prefix='/admins/')
 app.register_blueprint(event_log, url_prefix='/event_log')
 
 @app.route('/')
@@ -42,11 +44,12 @@ def create_db():
 def get_version():
     version = app.config.get('MINIMUM_VERSION')
     if version:
-        return jsonify({'success': True, 'version': version})
+        return jsonify({'success': True, 'error_type': 'version', 'version': version})
     else:
         return jsonify({'success': False, 'debugmsg': 'Version not specified'}), 500
 
 @app.route('/cases/', methods=(['GET']))
+@requires_clinician
 def get_cases(user_info=None):
     result = ext.select_query_result_({}, 'cases')
     result['success'] = True
