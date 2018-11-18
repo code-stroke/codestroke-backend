@@ -48,14 +48,14 @@ def get_version():
     else:
         return jsonify({'success': False, 'debugmsg': 'Version not specified'}), 500
 
-@app.route('/cases/', methods=(['GET']))
+@app.route('/cases/view/', methods=(['GET']))
 @requires_clinician
 def get_cases(user_info=None):
     result = ext.select_query_result_({}, 'cases')
     result['success'] = True
     return jsonify(result)
 
-@app.route('/cases/', methods=(['POST']))
+@app.route('/cases/add/', methods=(['POST']))
 @requires_clinician
 def add_case(user_info):
     if not request.get_json():
@@ -123,7 +123,7 @@ def add_case(user_info):
 
     return jsonify({'success': True, 'case_id': case_id})
 
-@app.route('/cases/<int:case_id>/', methods=(['DELETE']))
+@app.route('/delete/<int:case_id>/', methods=(['DELETE']))
 @requires_clinician
 def delete_case(case_id, user_info):
 

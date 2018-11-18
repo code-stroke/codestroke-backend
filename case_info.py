@@ -10,7 +10,56 @@ import json
 
 case_info = Blueprint('case_info', __name__, url_prefix='/case<info_table>')
 
-@case_info.route('/<int:case_id>/', methods=(['GET']))
+@case_info.route('/<int:case_id>/edit/', methods=(['PUT']))
+@requires_clinician
+def edit_case_info(info_table, case_id, user_info):
+    if not request.get_json():
+        return jsonify({'success': False,
+                        'error_type': 'request',
+                        'debugmsg': 'No data in request.'})
+    # TODO Requires safer error handling
+    # TODO Check table exists and exit if not (safety)
+    info_table = 'case' + info_table
+    cursor = ext.connect_()
+    columns = ext.get_cols_(info_table)
+    qargs = ext.get_args_(columns, request.get_json())
+
+    # Necessary for PUT since expect whole replacement back.
+    # Will be much easier to implement this hook as a PATCH request
+    # as will not have to check the previous stored data
+    prior = ext.select_query_result_({"case_id":case_id}, info_table)['result'][0]
+    prior_meta = ext.select_query_result_({"case_id":case_id}, 'cases')['result'][0]
+    qargs = {**qargs, **user_info}
+    qargs = hooks.put(info_table, case_id, qargs, prior)
+    if not qargs:
+        print("NO CHANGE")
+        return jsonify({"success": True, "message": "no change"})
+    query = ext.update_(qargs)
+    query_string = "update {} ".format(info_table) + query[0] + " where case_id=%s"
+    print(query_string)
+    cursor.execute(query_string, query[1]+(case_id,))
+    mysql.connection.commit()
+
+    meta = {'info_table': info_table, 'case_id': case_id,
+            'first_name': prior_meta.get('first_name'),
+            'last_name': prior_meta.get('last_name'),
+            'status': prior_meta.get('status'),
+            'gender': prior_meta.get('gender'),
+            'dob': prior_meta.get('dob'),
+    }
+
+    log_event('edit', qargs, meta, user_info)
+
+    return jsonify({"success": True,
+                    "message":"added"})
+
+    # except MySQLdb.Error as e:
+    #     print(e)
+    #     return jsonify({"status":"error",}), 400
+
+
+
+@case_info.route('/<int:case_id>/view/', methods=(['GET']))
 @requires_clinician
 def get_case_info(info_table, case_id, user_info):
     info_table = 'case' + info_table
@@ -40,51 +89,6 @@ def get_case_info(info_table, case_id, user_info):
     results['success'] = True
 
     return jsonify(results)
-
-@case_info.route('/<int:case_id>/', methods=(['PUT']))
-@requires_clinician
-def edit_case_info(info_table, case_id, user_info):
-    if not request.get_json():
-        return jsonify({'success': False,
-                        'error_type': 'request',
-                        'debugmsg': 'No data in request.'})
-    # TODO Requires safer error handling
-    # TODO Check table exists and exit if not (safety)
-    info_table = 'case' + info_table
-    cursor = ext.connect_()
-    columns = ext.get_cols_(info_table)
-    qargs = ext.get_args_(columns, request.get_json())
-
-    # Necessary for PUT since expect whole replacement back.
-    # Will be much easier to implement this hook as a PATCH request
-    # as will not have to check the previous stored data
-    prior = ext.select_query_result_({"case_id":case_id}, info_table)['result'][0]
-    prior_meta = ext.select_query_result_({"case_id":case_id}, 'cases')['result'][0]
-    qargs = {**qargs, **user_info}
-    qargs = hooks.put(info_table, case_id, qargs, prior)
-    if not qargs:
-        return jsonify({"success": True, "message": "no change"})
-    query = ext.update_(qargs)
-    query_string = "update {} ".format(info_table) + query[0] + " where case_id=%s"
-    cursor.execute(query_string, query[1]+(case_id,))
-    mysql.connection.commit()
-
-    meta = {'info_table': info_table, 'case_id': case_id,
-            'first_name': prior_meta.get('first_name'),
-            'last_name': prior_meta.get('last_name'),
-            'status': prior_meta.get('status'),
-            'gender': prior_meta.get('gender'),
-            'dob': prior_meta.get('dob'),
-    }
-
-    log_event('edit', qargs, meta, user_info)
-
-    return jsonify({"success": True,
-                    "message":"added"})
-
-    # except MySQLdb.Error as e:
-    #     print(e)
-    #     return jsonify({"status":"error",}), 400
 
 
 

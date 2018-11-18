@@ -138,7 +138,7 @@ def check_clinician(username, password, token):
     query = 'select pwhash, shared_secret, is_password_set from clinicians where username = %s'
     cursor.execute(query, (username,))
     result = cursor.fetchall()
-    print(result)
+    #print(result)
     if result:
         pwhash = result[0].get('pwhash')
         shared_secret = result[0].get('shared_secret')
@@ -148,7 +148,7 @@ def check_clinician(username, password, token):
         totp = pyotp.TOTP(shared_secret, interval=300)
         print(datetime.datetime.now())
         print(totp.now())
-        print(pbkdf2_sha256.hash(password))
+        #print(pbkdf2_sha256.hash(password))
         if pbkdf2_sha256.verify(password, pwhash) and totp.verify(token, valid_window=2):
             query = 'select first_name, last_name, role from clinicians where username = %s'
             cursor.execute(query, (username,))
