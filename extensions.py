@@ -168,7 +168,7 @@ def add_user_(user_table, request_args):
                         'debugmsg': 'Username is already taken.'
                         }), False
 
-    if user_table == 'admins':
+    if 'pwhash' not in args.keys():
         pwhash = pbkdf2_sha256.hash(request_args.get('password'))
         args['pwhash'] = pwhash
 
@@ -179,4 +179,3 @@ def add_user_(user_table, request_args):
     mysql.connection.commit()
 
     return jsonify({'success': True}), True
-
