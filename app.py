@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, redirect, url_for, session, flash
 from flask_cors import CORS
-from flask_mysqldb import MySQL, MySQLdb
+from flask_mysqldb import MySQL#, MySQLdb
 from passlib.hash import pbkdf2_sha256
 from case_info import case_info
 from admins import admins
@@ -48,14 +48,14 @@ def get_version():
     else:
         return jsonify({'success': False, 'debugmsg': 'Version not specified'}), 500
 
-@app.route('/cases/', methods=(['GET']))
+@app.route('/cases/view/', methods=(['GET']))
 @requires_clinician
 def get_cases(user_info=None):
     result = ext.select_query_result_({}, 'cases')
     result['success'] = True
     return jsonify(result)
 
-@app.route('/cases/', methods=(['POST']))
+@app.route('/cases/add/', methods=(['POST']))
 @requires_clinician
 def add_case(user_info):
     if not request.get_json():
@@ -123,7 +123,7 @@ def add_case(user_info):
 
     return jsonify({'success': True, 'case_id': case_id})
 
-@app.route('/cases/<int:case_id>/', methods=(['DELETE']))
+@app.route('/delete/<int:case_id>/', methods=(['DELETE']))
 @requires_clinician
 def delete_case(case_id, user_info):
 
@@ -195,4 +195,3 @@ def acknowledge_case(case_id, user_info):
 
 if __name__ == '__main__':
     app.run(debug = True)
-

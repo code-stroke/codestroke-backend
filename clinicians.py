@@ -16,8 +16,25 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 import io
 import datetime
+import re
 
 clinicians = Blueprint('clinicians', __name__)
+
+@clinicians.route('/register_quick/', methods=['POST'])
+@requires_admin
+def register_clinician_quick():
+    inputs = request.get_json()
+    exclude = ['id', 'pwhash', 'pairing_code', 'is_paired', 'shared_secret', 'is_password_set']
+    args = {k:inputs[k] for k in inputs.keys() if k not in exclude}
+    if not inputs.get('email'):
+            return jsonify({'success': False, 'error_type': 'request', 'debugmsg': 'Must include email'}), 400
+    if not inputs.get('password'):
+        return jsonify({'success': False, 'error_type': 'request', 'debugmsg': 'Must include password'}), 400
+    args['is_password_set'] = True
+    pairing_code = secrets.token_urlsafe(16)
+    args['pairing_code'] = pairing_code
+    add_result = ext.add_user_('clinicians', args)
+    return add_result[0]
 
 @clinicians.route('/register/', methods=['POST'])
 @requires_admin
@@ -138,7 +155,7 @@ def check_clinician(username, password, token):
     query = 'select pwhash, shared_secret, is_password_set from clinicians where username = %s'
     cursor.execute(query, (username,))
     result = cursor.fetchall()
-    print(result)
+    #print(result)
     if result:
         pwhash = result[0].get('pwhash')
         shared_secret = result[0].get('shared_secret')
@@ -148,7 +165,7 @@ def check_clinician(username, password, token):
         totp = pyotp.TOTP(shared_secret, interval=300)
         print(datetime.datetime.now())
         print(totp.now())
-        print(pbkdf2_sha256.hash(password))
+        #print(pbkdf2_sha256.hash(password))
         if pbkdf2_sha256.verify(password, pwhash) and totp.verify(token, valid_window=2):
             query = 'select first_name, last_name, role from clinicians where username = %s'
             cursor.execute(query, (username,))
@@ -162,6 +179,33 @@ def check_clinician(username, password, token):
                 return True, user_info, False
     return False, None, None
 
+def check_clinician_no_token(username, password):
+    cursor = ext.connect_()
+    query = 'select pwhash, is_password_set from clinicians where username = %s'
+    cursor.execute(query, (username,))
+    result = cursor.fetchall()
+    #print(result)
+    if result:
+        pwhash = result[0].get('pwhash')
+        is_password_set = result[0].get('is_password_set')
+        if pbkdf2_sha256.verify(password, pwhash):
+            query = 'select first_name, last_name, role from clinicians where username = %s'
+            cursor.execute(query, (username,))
+            result = cursor.fetchall()
+            user_result = result[0]
+            user_info = {'signoff_' + k: user_result[k] for k in user_result.keys()}
+            user_info['signoff_username'] = username
+            if is_password_set:
+                return True, user_info, True
+            else:
+                return True, user_info, False
+    return False, None, None
+
+def process_auth_no_token(auth):
+    username = auth.username
+    password = auth.password
+    return username, password
+
 def process_auth(auth):
     app.logger.info('test')
     username = auth.username
@@ -170,22 +214,24 @@ def process_auth(auth):
     password = password_token[0]
     # TODO CHeck if token can contain colon characters:
     token = ":".join(password_token[1:])
-    print([username, password, token])
     return username, password, token
 
 def requires_clinician(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
-        if auth:
-            username, password, token = process_auth(auth)
-            auth_check = check_clinician(username, password, token)
-        else:
-            auth_check = (False, None)
+        root_url = request.url_root
+        print(root_url)
         if not auth:
             return jsonify({'success': False,
                             'error_type': 'auth',
                             'debugmsg': 'Authentication header unable to be read.',}), 401
+        if re.match(r'http://\d+\.\d+\.\d+\.\d+/?', root_url):
+            username, password = process_auth_no_token(auth)
+            auth_check = check_clinician_no_token(username, password)
+        else:
+            username, password, token = process_auth(auth)
+            auth_check = check_clinician(username, password, token)
         if not auth_check[0]:
             return jsonify({'success': False,
                             'error_type': 'auth',
@@ -243,4 +289,3 @@ def set_password(user_info):
 def user_verify(user_info):
     return jsonify({'success': True,
                     'user_info': user_info})
-

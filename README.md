@@ -150,18 +150,21 @@ All passwords are hashed in the database.
 
 ### Route Listing
 
-- `/cases/` with GET: get all cases with their basic patient details.
-- `/cases/` with POST: add a case with the arguments specified in the request.
-- `/<table_name>/<case_id>` with GET: get the information specified in a given
+- `/cases/view/` with GET: get all cases with their basic patient details.
+- `/cases/add/` with POST: add a case with the arguments specified in the request.
+- `/acknowledge/<case_id>/` with POST: acknowledge a case and calculate an ETA based on provided initial lat and long.
+- `/delete/<case_id/` with DELETE: delete a case from the database.
+- `/<table_name>/<case_id>/view/` with GET: get the information specified in a given
   table for a given case id.
-- `/<table_name>/<case_id>` with PUT: modify the existing information in a given
+- `/<table_name>/<case_id>/edit/` with PUT: modify the existing information in a given
   table for a given case id with the arguments specified in the request.
+- `/event_log/all/` with GET: get all events in reverse chronological order.
+- `/event_log/limit/?start=<int>&number=<int>/` with GET: get `number` entries starting from the `start`th entry in reverse chronological order.
+- `/event_log/datetime/?start=<%Y-%m-%dT%H:%M:%S>&end=<%Y-%m-%dT%H:%M:%S>/`with GET: get entries between the `start` and `end` datetimes in reverse chronological order.
 
 `<table_name>` can be one of:
 
-  - `cases` (the patient details) (noting that accessing this route without the
-    case id will instead return all cases, or will add a case depending on
-    request type)
+  - `cases` (the patient details) 
   - `case_histories`
   - `case_assessments`
   - `case_eds`
