@@ -93,7 +93,7 @@ def add_message(notify_type, case_id, args=None):
         payload["filters"] = filterize(targets)
 
     req = requests.post("https://onesignal.com/api/v1/notifications", headers=header, data=json.dumps(payload))
-    print(req.reason, req.text, req.json()) # debugging
+    #print(req.reason, req.text, req.json()) # debugging
 
     # Pager Notification
     pager_server_ip = app.config.get('PAGER_SERVER_IP')
@@ -104,7 +104,7 @@ def add_message(notify_type, case_id, args=None):
         pager_socket.connect((pager_server_ip, int(pager_server_port)))
         pager_socket.sendall(pager_format(msg, pager_number))
         data = pager_socket.receive(8)
-        print(data)
+        #print(data)
         pager_socket.close()
 
 def pager_format(message, pager_number_string):

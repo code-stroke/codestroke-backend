@@ -72,7 +72,7 @@ def register_clinician():
     # TODO CHANGE TO SMTP SERVER FROM CONFIG
     # GMAIL FOR TESTING ONLY
     config_smtp = app.config.get('SMTP_SERVER')
-    print(config_smtp)
+    #print(config_smtp)
     server = smtplib.SMTP(config_smtp, 587)
     server.ehlo()
     server.starttls()
@@ -103,7 +103,7 @@ def register_clinician():
     """.format(qrstring)
     html = MIMEText(contents, 'html')
     msg.attach(html)
-    print(buffer.getvalue())
+    #print(buffer.getvalue())
     image = MIMEImage(buffer.getvalue(), name='QR', _subtype="png")
     msg.attach(image)
 
@@ -142,9 +142,9 @@ def pair_clinician():
             cursor.execute(query, (shared_secret, in_username))
             mysql.connection.commit()
             totp = pyotp.TOTP(shared_secret, interval=300)
-            print("PAIRING DONE, TOTP FOLLOWS")
-            print(totp.now())
-            print("TOTP END")
+            #print("PAIRING DONE, TOTP FOLLOWS")
+            #print(totp.now())
+            #print("TOTP END")
             return jsonify({'success': True, 'shared_secret': shared_secret, 'token': totp.now()})
     return jsonify({'success': False, 'error_type': 'checkpoint', 'debugmsg': 'Input parameters did not pass'}), 401
 
@@ -163,8 +163,8 @@ def check_clinician(username, password, token):
         if not shared_secret:
             return False, None, None
         totp = pyotp.TOTP(shared_secret, interval=300)
-        print(datetime.datetime.now())
-        print(totp.now())
+        #print(datetime.datetime.now())
+        #print(totp.now())
         #print(pbkdf2_sha256.hash(password))
         if pbkdf2_sha256.verify(password, pwhash) and totp.verify(token, valid_window=2):
             query = 'select first_name, last_name, role from clinicians where username = %s'
@@ -221,7 +221,7 @@ def requires_clinician(f):
     def decorated(*args, **kwargs):
         auth = request.authorization
         root_url = request.url_root
-        print(root_url)
+        #print(root_url)
         if not auth:
             return jsonify({'success': False,
                             'error_type': 'auth',
@@ -280,7 +280,7 @@ def set_password(user_info):
     cursor = ext.connect_()
     query = "update clinicians set pwhash = %s, is_password_set = 1 where username = %s"
     cursor.execute(query, (pbkdf2_sha256.hash(new_password), user_info.get('signoff_username')))
-    print(user_info.get('username'))
+    #print(user_info.get('username'))
     mysql.connection.commit()
     return jsonify({'success': True})
 

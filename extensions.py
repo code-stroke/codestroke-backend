@@ -119,10 +119,10 @@ def get_all_case_info_(case_id):
     query = 'select * from cases ' + \
             ' '.join(['left join {} using (case_id)'.format(tbl) for tbl in case_info_tables]) + \
             'where case_id = %s'
-    print(query)
+    #print(query)
     cursor.execute(query, (case_id,))
     result = cursor.fetchall()
-    print(result)
+    #print(result)
     return result[0]
 
 def calculate_eta_(origin_lat, origin_long, dest_lat, dest_long, start_time_string,
@@ -137,7 +137,7 @@ def calculate_eta_(origin_lat, origin_long, dest_lat, dest_long, start_time_stri
     }
     response = requests.get(endpoint, params=payload)
     data = response.json()
-    print(data) #debug only
+    #print(data) #debug only
     try:
         time_to_dest = data['rows'][0]['elements'][0]['duration']['value'] # in seconds
         start_time = datetime.datetime.strptime(start_time_string, '%Y-%m-%d %H:%M')
@@ -175,7 +175,7 @@ def add_user_(user_table, request_args):
     add_params = add_(args)
     add_query = 'insert into {} '.format(user_table) + add_params[0]
     cursor.execute(add_query, add_params[1])
-    print(add_query)
+    #print(add_query)
     mysql.connection.commit()
 
     return jsonify({'success': True}), True
