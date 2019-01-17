@@ -1,8 +1,17 @@
+""" For "hooks" into different functions.
+
+This module contains functions that produce desirable side-effects (e.g.
+notifications) and filters for data.
+
+"""
+
+
 import datetime
 import decimal
 from pytz import timezone
-import notify
-import extensions as ext
+
+import modules.notify as notify
+import modules.extensions as ext
 
 def fetch(result, table):
     rows = list(result)

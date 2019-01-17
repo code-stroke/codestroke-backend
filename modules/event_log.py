@@ -1,9 +1,19 @@
+"""For logging events e.g. database changes.
+
+This module exposes functions for event logging (which can be called from
+anywhere) and an API for viewing and filtering these events.
+
+"""
+
+
 from flask import Blueprint, request, jsonify
-from extensions import mysql
-import extensions as ext
-from clinicians import requires_clinician
+
+from modules.extensions import mysql
+import modules.extensions as ext
+from modules.clinicians import requires_clinician
+import modules.hooks as hooks
+
 import datetime
-import hooks
 import json
 
 event_log = Blueprint('event_log', __name__)

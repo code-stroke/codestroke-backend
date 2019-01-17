@@ -1,12 +1,20 @@
-from flask import Flask, jsonify, request, redirect, url_for, session, flash, Blueprint
-from flask_mysqldb import MySQL, MySQLdb
-from flask import current_app as app
-from clinicians import requires_clinician
-import extensions as ext
-from extensions import mysql
-from event_log import log_event
-import hooks
-import json
+""" For exposure of main case editing and viewing API.
+
+This module exposes an API for editing and viewing all "case" tables defined in
+the schema. These case tables are specified by being named with a "cases"
+prefix.
+
+"""
+
+
+from flask import jsonify, request, Blueprint
+
+
+from modules.clinicians import requires_clinician
+import modules.extensions as ext
+from modules.extensions import mysql
+from modules.event_log import log_event
+import modules.hooks as hooks
 
 case_info = Blueprint('case_info', __name__, url_prefix='/case<info_table>')
 

@@ -1,7 +1,16 @@
+""" For handling notifications.
+
+This module contains functions for handling notifications, which are generally
+caled by other functions (especially hooks).
+
+"""
+
+
 import requests
 import json
+
 from flask import current_app as app
-import extensions as ext
+import modules.extensions as ext
 from datetime import datetime
 import socket
 

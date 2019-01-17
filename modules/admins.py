@@ -1,9 +1,22 @@
+""" For management of app administrator/s.
+
+This module handles all routes relating to administrator management. There
+should be very little, if any, reason to communicate with this API from the
+frontend clients.
+
+This module also exposes a @requires_admin decorator for routes which should not
+be accessible without an administrator login.
+
+"""
+
 from flask import Blueprint, request, jsonify
 from functools import wraps
-from extensions import mysql
 from uuid import uuid4
 from passlib.hash import pbkdf2_sha256
-import extensions as ext
+
+from modules.extensions import mysql
+import modules.extensions as ext
+
 from flask import current_app as app
 
 admins = Blueprint('admins', __name__)

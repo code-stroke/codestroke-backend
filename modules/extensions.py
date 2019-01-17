@@ -1,9 +1,22 @@
-from flask import jsonify
-from flask_mysqldb import MySQL, MySQLdb
-from flask import current_app as app
+""" For reusable and useful functions.
+
+This module contains general and reusable functions, including the code used for
+database interaction.
+
+Most of these functions are qualified with an underscore suffix to prevent
+namespace clashes.
+
+"""
+
+
+from flask import jsonify, current_app as app
+from flask_mysqldb import MySQL
+
+import modules.hooks as hooks
+
 import requests
-import hooks
 import datetime
+
 from passlib.hash import pbkdf2_sha256
 
 mysql = MySQL()

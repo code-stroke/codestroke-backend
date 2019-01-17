@@ -1,19 +1,32 @@
-from flask import Blueprint, request, jsonify
+""" For clinician/user management.
+
+This module exposes an API for clinician and user management. This includes the
+user registration and pairing process.
+
+This module also exposes a @requires_clinician decorator which should be applied
+to any routes which allow manipulation of the database.
+
+"""
+
+from flask import Blueprint, request, jsonify, current_app as app
 from functools import wraps
-from extensions import mysql
-from uuid import uuid4
+
+from modules.extensions import mysql
+import modules.extensions as ext
+from modules.admins import requires_admin
+
 from passlib.hash import pbkdf2_sha256
 import secrets
-import extensions as ext
-from flask import current_app as app
-from admins import requires_admin
+import pyotp
+
 import pyqrcode
 import smtplib
 import json
-import pyotp
+
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
+
 import io
 import datetime
 import re

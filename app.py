@@ -1,17 +1,28 @@
+""" The main app module.
+This is the main app module and contains the WSGI handler.
+
+This app also exposes routes which are registered under
+
+"""
+
 from flask import Flask, jsonify, request, redirect, url_for, session, flash
 from flask_cors import CORS
-from flask_mysqldb import MySQL#, MySQLdb
+from flask_mysqldb import MySQL
 from passlib.hash import pbkdf2_sha256
-from case_info import case_info
-from admins import admins
-from clinicians import clinicians, requires_clinician
-from event_log import event_log, log_event
-import extensions as ext
-from extensions import mysql
-import getpass, datetime, urllib.request
-import notify
+
+from modules.case_info import case_info
+from modules.admins import admins
+from modules.clinicians import clinicians, requires_clinician
+from modules.event_log import event_log, log_event
+from modules.extensions import mysql
+import modules.notify as notify
+import modules.hooks as hooks
+import modules.extensions as ext
+
+import getpass
+import datetime
+import urllib.request
 import json
-import hooks
 
 app = Flask(__name__)
 app.config.from_pyfile('app.conf')
@@ -34,7 +45,7 @@ def index(user_info):
 @app.route('/create_db/')
 def create_db():
     #try:
-    ext.execute_sqlfile_('schema.sql')
+    ext.execute_sqlfile_('./resources/schema.sql')
     return jsonify({'success': True})
     #except MySQLdb.Error as e:
     #    print(e)
