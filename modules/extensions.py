@@ -27,20 +27,6 @@ def connect_():
     cursor.execute('set time_zone = "+10:00"')
     return cursor
 
-def execute_sqlfile_(sqlfile):
-    cursor = mysql.connection.cursor()
-    with open(sqlfile) as schema_file:
-        schema_queries = filter(lambda x: not (x == ''),
-                                ' '.join(schema_file.read()\
-                                         .replace('[DATABASE_NAME]',
-                                                  app.config.get('DATABASE_NAME'))\
-                                         .splitlines())\
-                                .split(';'))
-    for query in schema_queries:
-        cursor.execute(query)
-    mysql.connection.commit()
-
-
 def check_database_():
     cursor = connect_()
     check_query = "show databases like '{}'".format(app.config.get('DATABASE_NAME'))

@@ -44,18 +44,9 @@ def index(user_info):
     else:
         return jsonify({'success': False, 'error_type': 'database'}), 500
 
-@app.route('/create_db/')
-def create_db():
-    #try:
-    ext.execute_sqlfile_('resources/schema.sql')
-    return jsonify({'success': True})
-    #except MySQLdb.Error as e:
-    #    print(e)
-    #    return jsonify({"status":"error",}), 400
-
 @app.route('/version/', methods=(['GET']))
 def get_version():
-    version = app.config.get('MINIMUM_VERSION')
+    version = app.config.get('VERSION')
     if version:
         return jsonify({'success': True, 'error_type': 'version', 'version': version})
     else:
