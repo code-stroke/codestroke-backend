@@ -24,9 +24,11 @@ import datetime
 import urllib.request
 import json
 
+
 app = Flask(__name__)
 app.config.from_pyfile('app.conf')
 CORS(app)
+
 mysql.init_app(app)
 
 app.register_blueprint(case_info)
@@ -45,7 +47,7 @@ def index(user_info):
 @app.route('/create_db/')
 def create_db():
     #try:
-    ext.execute_sqlfile_('./resources/schema.sql')
+    ext.execute_sqlfile_('resources/schema.sql')
     return jsonify({'success': True})
     #except MySQLdb.Error as e:
     #    print(e)
