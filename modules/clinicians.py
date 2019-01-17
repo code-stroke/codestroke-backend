@@ -334,7 +334,7 @@ def set_password(user_info):
     mysql.connection.commit()
     return jsonify({'success': True})
 
-@clinicians.route('/login/', methods=['GET'])
+@clinicians.route('/profile/', methods=['GET'])
 @requires_clinician
 def user_verify(user_info):
     return jsonify({'success': True,
