@@ -58,70 +58,78 @@ def get_cases(user_info=None):
 @app.route('/cases/add/', methods=(['POST']))
 @requires_clinician
 def add_case(user_info):
-    if not request.get_json():
-        return jsonify({'success': False,
-                        'error_type': 'request',
-                        'debugmsg': 'No data in request.'})
-    # TODO Safe error handling
-    cursor = ext.connect_()
-    cols_cases = ext.get_cols_('cases')
-    args_cases = ext.get_args_(cols_cases, request.get_json())
 
-    # calculate eta
-    if all(x in args_cases.keys() for x in ['initial_location_lat', 'initial_location_long']): # just in case
-        init_lat = args_cases['initial_location_lat']
-        init_long = args_cases['initial_location_long']
-        if None not in [init_lat, init_long]:
-            eta = ext.calculate_eta_(init_lat, init_long,
-                                     app.config['HOSPITAL_LAT'], app.config['HOSPITAL_LONG'],
-                                     hooks.time_now())
-            args_cases['eta'] = eta
+    try:
+        if not request.get_json():
+            return jsonify({'success': False,
+                            'error_type': 'request',
+                            'debugmsg': 'No data in request.'})
+        # TODO Safe error handling
+        cursor = ext.connect_()
+        cols_cases = ext.get_cols_('cases')
+        args_cases = ext.get_args_(cols_cases, request.get_json())
+
+        # calculate eta
+        if all(x in args_cases.keys() for x in ['initial_location_lat', 'initial_location_long']): # just in case
+            init_lat = args_cases['initial_location_lat']
+            init_long = args_cases['initial_location_long']
+            if None not in [init_lat, init_long]:
+                eta = ext.calculate_eta_(init_lat, init_long,
+                                         app.config['HOSPITAL_LAT'], app.config['HOSPITAL_LONG'],
+                                         hooks.time_now())
+                args_cases['eta'] = eta
+            else:
+                eta = 'UNKNOWN' # for notification
+                print('Debug line: initial location field latitude or longitude null.')
         else:
-            eta = 'UNKNOWN' # for notification
-            print('Debug line: initial location field latitude or longitude null.')
-    else:
-        eta='UNKNOWN'
+            eta='UNKNOWN'
 
-    notify_type = 'case_incoming'
-    status = 'incoming'
+        notify_type = 'case_incoming'
+        status = 'incoming'
 
-    if 'status' in args_cases.keys():
-        if args_cases.get('status').lower() == 'active' and 'active_timestamp' not in args_cases.keys():
-            status = 'active'
-            notify_type = 'case_arrived'
-            args_cases['active_timestamp'] = hooks.time_now()
+        if 'status' in args_cases.keys():
+            if args_cases.get('status').lower() == 'active' and 'active_timestamp' not in args_cases.keys():
+                status = 'active'
+                notify_type = 'case_arrived'
+                args_cases['active_timestamp'] = hooks.time_now()
 
-    add_params = ext.add_(args_cases)
-    add_query = 'insert into cases ' + add_params[0]
-    cursor.execute(add_query, add_params[1])
-    cursor.execute('select last_insert_id()')
-    result = cursor.fetchall()
-    case_id = result[0]['last_insert_id()']
-
-    info_tables = ['case_histories', 'case_assessments',
-                   'case_eds', 'case_radiologies', 'case_managements']
-
-    args_table = {'case_id': case_id}
-    add_params = ext.add_(args_table)
-
-    for info_table in info_tables:
-        add_query = 'insert into {} '.format(info_table) + add_params[0]
+        add_params = ext.add_(args_cases)
+        add_query = 'insert into cases ' + add_params[0]
         cursor.execute(add_query, add_params[1])
+        cursor.execute('select last_insert_id()')
+        result = cursor.fetchall()
+        case_id = result[0]['last_insert_id()']
 
-    mysql.connection.commit()
+        info_tables = ['case_histories', 'case_assessments',
+                       'case_eds', 'case_radiologies', 'case_managements']
 
-    # POST ADDITION HOOKS
-    meta = {'case_id': case_id, 'first_name': args_cases.get('first_name'),
-            'last_name': args_cases.get('last_name'), 'status': status,
-            'gender': args_cases.get('gender'), 'dob': args_cases.get('dob'),
-    }
-    log_event('add', args_cases, meta, user_info)
+        args_table = {'case_id': case_id}
+        add_params = ext.add_(args_table)
 
-    args_event = user_info
-    args_event['eta'] = eta
-    notify.add_message(notify_type, case_id, args_event)
+        for info_table in info_tables:
+            add_query = 'insert into {} '.format(info_table) + add_params[0]
+            cursor.execute(add_query, add_params[1])
 
-    return jsonify({'success': True, 'case_id': case_id})
+        mysql.connection.commit()
+
+        # POST ADDITION HOOKS
+        meta = {'case_id': case_id, 'first_name': args_cases.get('first_name'),
+                'last_name': args_cases.get('last_name'), 'status': status,
+                'gender': args_cases.get('gender'), 'dob': args_cases.get('dob'),
+        }
+        log_event('add', args_cases, meta, user_info)
+
+        args_event = user_info
+        args_event['eta'] = eta
+
+        notified = notify.add_message(notify_type, case_id, args_event)
+
+        if not notified:
+            return jsonify({'success': True, 'case_id': case_id, 'debugmsg': 'Notification not sent.'})
+
+        return jsonify({'success': True, 'case_id': case_id})
+    except Exception as e:
+        return jsonify({'success': False, 'debug_info': str(e)})
 
 @app.route('/delete/<int:case_id>/', methods=(['DELETE']))
 @requires_clinician
