@@ -109,3 +109,5 @@ app.conf
 
 # web config
 web.config
+
+node_modules/

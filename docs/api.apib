@@ -1,0 +1,261 @@
+FORMAT: 1A
+
+# Code Stroke Backend
+
+This API documentation details the resources for the Code Stroke backend.
+
+Currently, almost all actions are accessed on a separate resource. This may change in the future. 
+
+# API Root [/]
+
+@require_clinician
+
+## Cases
+
+### Add Cases [/cases/add/]
+
+#### Add a Case [POST]
+
+@requires_clinician
+
+This will add a case, accepting the following parameters:
+
+### View Cases [/cases/view/]
+
+#### View a Case [GET]
+
+@app.route('/cases/view/', methods=(['GET']))
+@requires_clinician
+
+### Delete Cases [/cases/delete/{case_id}/] 
+
+#### Delete a Case [DELETE]
+
+@app.route('/delete/<int:case_id>/', methods=(['DELETE']))
+@requires_clinician
+
+### Acknowledge Cases [/cases/acknowledge/{case_id}/]
+
+#### Acknowledge a Case [POST]
+
+@app.route('/acknowledge/<int:case_id>/', methods=(['POST']))
+@requires_clinician
+
+## Group Case Information
+
+### Edit Case Information [/{case_table}/{case_id}/edit/]
+
+#### Edit Basic Case Information [PUT]
+
+@case_info.route('/<int:case_id>/edit/', methods=(['PUT']))
+@requires_clinician
+
+### View Basic Case Information [/{case_table}/{case_id}/view/]
+
+#### View Basic Case Information [GET]
+
+@case_info.route('/<int:case_id>/view/', methods=(['GET']))
+@requires_clinician
+
+### Case Tables
+
+#### cases
+
++ first_name (varchar(30)) [optional, default value null]
++ last_name (varchar(30)) [optional, default value null]
++ dob (date) [optional, default value null]
++ address (text) [optional, default value null]
++ gender (enum('f',) [optional, default value 'u']
++ last_well (timestamp) [optional, default value null]
++ nok (varchar(40)) [optional, default value null]
++ nok_phone (varchar(16)) [optional, default value null]
++ medicare_no (varchar(12)) [optional, default value null]
++ initial_location_lat (decimal(10,8)) [optional, default value null]
++ initial_location_long (decimal(11,8)) [optional, default value null]
++ eta (timestamp) [optional, default value null]
++ status (enum('incoming',) [optional, default value 'incoming']
++ incoming_timestamp (timestamp) [optional, default value current_timestamp]
++ active_timestamp (timestamp) [optional, default value null]
++ completed_timestamp (timestamp) [optional, default value null]
+
+#### case_histories
+
++ pmhx (text) [optional, default value null]
++ meds (text) [optional, default value null]
++ anticoags (enum('no',) [optional, default value null]
++ anticoags_last_dose (timestamp) [optional, default value null]
++ hopc (text) [optional, default value null]
++ weight (float) [optional, default value null]
++ last_meal (timestamp) [optional, default value null]
+
+
+#### case_assessments
+
++ facial_droop (enum('no',) [optional, default value null]
++ arm_drift (enum('no',) [optional, default value null]
++ weak_grip (enum('no',) [optional, default value null]
++ speech_difficulty (enum('no',) [optional, default value null]
++ bp_systolic (int) [optional, default value null]
++ bp_diastolic (int) [optional, default value null]
++ heart_rate (int) [optional, default value null]
++ heart_rhythm (enum('regular',) [optional, default value null]
++ rr (int) [optional, default value null]
++ o2sats (int) [optional, default value null]
++ temp (int) [optional, default value null]
++ gcs (int) [optional, default value null]
++ blood_glucose (int) [optional, default value null]
++ facial_palsy_race (tinyint) [optional, default value null]
++ arm_motor_impair (tinyint) [optional, default value null]
++ leg_motor_impair (tinyint) [optional, default value null]
++ head_gaze_deviate (tinyint) [optional, default value null]
++ hemiparesis (enum('left',) [optional, default value null]
++ cannula (enum('no',) [optional, default value null]
++ conscious_level (tinyint) [optional, default value null]
++ month_age (tinyint) [optional, default value null]
++ blink_squeeze (tinyint) [optional, default value null]
++ horizontal_gaze (tinyint) [optional, default value null]
++ visual_fields (tinyint) [optional, default value null]
++ facial_palsy_nihss (tinyint) [optional, default value null]
++ left_arm_drift (tinyint) [optional, default value null]
++ right_arm_drift (tinyint) [optional, default value null]
++ left_leg_drift (tinyint) [optional, default value null]
++ right_leg_drift (tinyint) [optional, default value null]
++ limb_ataxia (tinyint) [optional, default value null]
++ sensation (tinyint) [optional, default value null]
++ aphasia (tinyint) [optional, default value null]
++ dysarthria (tinyint) [optional, default value null]
++ neglect (tinyint) [optional, default value null]
++ rankin_conscious (tinyint) [optional, default value null]
++ likely_lvo (bool) [optional, default value null]
+
+
+#### case_eds
+
++ location (VARCHAR(30)) [optional, default value null]
++ registered (bool) [optional, default value 0]
++ triaged (bool) [optional, default value 0]
++ primary_survey (bool) [optional, default value 0]
+
+
+#### case_radiologies
+
++ ct_available (bool) [optional, default value null]
++ ct_available_loc (varchar(30)) [optional, default value null]
++ arrived_to_ct (bool) [optional, default value null]
++ ct_complete (bool) [optional, default value null]
++ ich_found (bool) [optional, default value null]
++ do_cta_ctp (bool) [optional, default value null]
++ cta_ctp_complete (bool) [optional, default value null]
++ large_vessel_occlusion (bool) [optional, default value null]
+
+
+#### case_managements
+
++ thrombolysis (bool) [optional, default value null]
++ new_trauma_haemorrhage (bool) [optional, default value null]
++ uncontrolled_htn (bool) [optional, default value null]
++ history_ich (bool) [optional, default value null]
++ known_intracranial (bool) [optional, default value null]
++ active_bleed (bool) [optional, default value null]
++ endocarditis (bool) [optional, default value null]
++ bleeding_diathesis (bool) [optional, default value null]
++ abnormal_blood_glucose (bool) [optional, default value null]
++ rapidly_improving (bool) [optional, default value null]
++ recent_trauma_surgery (bool) [optional, default value null]
++ recent_active_bleed (bool) [optional, default value null]
++ seizure_onset (bool) [optional, default value null]
++ recent_arterial_puncture (bool) [optional, default value null]
++ recent_lumbar_puncture (bool) [optional, default value null]
++ post_acs_pericarditis (bool) [optional, default value null]
++ pregnant (bool) [optional, default value null]
++ thrombolysis_time_given (timestamp) [optional, default value null]
++ ecr (bool) [optional, default value null]
++ surgical_rx (bool) [optional, default value null]
++ conservative_rx (bool) [optional, default value null]
+
+
+
+
+
+## Group Clinicians 
+
+### Register Clinicians [/clinicians/register/]
+
++ first_name (varchar(30)) [optional, default value null]
++ last_name (varchar(30)) [optional, default value null]
++ username (varchar(20)) [required] 
++ pwhash (text) [required] 
++ role (enum('paramedic',) 
++ email (varchar(40)) [required] 
++ phone (varchar(16)) [optional, default value null]
++ pairing_code (text) [required] 
++ is_paired (bool) [optional, default value 0]
++ shared_secret (text) [optional, default value null]
++ is_password_set (bool) [optional, default value 0]
+
+#### Register a Clinician [POST]
+
+@clinicians.route('/register/', methods=['POST'])
+@requires_admin
+
+These will be deprecated:
++ @clinicians.route('/register_quick/', methods=['POST']), @requires_admin
++ @clinicians.route('/register_TEMP/', methods=['POST'])
+
+### Pair a Device [/clinicians/pair/]
+
+#### Pair a Device [POST]
+
+### Set an Initial Password [/clinicians/set_password/]
+
+#### Set an Initial Password [POST]
+
+@clinicians.route('/set_password/', methods=['POST'])
+@requires_unset
+
+### Get Basic User Credentials [/clinicians/profile/]
+@clinicians.route('/profile/', methods=['GET'])
+@requires_clinician
+
+## Group Event Log
+
++ event_type (varchar(20)) [required] 
++ event_data (text) [optional, default value null]
++ event_metadata (text) [optional, default value null]
++ signoff_first_name (varchar(30)) [optional, default value null]
++ signoff_last_name (varchar(30)) [optional, default value null]
++ signoff_role (enum('paramedic',) 
++ signoff_username (text) [optional, default value null]
++ event_timestamp () [optional, default value current_timestamp]
+
+### Get all Events [/event_log/all/]
+
+#### Get all Events [GET]
+
+@event_log.route('/all/', methods=(['GET']))
+@requires_clinician
+
+### Limit by Count [/event_log/limit/?]
+
+#### Get Events and Limit by Count [GET]
+
+@event_log.route('/limit/', methods=(['GET']))
+@requires_clinician
+
+### Limit by Datetime Range [/event_log/datetime/?]
+
+@event_log.route('/datetime/', methods=(['GET']))
+@requires_clinician
+
+## Group Admins
+
+### Admins
+
+
++ first_name (varchar(30)) [optional, default value null]
++ last_name (varchar(30)) [optional, default value null]
++ username (varchar(20)) [required] 
++ pwhash (text) [required] 
++ email (varchar(40)) [optional, default value null]
+
+
