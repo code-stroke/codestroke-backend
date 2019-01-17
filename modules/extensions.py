@@ -12,7 +12,7 @@ namespace clashes.
 from flask import jsonify, current_app as app
 from flask_mysqldb import MySQL
 
-import modules.hooks as hooks
+import modules.filters as filters
 
 import requests
 import datetime
@@ -65,7 +65,7 @@ def select_query_result_(qargs, table):
     cursor.execute("select * from {}".format(table) + query[0], query[1])
     result = cursor.fetchall()
     if result:
-        filtered = hooks.fetch(result, table)
+        filtered = filters.fetch_filter(result, table)
         return {"result":filtered}
     return {"result":None}
 
