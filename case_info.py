@@ -83,8 +83,8 @@ def get_case_info(info_table, case_id, user_info):
             elif field[0] == 'last_well' and field_val:
                 field_val = field_val.strftime("%Y-%m-%d %H:%M")
             results['result'][0][field[0]] = field_val
-    if info_table == 'cases':
-        results['google_distance_api_key'] = app.config.get('GOOGLE_DISTANCE_API_KEY')
+    #if info_table == 'cases':
+    #    results['google_distance_api_key'] = app.config.get('GOOGLE_DISTANCE_API_KEY')
 
     results['success'] = True
 
