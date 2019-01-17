@@ -28,7 +28,6 @@ CREATE TABLE IF NOT EXISTS `admins` (
   `email` varchar(40) DEFAULT NULL
 );
 
-
 CREATE TABLE IF NOT EXISTS `cases` (
   `case_id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `first_name` varchar(30) DEFAULT NULL,
@@ -151,7 +150,7 @@ CREATE TABLE IF NOT EXISTS `case_managements` (
   `recent_lumbar_puncture` bool DEFAULT NULL,
   `post_acs_pericarditis` bool DEFAULT NULL,
   `pregnant` bool DEFAULT NULL,
-  `thrombolysis_time_given` timestamp DEFAULT NULL,
+  `thrombolysis_time_given` timestamp NULL DEFAULT NULL,
   `ecr` bool DEFAULT NULL,
   `surgical_rx` bool DEFAULT NULL,
   `conservative_rx` bool DEFAULT NULL,
