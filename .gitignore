@@ -106,3 +106,6 @@ ENV/
 
 # local server testing app config
 app.conf
+
+# web config
+web.config
