@@ -171,6 +171,13 @@ def add_user_(user_table, request_args):
     if 'pwhash' not in args.keys():
         pwhash = pbkdf2_sha256.hash(request_args.get('password'))
         args['pwhash'] = pwhash
+    
+    if user_table == "admins":
+        if len(taken) > 0:
+            return jsonify({'success': False,
+                            'error_type': 'admin_num',
+                            'debugmsg': 'No more admins can be added.'
+                            }), False
 
     add_params = add_(args)
     add_query = 'insert into {} '.format(user_table) + add_params[0]
