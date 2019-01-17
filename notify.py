@@ -85,15 +85,18 @@ def add_message(notify_type, case_id, args=None):
     payload = {"app_id": app.config['OS_APP_ID'],
                "data": {"case_id": case_id},
                "headings": {"en": title},
-	           "contents": {"en": msg}}
+               "contents": {"en": msg}}
 
     if targets == None:
         payload["included_segments"] = ["All"]
     else:
         payload["filters"] = filterize(targets)
-
-    req = requests.post("https://onesignal.com/api/v1/notifications", headers=header, data=json.dumps(payload))
-    #print(req.reason, req.text, req.json()) # debugging
+    
+    try:
+        req = requests.post("https://onesignal.com/api/v1/notifications", headers=header, data=json.dumps(payload), timeout=4)
+        #print(req.reason, req.text, req.json()) # debugging
+    except Exception as e:
+        return False
 
     # Pager Notification
     pager_server_ip = app.config.get('PAGER_SERVER_IP')
@@ -106,6 +109,8 @@ def add_message(notify_type, case_id, args=None):
         data = pager_socket.receive(8)
         #print(data)
         pager_socket.close()
+    
+    return True
 
 def pager_format(message, pager_number_string):
     prefix = "m04"
