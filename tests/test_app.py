@@ -3,15 +3,13 @@ import tempfile
 
 import pytest
 
-from app import app, create_db
+from app import app
 
 @pytest.fixture
 def client():
-    app.config['DATABASE_NAME'] = 'TEST_CODESTROKE_DB'
+    app.config['DATABASE_NAME'] = 'test_codestroke'
     app.config['TESTING'] = True
     client = app.test_client()
-
-    create_db()
 
     yield client
 
@@ -20,4 +18,4 @@ def test_empty_db(client):
 
     response = client.get("/")
     print(response)
-    assert("error_type" in response.data)
+    assert(b"error_type" in response.data)
