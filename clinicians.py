@@ -262,7 +262,7 @@ def requires_clinician(f):
         if not auth:
             return jsonify({'success': False,
                             'error_type': 'auth',
-                            'debugmsg': 'Authentication header unable to be read.',}), 401
+                            'debugmsg': 'You cannot access this page directly. If you think this is an error, please contact your systems administrator.',}), 401
         if re.match(r'http://\d+\.\d+\.\d+\.\d+/?', root_url):
             username, password = process_auth_no_token(auth)
             auth_check = check_clinician_no_token(username, password)
@@ -294,7 +294,7 @@ def requires_unset(f):
         if not auth:
             return jsonify({'success': False,
                             'error_type': 'auth',
-                            'debugmsg': 'Authentication header unable to be read.',}), 401
+                            'debugmsg': 'You cannot access this page directly. If you think this is an error, please contact your systems administrator.',}), 401
         if not auth_check[0]:
             return jsonify({'success': False,
                             'error_type': 'auth',
