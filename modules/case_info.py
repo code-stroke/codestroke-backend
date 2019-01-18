@@ -9,14 +9,13 @@ prefix.
 
 from flask import jsonify, request, Blueprint
 
-
 from modules.clinicians import requires_clinician
 import modules.extensions as ext
 from modules.extensions import mysql
 from modules.event_log import log_event
 import modules.hooks as hooks
 
-case_info = Blueprint('case_info', __name__, url_prefix='/case<info_table>')
+case_info = Blueprint('case_info', __name__)
 
 @case_info.route('/<int:case_id>/edit/', methods=(['PUT']))
 @requires_clinician
