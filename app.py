@@ -19,7 +19,6 @@ from modules.extensions import mysql
 app = Flask(__name__)
 app.config.from_pyfile('app.conf')
 CORS(app)
-
 mysql.init_app(app)
 
 app.register_blueprint(cases)
@@ -31,6 +30,9 @@ app.register_blueprint(event_log, url_prefix='/event_log')
 @app.route('/')
 @requires_clinician
 def index(user_info):
+    """ Default endpoint.
+
+    """
     if ext.check_database_():
         return jsonify({'success': True})
     else:

@@ -23,7 +23,7 @@ def edit_case_info(info_table, case_id, user_info):
     if not request.get_json():
         return jsonify({'success': False,
                         'error_type': 'request',
-                        'debugmsg': 'No data in request.'})
+                        'debugmsg': 'No data in request.'}), 400
     # TODO Requires safer error handling
     # TODO Check table exists and exit if not (safety)
     info_table = 'case' + info_table
@@ -58,7 +58,7 @@ def edit_case_info(info_table, case_id, user_info):
     log_event('edit', qargs, meta, user_info)
 
     return jsonify({"success": True,
-                    "message":"added"})
+                    "debugmsg":"added"})
 
     # except MySQLdb.Error as e:
     #     print(e)

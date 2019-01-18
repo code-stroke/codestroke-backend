@@ -32,7 +32,7 @@ def add_case(user_info):
         if not request.get_json():
             return jsonify({'success': False,
                             'error_type': 'request',
-                            'debugmsg': 'No data in request.'})
+                            'debugmsg': 'No data in request.'}), 400
         # TODO Safe error handling
         cursor = ext.connect_()
         cols_cases = ext.get_cols_('cases')
@@ -98,7 +98,7 @@ def add_case(user_info):
 
         return jsonify({'success': True, 'case_id': case_id})
     except Exception as e:
-        return jsonify({'success': False, 'debug_info': str(e)})
+        return jsonify({'success': False, 'debug_info': str(e)}), 500
 
 @cases.route('/delete/<int:case_id>/', methods=(['DELETE']))
 @requires_clinician

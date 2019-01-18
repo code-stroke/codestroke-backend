@@ -1,0 +1,1242 @@
+swagger: "2.0"
+info:
+  description: "This API documentation details the resources for the Code Stroke Backend."
+  version: "$VERSION"
+  title: "Code Stroke Backend"
+host: "$HOST"
+basePath: "/"
+tags:
+- name: "Cases"
+  description: "General operations on cases."
+- name: "Case Info"
+  description: "Specific editing and viewing of case tables."
+- name: "Case Operations"
+  description: "Other actions on cases."
+- name: "Clinicians"
+  description: "Operations on clinicians (users)."
+- name: "Event Log"
+  description: "Viewing the event log"
+schemes:
+- "https"
+paths:
+  /clinicians/register/:
+    post:
+      tags:
+      - "Clinicians"
+      summary: "Registers a new clinician."
+      description: "Registers a clinician with the backend. This is only generally called by an admin during the initial setup, and would not ordinarily be called by a frontend client. When this request is made, an email is sent to the clinician's email (provided in the request) and you must access the email for a QR code to progress further. The authentication header must contain the username and password of an administrator, not a clinician."
+      operationId: "registerClinician"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Basic clinician details."
+        required: true
+        schema:
+          $ref: "#/definitions/CLINICIANS"
+      responses:
+        200:
+          description: "OK"
+          schema: 
+            type: "object"
+            properties:
+              success: 
+                type: "boolean"
+                default: True
+              destination:
+                type: "string"
+        500:
+          description: "Error not specified. Please contact the developers."
+      security:
+        - requiresAdmin: []
+  /clinicians/pair/:
+    post:
+      tags:
+      - "Clinicians"
+      summary: "Returns a secret the first time it is called."
+      description: "When a clinician is registered and receives their QR code, they are required to send the information contained in the QR code to this resource. If it is the first time that clinician calls this resource, then a shared secret will be returned - otherwise, this will return an error."
+      operationId: "pairClinician"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "QR code data sent to clinician's email upon registration."
+        required: true
+        schema: 
+          type: "object"
+          required: 
+            - username
+            - password
+            - pairing_code
+            - backend_domain
+            - backend_id
+          properties:
+            username: 
+              type: "string"
+            password:
+              type: "string"
+            pairing_code:
+              type: "string"
+            backend_domain:
+              type: "string"
+            backend_id:
+              type: "string"
+          
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+              shared_secret:
+                type: "string"
+              token:
+                type: "string"
+        400:
+          description: "Request parameters were incomplete."
+          schema: 
+            type: "object"
+            properties:
+              success:
+                 type: "boolean"
+                 default: False
+              error_type:
+                type: "string"
+                enum: ["request"]
+        401:
+          description: "QR code details did not match server's records."
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                default: False
+              error_type:
+                type: "string"
+                enum: ["checkpoint"]
+  /clinicians/set_password/:
+    post:
+      tags:
+      - "Clinicians"
+      summary: "Sets the clinician's initial password."
+      description: "Sets the clinician's initial password after the pairing step. This will only work the first time it is called."
+      operationId: "setPassword"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Initial password details."
+        required: true
+        schema:
+          type: "object"
+          required:
+            - new_password
+          properties:
+            new_password:
+              type: "string"
+      responses:
+        200:
+          description: "Password set."
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: boolean
+                default: True
+        400:
+          description: "Body parameters were invalid."
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: boolean
+                default: False
+              error_type:
+                type: string
+                enum: ['request']
+      security:
+        - requiresClinician: []
+  /clinicians/profile/:
+    get:
+      tags:
+        - "Clinicians"
+      summary: "Returns basic clinician details."
+      description: "Returns some basic profile information of a clinician who accesses this resource with their login credentials."
+      operationId: "getProfile"
+      produces: 
+        - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              signoff_first_name:
+                type: string
+              signoff_last_name:
+                type: string
+              signoff_username:
+                type: string
+              signoff_role:
+                type: string
+                enum: ['paramedic', 'ed_clinician', 'radiographer', 'stroke_team', 'radiologist', 'stroke_ward', 'neuroint', 'angio_nurse', 'anaesthetist', 'admin']
+        401:
+          description: "Authentication credentials did not pass."
+          schema:
+            $ref: "#/definitions/FailedAuthClinician"
+      security:
+        - requiresClinician: []
+  /cases/view/:
+    get:
+      tags:
+      - "Cases"
+      summary: "View a list of cases."
+      description: "Returns a list of all cases in the database."
+      operationId: "getCases"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success: 
+                type: boolean
+                default: True
+              result:
+                type: array
+                items:
+                  $ref: "#/definitions/CASES"
+        401:
+          description: "Authentication failed."
+          schema:
+            $ref: "#/definitions/FailedAuthClinician"
+      security:
+        - requiresClinician: []
+  /cases/add/:
+    post:
+      tags:
+        - "Cases"
+      summary: "Add a new case."
+      description: "Add a new case to the database."
+      operationId: "addCase"
+      produces:
+      - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          required: True
+          description: "Case details."
+          schema:
+            $ref: "#/definitions/CASES"
+      responses:
+        200: 
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                default: True
+              case_id:
+                type: "integer"
+        400: 
+          description: "Request data was invalid."
+          schema: 
+            type: "object"
+            properties:
+              success: 
+                type: "boolean"
+                default: False
+              error_type:
+                  type: "string"
+                  default: "request"
+        500:
+          description: "Unspecified error. Please contact the developing team."
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                default: False
+      security:
+      - requiresClinician: []
+  /delete/{case_id}/:
+    delete:
+      tags:
+        - "Case Operations"
+      summary: "Delete a case."
+      operationId: "deleteCase"
+      description: "Permanently deletes a case from the database."
+      security:
+        - requiresClinician: []
+      parameters:
+        - name: "case_id"
+          in: "path"
+          description: "ID of case to delete."
+          required: true
+          type: "integer"
+      responses:
+        200: 
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                default: True
+        401:
+          description: "Authentication failed."
+          schema:
+            $ref: "#/definitions/FailedAuthClinician"
+  /acknowledge/{case_id}/:
+    post:
+      tags:
+        - "Case Operations"
+      summary: "Acknowledge an incoming case notification"
+      description: "Acknowledges that a notification for an incoming case has been seen, and will broadcast this acknowledgement and an ETA (if location data is provided) as a new notification."
+      operationId: "acknowledgeCase"
+      produces:
+      - "application/json"
+      parameters:
+        - in: "path"
+          name: "case_id"
+          required: True
+          description: "The ID of the case to be acknowledged."
+          type: integer
+        - in: "body"
+          name: "body"
+          required: True
+          description: "The acknowledging clinician's current location details."
+          schema:
+            type: "object"
+            properties:
+              initial_location_lat:
+                type: "string"
+                example: "-37.8136"
+              initial_location_long:
+                type: "string"
+                example: "144.9631"
+      responses:
+        200: 
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                default: True
+        401:
+          description: "Authentication failed."
+          schema:
+            $ref: "#/definitions/FailedAuthClinician"
+      security:
+      - requiresClinician: []    
+  /event_log/all/:
+    get:
+      tags:
+      - "Event Log"
+      summary: "View a list of all events."
+      description: "Returns a list of all events in the database."
+      operationId: "getEventsAll"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success: 
+                type: boolean
+                default: True
+              result:
+                type: array
+                items:
+                  $ref: "#/definitions/EVENT_LOG"
+        401:
+          description: "Authentication failed."
+          schema:
+            $ref: "#/definitions/FailedAuthClinician"
+      security:
+        - requiresClinician: []
+  /event_log/limit/:
+    get:
+      tags:
+      - "Event Log"
+      summary: "View a count-limited list of events."
+      description: "Returns a list of a limited number of events in the database, from most recent to earliest."
+      operationId: "getEventsLimit"
+      produces:
+      - "application/json"
+      parameters:
+        - in: "query"
+          name: "start"
+          type: "integer"
+          required: True
+          description: "The position of the first query e.g. if `start` is 25, then the queries will be returned starting from the 25th most recent, the 26th most recent etc."
+        - in: "query"
+          name: "number"
+          type: "integer"
+          required: True
+          description: "The number of queries to return in total."
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success: 
+                type: boolean
+                default: True
+              result:
+                type: array
+                items:
+                  $ref: "#/definitions/EVENT_LOG"
+        400:
+          description: "Query parameters were invalid."
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: boolean
+                default: False
+              error_type:
+                type: "string"
+                enum: ["parameters"]
+        401:
+          description: "Authentication failed."
+          schema:
+            $ref: "#/definitions/FailedAuthClinician"
+      security:
+        - requiresClinician: []  
+  /error_log/datetime/:
+    get:
+      tags:
+      - "Event Log"
+      summary: "View a date-ranged list of events."
+      description: "Returns a list of events occurring within a specified date and time range."
+      operationId: "getEventsDatetime"
+      produces:
+      - "application/json"
+      parameters:
+        - in: "query"
+          name: "start"
+          type: "string"
+          format: "date-time"
+          required: True
+          description: "The datetime after which queries will be included."
+        - in: "query"
+          name: "end"
+          type: "string"
+          format: "date-time"
+          required: True
+          description: "The datetime before which queries will be included."
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success: 
+                type: boolean
+                default: True
+              result:
+                type: array
+                items:
+                  $ref: "#/definitions/EVENT_LOG"
+        400:
+          description: "Query parameters were invalid."
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: boolean
+                default: False
+              error_type:
+                type: "string"
+                enum: ["parameters"]
+        401:
+          description: "Authentication failed."
+          schema:
+            $ref: "#/definitions/FailedAuthClinician"
+      security:
+        - requiresClinician: []  
+  /case_histories/{case_id}/view/:
+    get:
+      tags:
+      - "Case Info"
+      summary: "View case history information."
+      description: "Returns the medical history information for a single case."
+      operationId: "getCaseHistory"
+      produces:
+      - "application/json"
+      parameters:
+        - in: "path"
+          name: "case_id"
+          required: True
+          description: "ID of the case to get information for."
+          type: "integer"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success: 
+                type: "boolean"
+                default: True
+              result:
+                type: "array"
+                items:
+                  $ref: "#/definitions/CASE_HISTORIES"
+        401:
+          description: "Authentication failed."
+          schema:
+            $ref: "#/definitions/FailedAuthClinician"
+      security:
+        - requiresClinician: []
+  /case_histories/{case_id}/edit/:
+    post:
+      tags:
+        - "Case Info"
+      summary: "Edit case history information."
+      operationId: "editCaseHistory"
+      description: "Edits the medical history information for a case."
+      produces:
+      - "application/json"
+      parameters:
+        - in: "path"
+          name: "case_id"
+          required: True
+          description: "ID of the case to get information for."
+          type: "integer"
+        - in: "body"
+          name: "body"
+          required: True
+          description: "New details for the case."
+          schema:
+            $ref: "#/definitions/CASE_HISTORIES"
+      responses:
+        200: 
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                default: True
+        400: 
+          description: "Request data was invalid."
+          schema: 
+            type: "object"
+            properties:
+              success: 
+                type: "boolean"
+                default: False
+              error_type:
+                  type: "string"
+                  enum: ["request"]
+        500:
+          description: "Unspecified error. Please contact the developing team."
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                default: False
+      security:
+      - requiresClinician: []
+  /case_assessments/{case_id}/view/:
+    get:
+      tags:
+      - "Case Info"
+      summary: "View case assessment information."
+      description: "Returns the medical assessment information for a single case."
+      operationId: "getCaseAssessments"
+      produces:
+      - "application/json"
+      parameters:
+        - in: "path"
+          name: "case_id"
+          required: True
+          description: "ID of the case to get information for."
+          type: "integer"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success: 
+                type: "boolean"
+                default: True
+              result:
+                type: "array"
+                items:
+                  $ref: "#/definitions/CASE_ASSESSMENTS"
+        401:
+          description: "Authentication failed."
+          schema:
+            $ref: "#/definitions/FailedAuthClinician"
+      security:
+        - requiresClinician: []
+  /case_assessments/{case_id}/edit/:
+    post:
+      tags:
+        - "Case Info"
+      summary: "Edit case assessment information."
+      operationId: "editCaseAssessments"
+      description: "Edits the medical assessment information for a case."
+      produces:
+      - "application/json"
+      parameters:
+        - in: "path"
+          name: "case_id"
+          required: True
+          description: "ID of the case to get information for."
+          type: "integer"
+        - in: "body"
+          name: "body"
+          required: True
+          description: "New details for the case."
+          schema:
+            $ref: "#/definitions/CASE_ASSESSMENTS"
+      responses:
+        200: 
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                default: True
+        400: 
+          description: "Request data was invalid."
+          schema: 
+            type: "object"
+            properties:
+              success: 
+                type: "boolean"
+                default: False
+              error_type:
+                  type: "string"
+                  enum: ["request"]
+        500:
+          description: "Unspecified error. Please contact the developing team."
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                default: False
+      security:
+      - requiresClinician: []
+  /case_eds/{case_id}/view/:
+    get:
+      tags:
+      - "Case Info"
+      summary: "View case ED information."
+      description: "Returns the ED department information for a single case."
+      operationId: "getCaseEDs"
+      produces:
+      - "application/json"
+      parameters:
+        - in: "path"
+          name: "case_id"
+          required: True
+          description: "ID of the case to get information for."
+          type: "integer"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success: 
+                type: "boolean"
+                default: True
+              result:
+                type: "array"
+                items:
+                  $ref: "#/definitions/CASE_EDS"
+        401:
+          description: "Authentication failed."
+          schema:
+            $ref: "#/definitions/FailedAuthClinician"
+      security:
+        - requiresClinician: []
+  /case_eds/{case_id}/edit/:
+    post:
+      tags:
+        - "Case Info"
+      summary: "Edit case ED information."
+      operationId: "editCaseEDs"
+      description: "Edits the ED department information for a case."
+      produces:
+      - "application/json"
+      parameters:
+        - in: "path"
+          name: "case_id"
+          required: True
+          description: "ID of the case to get information for."
+          type: "integer"
+        - in: "body"
+          name: "body"
+          required: True
+          description: "New details for the case."
+          schema:
+            $ref: "#/definitions/CASE_EDS"
+      responses:
+        200: 
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                default: True
+        400: 
+          description: "Request data was invalid."
+          schema: 
+            type: "object"
+            properties:
+              success: 
+                type: "boolean"
+                default: False
+              error_type:
+                  type: "string"
+                  enum: ["request"]
+        500:
+          description: "Unspecified error. Please contact the developing team."
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                default: False
+      security:
+      - requiresClinician: []
+  /case_radiologies/{case_id}/view/:
+    get:
+      tags:
+      - "Case Info"
+      summary: "View case radiology information."
+      description: "Returns the Radiology department information for a single case."
+      operationId: "getCaseRadiologies"
+      produces:
+      - "application/json"
+      parameters:
+        - in: "path"
+          name: "case_id"
+          required: True
+          description: "ID of the case to get information for."
+          type: "integer"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success: 
+                type: "boolean"
+                default: True
+              result:
+                type: "array"
+                items:
+                  $ref: "#/definitions/CASE_RADIOLOGIES"
+        401:
+          description: "Authentication failed."
+          schema:
+            $ref: "#/definitions/FailedAuthClinician"
+      security:
+        - requiresClinician: []
+  /case_radiologies/{case_id}/edit/:
+    post:
+      tags:
+        - "Case Info"
+      summary: "Edit case Radiology information."
+      operationId: "editCaseRadiologies"
+      description: "Edits the Radiology department information for a case."
+      produces:
+      - "application/json"
+      parameters:
+        - in: "path"
+          name: "case_id"
+          required: True
+          description: "ID of the case to get information for."
+          type: "integer"
+        - in: "body"
+          name: "body"
+          required: True
+          description: "New details for the case."
+          schema:
+            $ref: "#/definitions/CASE_RADIOLOGIES"
+      responses:
+        200: 
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                default: True
+        400: 
+          description: "Request data was invalid."
+          schema: 
+            type: "object"
+            properties:
+              success: 
+                type: "boolean"
+                default: False
+              error_type:
+                  type: "string"
+                  enum: ["request"]
+        500:
+          description: "Unspecified error. Please contact the developing team."
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                default: False
+      security:
+      - requiresClinician: []
+  /case_managements/{case_id}/view/:
+    get:
+      tags:
+      - "Case Info"
+      summary: "View case management information."
+      description: "Returns the management information for a single case."
+      operationId: "getCaseManagements"
+      produces:
+      - "application/json"
+      parameters:
+        - in: "path"
+          name: "case_id"
+          required: True
+          description: "ID of the case to get information for."
+          type: "integer"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success: 
+                type: "boolean"
+                default: True
+              result:
+                type: "array"
+                items:
+                  $ref: "#/definitions/CASE_MANAGEMENTS"
+        401:
+          description: "Authentication failed."
+          schema:
+            $ref: "#/definitions/FailedAuthClinician"
+      security:
+        - requiresClinician: []
+  /case_managements/{case_id}/edit/:
+    post:
+      tags:
+        - "Case Info"
+      summary: "Edit case management information."
+      operationId: "editCaseManagements"
+      description: "Edits the management information for a case."
+      produces:
+      - "application/json"
+      parameters:
+        - in: "path"
+          name: "case_id"
+          required: True
+          description: "ID of the case to get information for."
+          type: "integer"
+        - in: "body"
+          name: "body"
+          required: True
+          description: "New details for the case."
+          schema:
+            $ref: "#/definitions/CASE_MANAGEMENTS"
+      responses:
+        200: 
+          description: "OK"
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                default: True
+        400: 
+          description: "Request data was invalid."
+          schema: 
+            type: "object"
+            properties:
+              success: 
+                type: "boolean"
+                default: False
+              error_type:
+                  type: "string"
+                  enum: ["request"]
+        500:
+          description: "Unspecified error. Please contact the developing team."
+          schema:
+            type: "object"
+            properties:
+              success:
+                type: "boolean"
+                default: False
+      security:
+      - requiresClinician: []
+securityDefinitions:
+  requiresClinician:
+    type: "basic"
+    description: "This is the standard 2FA method for a clinician. The time-based token based on the shared secret should be concatenated onto the password with a colon i.e. `password:token` - if using the headers directly, the whole string should be of the form `username:password:token` before being base64 encoded."
+  requiresAdmin:
+    type: "basic"
+    description: "This route requires administrator credentials, which are just a standard username and password. These resources should not generally be called from the ordinary frontend clients and may be deprecated in the future."
+definitions:
+  FailedAuthClinician:
+    type: "object"
+    properties:
+      success: 
+        type: boolean
+        default: False
+      error_type:
+        type: string
+        enum: ["auth"]
+
+  CLINICIANS:
+    type: 'object'
+    required:
+      - id
+      - username
+      - pwhash
+      - email
+      - pairing_code
+    properties:
+      id:
+        type: 'integer'
+      first_name:
+        type: 'string'
+      last_name:
+        type: 'string'
+      username:
+        type: 'string'
+      pwhash:
+        type: 'string'
+      role:
+        type: 'string'
+        enum: ['paramedic', 'ed_clinician', 'radiographer', 'stroke_team', 'radiologist', 'stroke_ward', 'neuroint', 'angio_nurse', 'anaesthetist', 'admin']
+      email:
+        type: 'string'
+      phone:
+        type: 'string'
+      pairing_code:
+        type: 'string'
+      is_paired:
+        type: 'boolean'
+      shared_secret:
+        type: 'string'
+      is_password_set:
+        type: 'boolean'
+  ADMINS:
+    type: 'object'
+    required:
+      - id
+      - username
+      - pwhash
+    properties:
+      id:
+        type: 'integer'
+      first_name:
+        type: 'string'
+      last_name:
+        type: 'string'
+      username:
+        type: 'string'
+      pwhash:
+        type: 'string'
+      email:
+        type: 'string'
+  CASES:
+    type: 'object'
+    required:
+      - case_id
+    properties:
+      case_id:
+        type: 'integer'
+      first_name:
+        type: 'string'
+      last_name:
+        type: 'string'
+      dob:
+        type: 'string'
+        format: 'date'
+      address:
+        type: 'string'
+      gender:
+        type: 'string'
+        enum: ['f', 'm', 'u']
+      last_well:
+        type: 'string'
+        format: 'date-time'
+      nok:
+        type: 'string'
+      nok_phone:
+        type: 'string'
+      medicare_no:
+        type: 'string'
+      initial_location_lat:
+        type: 'string'
+      initial_location_long:
+        type: 'string'
+      eta:
+        type: 'string'
+        format: 'date-time'
+      status:
+        type: 'string'
+        enum: ['incoming', 'active', 'completed']
+      incoming_timestamp:
+        type: 'string'
+        format: 'date-time'
+      active_timestamp:
+        type: 'string'
+        format: 'date-time'
+      completed_timestamp:
+        type: 'string'
+        format: 'date-time'
+  CASE_HISTORIES:
+    type: 'object'
+    required:
+      - case_id
+    properties:
+      case_id:
+        type: 'integer'
+      pmhx:
+        type: 'string'
+      meds:
+        type: 'string'
+      anticoags:
+        type: 'string'
+        enum: ['no', 'yes', 'unknown']
+      anticoags_last_dose:
+        type: 'string'
+        format: 'date-time'
+      hopc:
+        type: 'string'
+      weight:
+        type: 'number'
+      last_meal:
+        type: 'string'
+        format: 'date-time'
+  CASE_ASSESSMENTS:
+    type: 'object'
+    required:
+      - case_id
+    properties:
+      case_id:
+        type: 'integer'
+      facial_droop:
+        type: 'string'
+        enum: ['no', 'yes', 'unknown']
+      arm_drift:
+        type: 'string'
+        enum: ['no', 'yes', 'unknown']
+      weak_grip:
+        type: 'string'
+        enum: ['no', 'yes', 'unknown']
+      speech_difficulty:
+        type: 'string'
+        enum: ['no', 'yes', 'unknown']
+      bp_systolic:
+        type: 'integer'
+      bp_diastolic:
+        type: 'integer'
+      heart_rate:
+        type: 'integer'
+      heart_rhythm:
+        type: 'string'
+        enum: ['regular', 'irregular', 'unknown']
+      rr:
+        type: 'integer'
+      o2sats:
+        type: 'integer'
+      temp:
+        type: 'integer'
+      gcs:
+        type: 'integer'
+      blood_glucose:
+        type: 'integer'
+      facial_palsy_race:
+        type: 'integer'
+      arm_motor_impair:
+        type: 'integer'
+      leg_motor_impair:
+        type: 'integer'
+      head_gaze_deviate:
+        type: 'integer'
+      hemiparesis:
+        type: 'string'
+        enum: ['left', 'right', 'unknown']
+      cannula:
+        type: 'string'
+        enum: ['no', 'yes', 'unknown']
+      conscious_level:
+        type: 'integer'
+      month_age:
+        type: 'integer'
+      blink_squeeze:
+        type: 'integer'
+      horizontal_gaze:
+        type: 'integer'
+      visual_fields:
+        type: 'integer'
+      facial_palsy_nihss:
+        type: 'integer'
+      left_arm_drift:
+        type: 'integer'
+      right_arm_drift:
+        type: 'integer'
+      left_leg_drift:
+        type: 'integer'
+      right_leg_drift:
+        type: 'integer'
+      limb_ataxia:
+        type: 'integer'
+      sensation:
+        type: 'integer'
+      aphasia:
+        type: 'integer'
+      dysarthria:
+        type: 'integer'
+      neglect:
+        type: 'integer'
+      rankin_conscious:
+        type: 'integer'
+      likely_lvo:
+        type: 'boolean'
+  CASE_EDS:
+    type: 'object'
+    required:
+      - case_id
+    properties:
+      case_id:
+        type: 'integer'
+      location:
+        type: 'string'
+      registered:
+        type: 'boolean'
+      triaged:
+        type: 'boolean'
+      primary_survey:
+        type: 'boolean'
+  CASE_RADIOLOGIES:
+    type: 'object'
+    required:
+      - case_id
+    properties:
+      case_id:
+        type: 'integer'
+      ct_available:
+        type: 'boolean'
+      ct_available_loc:
+        type: 'string'
+      arrived_to_ct:
+        type: 'boolean'
+      ct_complete:
+        type: 'boolean'
+      ich_found:
+        type: 'boolean'
+      do_cta_ctp:
+        type: 'boolean'
+      cta_ctp_complete:
+        type: 'boolean'
+      large_vessel_occlusion:
+        type: 'boolean'
+  CASE_MANAGEMENTS:
+    type: 'object'
+    required:
+      - case_id
+    properties:
+      case_id:
+        type: 'integer'
+      thrombolysis:
+        type: 'boolean'
+      new_trauma_haemorrhage:
+        type: 'boolean'
+      uncontrolled_htn:
+        type: 'boolean'
+      history_ich:
+        type: 'boolean'
+      known_intracranial:
+        type: 'boolean'
+      active_bleed:
+        type: 'boolean'
+      endocarditis:
+        type: 'boolean'
+      bleeding_diathesis:
+        type: 'boolean'
+      abnormal_blood_glucose:
+        type: 'boolean'
+      rapidly_improving:
+        type: 'boolean'
+      recent_trauma_surgery:
+        type: 'boolean'
+      recent_active_bleed:
+        type: 'boolean'
+      seizure_onset:
+        type: 'boolean'
+      recent_arterial_puncture:
+        type: 'boolean'
+      recent_lumbar_puncture:
+        type: 'boolean'
+      post_acs_pericarditis:
+        type: 'boolean'
+      pregnant:
+        type: 'boolean'
+      thrombolysis_time_given:
+        type: 'string'
+        format: 'date-time'
+      ecr:
+        type: 'boolean'
+      surgical_rx:
+        type: 'boolean'
+      conservative_rx:
+        type: 'boolean'
+  EVENT_LOG:
+    type: 'object'
+    required:
+      - id
+      - event_type
+    properties:
+      id:
+        type: 'integer'
+      event_type:
+        type: 'string'
+      event_data:
+        type: 'string'
+      event_metadata:
+        type: 'string'
+      signoff_first_name:
+        type: 'string'
+      signoff_last_name:
+        type: 'string'
+      signoff_role:
+        type: 'string'
+        enum: ['paramedic', 'ed_clinician', 'radiographer', 'stroke_team', 'radiologist', 'stroke_ward', 'neuroint', 'angio_nurse', 'anaesthetist', 'other', 'admin']
+      signoff_username:
+        type: 'string'
+      event_timestamp:
+        type: 'string'
+        format: 'date-time'

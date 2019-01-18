@@ -7,10 +7,7 @@ CREATE TABLE IF NOT EXISTS `clinicians` (
   `last_name` varchar(30) DEFAULT NULL,
   `username` varchar(20) NOT NULL,
   `pwhash` text NOT NULL,
-  `role` enum('paramedic', 'ed_clinician', 'radiographer',
-       	      'stroke_team', 'radiologist', 'stroke_ward',
-	            'neuroint', 'angio_nurse', 'anaesthetist',
-	            'admin') DEFAULT NULL,
+  `role` enum('paramedic', 'ed_clinician', 'radiographer', 'stroke_team', 'radiologist', 'stroke_ward', 'neuroint', 'angio_nurse', 'anaesthetist', 'admin') DEFAULT NULL,
   `email` varchar(40) NOT NULL,
   `phone` varchar(16) DEFAULT NULL,
   `pairing_code` text NOT NULL,
@@ -107,7 +104,7 @@ CREATE TABLE IF NOT EXISTS `case_assessments` (
 
 CREATE TABLE IF NOT EXISTS `case_eds` (
   `case_id` int NOT NULL PRIMARY KEY,
-  `location` VARCHAR(30) DEFAULT NULL,
+  `location` varchar(30) DEFAULT NULL,
   `registered` bool DEFAULT 0,
   `triaged` bool DEFAULT 0,
   `primary_survey` bool DEFAULT 0,
@@ -166,10 +163,7 @@ CREATE TABLE IF NOT EXISTS `event_log` (
   `event_metadata` text DEFAULT NULL,
   `signoff_first_name` varchar(30) DEFAULT NULL,
   `signoff_last_name` varchar(30) DEFAULT NULL,
-  `signoff_role` enum('paramedic', 'ed_clinician', 'radiographer',
-                      'stroke_team', 'radiologist', 'stroke_ward',
-	                    'neuroint', 'angio_nurse', 'anaesthetist',
-	                    'other', 'admin') DEFAULT NULL,
+  `signoff_role` enum('paramedic', 'ed_clinician', 'radiographer', 'stroke_team', 'radiologist', 'stroke_ward', 'neuroint', 'angio_nurse', 'anaesthetist', 'other', 'admin') DEFAULT NULL,
   `signoff_username` text DEFAULT NULL,
   `event_timestamp`  timestamp DEFAULT CURRENT_TIMESTAMP
 )

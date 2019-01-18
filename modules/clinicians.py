@@ -161,7 +161,7 @@ def register_clinician():
 		server.close()
 		return jsonify({'success': True, 'destination': inputs.get('email')})
 	except Exception as e:
-		return jsonify({'success': False, 'debug_py_err': str(e), 'e_args': str(e.args)})
+		return jsonify({'success': False, 'debug_py_err': str(e), 'e_args': str(e.args)}), 500
 
 @clinicians.route('/pair/', methods=['POST'])
 def pair_clinician():
@@ -173,10 +173,10 @@ def pair_clinician():
     in_backend_id = inputs.get('backend_id')
 
     if not in_username or not in_password:
-        return jsonify({'sucess': False, 'error_type': 'request', 'debugmsg': 'Username or password not given.'}), 400
+        return jsonify({'success': False, 'error_type': 'request', 'debugmsg': 'Username or password not given.'}), 400
 
     if in_backend_domain != app.config.get('BACKEND_DOMAIN') or in_backend_id != app.config.get('BACKEND_ID'):
-        return jsonify({'sucess': False, 'error_type': 'checkpoint', 'debugmsg': 'Backend details did not match'}), 401
+        return jsonify({'success': False, 'error_type': 'checkpoint', 'debugmsg': 'Backend details did not match'}), 401
 
     cursor = ext.connect_()
     query = 'select pwhash, pairing_code, is_paired from clinicians where username = %s'
@@ -326,7 +326,7 @@ def set_password(user_info):
     inputs = request.get_json()
     new_password = inputs.get('new_password')
     if not new_password:
-        return jsonify({'success': False, 'debugmsg': 'No new password given.'}), 400
+        return jsonify({'success': False, 'error_type': 'request', 'debugmsg': 'No new password given.'}), 400
     cursor = ext.connect_()
     query = "update clinicians set pwhash = %s, is_password_set = 1 where username = %s"
     cursor.execute(query, (pbkdf2_sha256.hash(new_password), user_info.get('signoff_username')))

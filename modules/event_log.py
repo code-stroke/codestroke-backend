@@ -57,7 +57,7 @@ def get_event_log_limit(user_info):
         else:
             output = {'result': None, 'success': True}
     else:
-        output = {'result': None, 'success': False, 'debugmsg': 'Positive integers for params only.'}, 400
+        output = {'success': False, 'error_type': 'parameters', 'debugmsg': 'Positive integers for params only.'}, 400
     return jsonify(output)
 
 @event_log.route('/all/', methods=(['GET']))
