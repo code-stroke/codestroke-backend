@@ -94,5 +94,8 @@ development team, please speak to one of the development members.
 
 ## API Document Generation
 
-The API documentation is written in [API Blueprint](https://apiblueprint.org)
-and rendered to HTML using [Aglio](https://github.com/danielgtaylor/aglio). 
+The API documentation is written in the
+[OpenAPI](https://swagger.io/docs/specification/about/) specification. Part of
+the API documentation (the definitions) are generated from
+`resources/schema.sql` using the `scripts/scan_schema.py` script and should be
+rerun if changes are made to the schema.
