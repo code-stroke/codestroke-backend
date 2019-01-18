@@ -37,40 +37,68 @@ def make_database(database_name):
 
     db.commit()
 
-# initialise a database for running tests
-make_database("test_codestroke")
 
-# then create the proper database
-make_database(config.DATABASE_NAME)
+# Convenience function
+
+def drop_database(database_name):
+    """ Drops a codestroke database with database_name."""
+
+    cursor.execute("drop database {}".format(database_name))
+    db.commit()
+
+# Add admin user
+
+def check_admin(database_name):
+    """ Checks whether an admin user is already created."""
+    check_query = 'select * from admins'
+    cursor.execute(check_query)
+    result = cursor.fetchall()
+
+    if len(result) > 0:
+        sys.exit('Admin user already created.')
+
+def add_admin(database_name, admin_info):
+    """ Adds an admin to the specified database.
+
+    Args:
+        database_name: name of the database to add to
+        admin_info: list of [first_name, last_name, username, password, email]
+    """
+
+    check_admin(database_name)
+
+    admin_pwhash = pbkdf2_sha256.hash(admin_info[3])
+
+    admin_info[3] = admin_pwhash
+
+    admin_query = 'insert into admins (first_name, last_name, username, pwhash, email) values (%s, %s, %s, %s, %s)'
+
+    cursor.execute("use {}".format(database_name))
+    cursor.execute(admin_query, admin_info)
+
+    db.commit()
 
 
-# PROMPT FOR FIRST ADMIN USER
+# only run if called directly
+if __name__ == "__main__":
 
-check_query = 'select * from admins'
-cursor.execute(check_query)
-result = cursor.fetchall()
+    # then create the proper database
+    make_database(config.DATABASE_NAME)
 
-if len(result) > 0:
-    sys.exit('Admin user already created.')
+    # and add an admin
 
-print('\nYou will now create the first administrator.\n\n')
+    check_admin(config.DATABASE_NAME)
 
-admin_first = input('\nEnter your first name:  ')
-admin_last = input('\nEnter your last name:  ')
-admin_email = input('\nEnter your email address:  ')
-admin_username = input('\nEnter the administrator username:  ')
-admin_password = getpass.getpass(prompt='\nEnter the administrator password:  ')
+    print('\nYou will now create the first administrator.\n\n')
 
-admin_pwhash = pbkdf2_sha256.hash(admin_password)
+    admin_first = input('Enter your first name:  ')
+    admin_last = input('Enter your last name:  ')
+    admin_email = input('Enter your email address:  ')
+    admin_username = input('Enter the administrator username:  ')
+    admin_password = getpass.getpass(prompt='Enter the administrator password:  ')
 
-admin_query = 'insert into admins (first_name, last_name, username, pwhash, email) values (%s, %s, %s, %s, %s)'
+    admin_info = [admin_first, admin_last, admin_username, admin_password, admin_email]
 
-cursor.execute(admin_query, (admin_first,
-                       admin_last,
-                       admin_username,
-                       admin_pwhash,
-                       admin_email))
+    add_admin(config.DATABASE_NAME, admin_info)
 
-db.commit()
-
-print('\n')
+    print('\nThe setup is now complete.\n')

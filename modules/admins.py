@@ -21,15 +21,17 @@ from flask import current_app as app
 
 admins = Blueprint('admins', __name__)
 
-@admins.route('/', methods=['POST'])
-def add_admin():
-    inputs = request.get_json()
-    exclude = ['id', 'pwhash']
-    args = {k:inputs[k] for k in inputs.keys() if k not in exclude}
-    if not inputs.get('password'):
-        return jsonify({'success': False, 'error_type': 'request', 'debugmsg': 'Must include password'}), 400
-    add_result = ext.add_user_('admins', args)
-    return add_result[0]
+# # Mostly moved to the quick_setup.py script
+# # Prevent adding any new admins from API full stop.
+# @admins.route('/', methods=['POST'])
+# def add_admin():
+#     inputs = request.get_json()
+#     exclude = ['id', 'pwhash']
+#     args = {k:inputs[k] for k in inputs.keys() if k not in exclude}
+#     if not inputs.get('password'):
+#         return jsonify({'success': False, 'error_type': 'request', 'debugmsg': 'Must include password'}), 400
+#     add_result = ext.add_user_('admins', args)
+#     return add_result[0]
 
 def check_admin(username, password):
     cursor = ext.connect_()

@@ -37,7 +37,7 @@ def valid_table_(table):
     cursor = connect_()
     cursor.execute('show tables')
     result = cursor.fetchall()
-    tables_list = [item['Tables_in_{}'.format(app.config.get('DATABASE_NAME'))] for item in result]
+    tables_list = [item['Tables_in_{}'.format(app.config.get('DATABASE_NAME').lower())] for item in result]
     if table in tables_list:
         return True
     else:

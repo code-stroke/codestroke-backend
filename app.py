@@ -40,9 +40,9 @@ def index(user_info):
 def get_version():
     version = app.config.get('VERSION')
     if version:
-        return jsonify({'success': True, 'error_type': 'version', 'version': version})
+        return jsonify({'success': True, 'version': version})
     else:
-        return jsonify({'success': False, 'debugmsg': 'Version not specified'}), 500
+        return jsonify({'success': False, 'error_type': 'version', 'debugmsg': 'Version not specified'}), 500
 
 
 if __name__ == '__main__':
