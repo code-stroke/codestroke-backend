@@ -31,16 +31,19 @@ for line in schema:
         in_table = False
         all_tables.append((current_table, current_fields))
 
-for table in all_tables:
-    with open("../docs/api.apib", "a") as api_file:
-        api_file.write("## {}\n\n".format(table[0]))
+with open("../docs/api.apib", "a") as api_file:
+    api_file.write("## Data Structures\n\n")
+
+    for table in all_tables:
+        api_file.write("### {}\n\n".format(table[0].upper()))
         for field in table[1]:
             if "PRIMARY KEY" in field[2]:
                 continue
-            api_file.write("+ {} ({}) ".format(field[0], field[1]))
+            api_file.write("+ {} ({}".format(field[0], field[1]))
             if "NOT NULL" in field[2]:
-                api_file.write("[required] ")
+                api_file.write(", required")
             if "DEFAULT" in field[2]:
-                api_file.write("[optional, default value {}]".format(field[2].split("DEFAULT ")[1].lower().strip(",")))
-            api_file.write("\n")
+                api_file.write(", optional)\n    + Default: {}\n".format(field[2].split("DEFAULT ")[1].lower().strip(",")))
+                continue
+            api_file.write(")\n")
         api_file.write("\n\n")

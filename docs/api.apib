@@ -257,5 +257,264 @@ These will be deprecated:
 + username (varchar(20)) [required] 
 + pwhash (text) [required] 
 + email (varchar(40)) [optional, default value null]
+## Data Structures
+
+### CLINICIANS
+
++ first_name (varchar(30), optional)
+    + Default: null
++ last_name (varchar(30), optional)
+    + Default: null
++ username (varchar(20), required)
++ pwhash (text, required)
++ role (enum('paramedic',)
++ email (varchar(40), required)
++ phone (varchar(16), optional)
+    + Default: null
++ pairing_code (text, required)
++ is_paired (bool, optional)
+    + Default: 0
++ shared_secret (text, optional)
+    + Default: null
++ is_password_set (bool, optional)
+    + Default: 0
+
+
+### ADMINS
+
++ first_name (varchar(30), optional)
+    + Default: null
++ last_name (varchar(30), optional)
+    + Default: null
++ username (varchar(20), required)
++ pwhash (text, required)
++ email (varchar(40), optional)
+    + Default: null
+
+
+### CASES
+
++ first_name (varchar(30), optional)
+    + Default: null
++ last_name (varchar(30), optional)
+    + Default: null
++ dob (date, optional)
+    + Default: null
++ address (text, optional)
+    + Default: null
++ gender (enum('f',, optional)
+    + Default: 'u'
++ last_well (timestamp, optional)
+    + Default: null
++ nok (varchar(40), optional)
+    + Default: null
++ nok_phone (varchar(16), optional)
+    + Default: null
++ medicare_no (varchar(12), optional)
+    + Default: null
++ initial_location_lat (decimal(10,8), optional)
+    + Default: null
++ initial_location_long (decimal(11,8), optional)
+    + Default: null
++ eta (timestamp, optional)
+    + Default: null
++ status (enum('incoming',, optional)
+    + Default: 'incoming'
++ incoming_timestamp (timestamp, optional)
+    + Default: current_timestamp
++ active_timestamp (timestamp, optional)
+    + Default: null
++ completed_timestamp (timestamp, optional)
+    + Default: null
+
+
+### CASE_HISTORIES
+
++ pmhx (text, optional)
+    + Default: null
++ meds (text, optional)
+    + Default: null
++ anticoags (enum('no',, optional)
+    + Default: null
++ anticoags_last_dose (timestamp, optional)
+    + Default: null
++ hopc (text, optional)
+    + Default: null
++ weight (float, optional)
+    + Default: null
++ last_meal (timestamp, optional)
+    + Default: null
+
+
+### CASE_ASSESSMENTS
+
++ facial_droop (enum('no',, optional)
+    + Default: null
++ arm_drift (enum('no',, optional)
+    + Default: null
++ weak_grip (enum('no',, optional)
+    + Default: null
++ speech_difficulty (enum('no',, optional)
+    + Default: null
++ bp_systolic (int, optional)
+    + Default: null
++ bp_diastolic (int, optional)
+    + Default: null
++ heart_rate (int, optional)
+    + Default: null
++ heart_rhythm (enum('regular',, optional)
+    + Default: null
++ rr (int, optional)
+    + Default: null
++ o2sats (int, optional)
+    + Default: null
++ temp (int, optional)
+    + Default: null
++ gcs (int, optional)
+    + Default: null
++ blood_glucose (int, optional)
+    + Default: null
++ facial_palsy_race (tinyint, optional)
+    + Default: null
++ arm_motor_impair (tinyint, optional)
+    + Default: null
++ leg_motor_impair (tinyint, optional)
+    + Default: null
++ head_gaze_deviate (tinyint, optional)
+    + Default: null
++ hemiparesis (enum('left',, optional)
+    + Default: null
++ cannula (enum('no',, optional)
+    + Default: null
++ conscious_level (tinyint, optional)
+    + Default: null
++ month_age (tinyint, optional)
+    + Default: null
++ blink_squeeze (tinyint, optional)
+    + Default: null
++ horizontal_gaze (tinyint, optional)
+    + Default: null
++ visual_fields (tinyint, optional)
+    + Default: null
++ facial_palsy_nihss (tinyint, optional)
+    + Default: null
++ left_arm_drift (tinyint, optional)
+    + Default: null
++ right_arm_drift (tinyint, optional)
+    + Default: null
++ left_leg_drift (tinyint, optional)
+    + Default: null
++ right_leg_drift (tinyint, optional)
+    + Default: null
++ limb_ataxia (tinyint, optional)
+    + Default: null
++ sensation (tinyint, optional)
+    + Default: null
++ aphasia (tinyint, optional)
+    + Default: null
++ dysarthria (tinyint, optional)
+    + Default: null
++ neglect (tinyint, optional)
+    + Default: null
++ rankin_conscious (tinyint, optional)
+    + Default: null
++ likely_lvo (bool, optional)
+    + Default: null
+
+
+### CASE_EDS
+
++ location (VARCHAR(30), optional)
+    + Default: null
++ registered (bool, optional)
+    + Default: 0
++ triaged (bool, optional)
+    + Default: 0
++ primary_survey (bool, optional)
+    + Default: 0
+
+
+### CASE_RADIOLOGIES
+
++ ct_available (bool, optional)
+    + Default: null
++ ct_available_loc (varchar(30), optional)
+    + Default: null
++ arrived_to_ct (bool, optional)
+    + Default: null
++ ct_complete (bool, optional)
+    + Default: null
++ ich_found (bool, optional)
+    + Default: null
++ do_cta_ctp (bool, optional)
+    + Default: null
++ cta_ctp_complete (bool, optional)
+    + Default: null
++ large_vessel_occlusion (bool, optional)
+    + Default: null
+
+
+### CASE_MANAGEMENTS
+
++ thrombolysis (bool, optional)
+    + Default: null
++ new_trauma_haemorrhage (bool, optional)
+    + Default: null
++ uncontrolled_htn (bool, optional)
+    + Default: null
++ history_ich (bool, optional)
+    + Default: null
++ known_intracranial (bool, optional)
+    + Default: null
++ active_bleed (bool, optional)
+    + Default: null
++ endocarditis (bool, optional)
+    + Default: null
++ bleeding_diathesis (bool, optional)
+    + Default: null
++ abnormal_blood_glucose (bool, optional)
+    + Default: null
++ rapidly_improving (bool, optional)
+    + Default: null
++ recent_trauma_surgery (bool, optional)
+    + Default: null
++ recent_active_bleed (bool, optional)
+    + Default: null
++ seizure_onset (bool, optional)
+    + Default: null
++ recent_arterial_puncture (bool, optional)
+    + Default: null
++ recent_lumbar_puncture (bool, optional)
+    + Default: null
++ post_acs_pericarditis (bool, optional)
+    + Default: null
++ pregnant (bool, optional)
+    + Default: null
++ thrombolysis_time_given (timestamp, optional)
+    + Default: null
++ ecr (bool, optional)
+    + Default: null
++ surgical_rx (bool, optional)
+    + Default: null
++ conservative_rx (bool, optional)
+    + Default: null
+
+
+### EVENT_LOG
+
++ event_type (varchar(20), required)
++ event_data (text, optional)
+    + Default: null
++ event_metadata (text, optional)
+    + Default: null
++ signoff_first_name (varchar(30), optional)
+    + Default: null
++ signoff_last_name (varchar(30), optional)
+    + Default: null
++ signoff_role (enum('paramedic',)
++ signoff_username (text, optional)
+    + Default: null
++ event_timestamp (, optional)
+    + Default: current_timestamp
 
 
