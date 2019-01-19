@@ -420,7 +420,7 @@ paths:
               result:
                 type: array
                 items:
-                  $ref: '#/definitions/EVENT_LOG'
+                  $ref: '#/definitions/EVENT_LOG_GET'
         '401':
           description: Authentication failed.
           schema:
@@ -464,7 +464,7 @@ paths:
               result:
                 type: array
                 items:
-                  $ref: '#/definitions/EVENT_LOG'
+                  $ref: '#/definitions/EVENT_LOG_GET'
         '400':
           description: Query parameters were invalid.
           schema:
@@ -519,7 +519,7 @@ paths:
               result:
                 type: array
                 items:
-                  $ref: '#/definitions/EVENT_LOG'
+                  $ref: '#/definitions/EVENT_LOG_GET'
         '400':
           description: Query parameters were invalid.
           schema:

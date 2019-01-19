@@ -620,7 +620,7 @@
                 "result": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/EVENT_LOG"
+                    "$ref": "#/definitions/EVENT_LOG_GET"
                   }
                 }
               }
@@ -680,7 +680,7 @@
                 "result": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/EVENT_LOG"
+                    "$ref": "#/definitions/EVENT_LOG_GET"
                   }
                 }
               }
@@ -760,7 +760,7 @@
                 "result": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/EVENT_LOG"
+                    "$ref": "#/definitions/EVENT_LOG_GET"
                   }
                 }
               }
