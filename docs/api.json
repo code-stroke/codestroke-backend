@@ -1,5 +1,5 @@
 {
-  "swagger": "3.0",
+  "swagger": "2.0",
   "info": {
     "description": "This API documentation details the resources for the Code Stroke Backend.",
     "version": 0.2,
@@ -1481,13 +1481,11 @@
   },
   "securityDefinitions": {
     "requiresClinician": {
-      "type": "https",
-      "scheme": "basic",
+      "type": "basic",
       "description": "This is the standard 2FA method for a clinician. The time-based token based on the shared secret should be concatenated onto the password with a colon i.e. `password:token` - if using the headers directly, the whole string should be of the form `username:password:token` before being base64 encoded."
     },
     "requiresAdmin": {
-      "type": "https",
-      "scheme": "basic",
+      "type": "basic",
       "description": "This route requires administrator credentials, which are just a standard username and password. These resources should not generally be called from the ordinary frontend clients and may be deprecated in the future."
     }
   },
