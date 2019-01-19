@@ -1,5 +1,7 @@
+appdirs==1.4.3
 atomicwrites==1.2.1
 attrs==18.2.0
+black==18.9b0
 certifi==2018.11.29
 chardet==3.0.4
 Click==7.0
@@ -9,7 +11,9 @@ Flask-MySQLdb==0.2.0
 idna==2.8
 itsdangerous==1.1.0
 Jinja2==2.10
+jsonschema==2.6.0
 MarkupSafe==1.1.0
+mistune==0.8.4
 more-itertools==5.0.0
 mysqlclient==1.3.14
 passlib==1.7.1
@@ -19,7 +23,9 @@ pyotp==2.2.7
 PyQRCode==1.2.1
 pytest==4.1.1
 pytz==2018.9
+PyYAML==3.13
 requests==2.21.0
 six==1.12.0
+toml==0.10.0
 urllib3==1.24.1
 Werkzeug==0.14.1

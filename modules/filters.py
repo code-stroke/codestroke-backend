@@ -8,9 +8,10 @@ formatting.
 import decimal
 import datetime
 
+
 def fetch_filter(result, table):
     rows = list(result)
-    rows = list(map(lambda x: {k:_process_fetch(k,v) for (k,v) in x.items()}, rows))
+    rows = list(map(lambda x: {k: _process_fetch(k, v) for (k, v) in x.items()}, rows))
     return rows
 
 
@@ -30,12 +31,11 @@ def _process_fetch(key, value):
 
 
 def put_filter(info_table, case_id, new_data, prior_data):
-
     def _data_is_new(key):
         try:
             return new_data[key] != prior_data[key]
         except KeyError:
-            return False # non-necessary additional key
+            return False  # non-necessary additional key
 
     # def _check(key):
     #     # since PUT, must check prior data
@@ -49,7 +49,10 @@ def put_filter(info_table, case_id, new_data, prior_data):
 
     # process new_data to only edited data
     edited_data = {key: new_data[key] for key in new_data.keys() if _data_is_new(key)}
-    additional_data = {k: new_data.get(k) for k in ['signoff_first_name', 'signoff_last_name', 'signoff_role']}
+    additional_data = {
+        k: new_data.get(k)
+        for k in ["signoff_first_name", "signoff_last_name", "signoff_role"]
+    }
     edited_keys = edited_data.keys()
 
     return edited_data, edited_keys, additional_data

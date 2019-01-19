@@ -7,7 +7,7 @@ One-off script to scan and generate text for the API blueprint.
 import re
 import imp
 
-config = imp.load_source('config', '../app.conf')
+config = imp.load_source("config", "../app.conf")
 
 # SCHEMA PARSING
 
@@ -41,7 +41,9 @@ for line in schema:
 with open("../resources/api_doc_template.yaml") as infile:
     main_template = infile.read()
 
-main_template = main_template.replace("$VERSION", config.VERSION).replace("$HOST", config.BACKEND_DOMAIN)
+main_template = main_template.replace("$VERSION", config.VERSION).replace(
+    "$HOST", config.BACKEND_DOMAIN
+)
 
 main_template += "\n"
 
@@ -59,7 +61,15 @@ for table in all_tables:
             if table_type == "POST":
                 if "PRIMARY KEY" in field[2]:
                     continue
-                elif any(x in field[0] for x in ["eta", "incoming_timestamp", "active_timestamp", "completed_timestamp"] ):
+                elif any(
+                    x in field[0]
+                    for x in [
+                        "eta",
+                        "incoming_timestamp",
+                        "active_timestamp",
+                        "completed_timestamp",
+                    ]
+                ):
                     continue
                 elif table[0].startswith("case") and field[0] == "case_id":
                     continue
@@ -71,7 +81,7 @@ for table in all_tables:
 
             field_template = "      {}:\n        type: '{}'\n"
 
-            if 'varchar' in field[1] or "text" in field[1] or "decimal" in field[1]:
+            if "varchar" in field[1] or "text" in field[1] or "decimal" in field[1]:
                 field[1] = "string"
             elif field[1] == "int" or field[1] == "tinyint":
                 field[1] = "integer"
@@ -79,10 +89,10 @@ for table in all_tables:
                 field[1] = "number"
             elif field[1] == "bool":
                 field[1] = "boolean"
-            elif field[1] == 'timestamp':
+            elif field[1] == "timestamp":
                 field[1] = "string"
                 field_template += "        format: 'date-time'\n"
-            elif field[1] == 'date':
+            elif field[1] == "date":
                 field[1] = "string"
                 field_template += "        format: 'date'\n"
             elif "enum" in field[1]:

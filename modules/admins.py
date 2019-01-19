@@ -19,7 +19,7 @@ import modules.extensions as ext
 
 from flask import current_app as app
 
-admins = Blueprint('admins', __name__)
+admins = Blueprint("admins", __name__)
 
 # # Mostly moved to the quick_setup.py script
 # # Prevent adding any new admins from API full stop.
@@ -33,16 +33,18 @@ admins = Blueprint('admins', __name__)
 #     add_result = ext.add_user_('admins', args)
 #     return add_result[0]
 
+
 def check_admin(username, password):
     cursor = ext.connect_()
-    query = 'select pwhash from admins where username = %s'
+    query = "select pwhash from admins where username = %s"
     cursor.execute(query, (username,))
     result = cursor.fetchall()
     if result:
-        pwhash = result[0]['pwhash']
+        pwhash = result[0]["pwhash"]
         if pbkdf2_sha256.verify(password, pwhash):
             return True
     return False
+
 
 def requires_admin(f):
     @wraps(f)
@@ -53,8 +55,16 @@ def requires_admin(f):
         else:
             auth_check = False
         if not auth or not auth_check:
-            return jsonify({'success': False,
-                            'error_type': 'auth',
-                            'debugmsg': 'Authentication failed',}), 401
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error_type": "auth",
+                        "debugmsg": "Authentication failed",
+                    }
+                ),
+                401,
+            )
         return f(*args, **kwargs)
+
     return decorated
