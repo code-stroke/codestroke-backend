@@ -1,4 +1,4 @@
-swagger: '2.0'
+swagger: '3.0'
 info:
   description: This API documentation details the resources for the Code Stroke Backend.
   version: $VERSION
@@ -42,7 +42,25 @@ paths:
           description: Basic clinician details.
           required: true
           schema:
-            $ref: '#/definitions/CLINICIANS'
+            type: object
+            required:
+              - username
+              - role
+              - email
+            properties:
+              first_name:
+                type: string
+              last_name:
+                type: string
+              username:
+                type: string
+              role:
+                type: string
+                enum: ['paramedic', 'ed_clinician', 'radiographer', 'stroke_team', 'radiologist', 'stroke_ward', 'neuroint', 'angio_nurse', 'anaesthetist', 'other', 'admin']
+              email:
+                type: string
+              phone:
+                type: string
       responses:
         '200':
           description: OK
@@ -547,7 +565,7 @@ paths:
               result:
                 type: array
                 items:
-                  $ref: '#/definitions/CASE_HISTORIES'
+                  $ref: '#/definitions/CASE_HISTORIES_GET'
         '401':
           description: Authentication failed.
           schema:
@@ -576,7 +594,7 @@ paths:
           required: true
           description: New details for the case.
           schema:
-            $ref: '#/definitions/CASE_HISTORIES'
+            $ref: '#/definitions/CASE_HISTORIES_POST'
       responses:
         '200':
           description: OK
@@ -635,7 +653,7 @@ paths:
               result:
                 type: array
                 items:
-                  $ref: '#/definitions/CASE_ASSESSMENTS'
+                  $ref: '#/definitions/CASE_ASSESSMENTS_GET'
         '401':
           description: Authentication failed.
           schema:
@@ -664,7 +682,7 @@ paths:
           required: true
           description: New details for the case.
           schema:
-            $ref: '#/definitions/CASE_ASSESSMENTS'
+            $ref: '#/definitions/CASE_ASSESSMENTS_POST'
       responses:
         '200':
           description: OK
@@ -723,7 +741,7 @@ paths:
               result:
                 type: array
                 items:
-                  $ref: '#/definitions/CASE_EDS'
+                  $ref: '#/definitions/CASE_EDS_GET'
         '401':
           description: Authentication failed.
           schema:
@@ -752,7 +770,7 @@ paths:
           required: true
           description: New details for the case.
           schema:
-            $ref: '#/definitions/CASE_EDS'
+            $ref: '#/definitions/CASE_EDS_POST'
       responses:
         '200':
           description: OK
@@ -811,7 +829,7 @@ paths:
               result:
                 type: array
                 items:
-                  $ref: '#/definitions/CASE_RADIOLOGIES'
+                  $ref: '#/definitions/CASE_RADIOLOGIES_GET'
         '401':
           description: Authentication failed.
           schema:
@@ -840,7 +858,7 @@ paths:
           required: true
           description: New details for the case.
           schema:
-            $ref: '#/definitions/CASE_RADIOLOGIES'
+            $ref: '#/definitions/CASE_RADIOLOGIES_POST'
       responses:
         '200':
           description: OK
@@ -899,7 +917,7 @@ paths:
               result:
                 type: array
                 items:
-                  $ref: '#/definitions/CASE_MANAGEMENTS'
+                  $ref: '#/definitions/CASE_MANAGEMENTS_GET'
         '401':
           description: Authentication failed.
           schema:
@@ -928,7 +946,7 @@ paths:
           required: true
           description: New details for the case.
           schema:
-            $ref: '#/definitions/CASE_MANAGEMENTS'
+            $ref: '#/definitions/CASE_MANAGEMENTS_POST'
       responses:
         '200':
           description: OK
@@ -962,7 +980,8 @@ paths:
         - requiresClinician: []
 securityDefinitions:
   requiresClinician:
-    type: basic
+    type: https
+    scheme: basic
     description: >-
       This is the standard 2FA method for a clinician. The time-based token
       based on the shared secret should be concatenated onto the password with a
@@ -970,7 +989,8 @@ securityDefinitions:
       string should be of the form `username:password:token` before being base64
       encoded.
   requiresAdmin:
-    type: basic
+    type: https
+    scheme: basic
     description: >-
       This route requires administrator credentials, which are just a standard
       username and password. These resources should not generally be called from

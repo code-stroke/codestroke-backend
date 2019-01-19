@@ -41,57 +41,66 @@ for line in schema:
 with open("../resources/api_doc_template.yaml") as infile:
     main_template = infile.read()
 
-main_template.replace("$VERSION", config.VERSION).replace("$HOST", config.BACKEND_DOMAIN)
+main_template = main_template.replace("$VERSION", config.VERSION).replace("$HOST", config.BACKEND_DOMAIN)
 
 main_template += "\n"
 
 for table in all_tables:
-    main_template += "  " + table[0].upper() + ":\n"
-    main_template += "    type: 'object'\n"
 
-    required = []
-    field_strings = []
+    for table_type in ["POST", "GET"]:
+        main_template += "  " + table[0].upper() + "_" + table_type + ":\n"
+        main_template += "    type: 'object'\n"
 
-    for field in table[1]:
+        required = []
+        field_strings = []
 
-        #if "PRIMARY KEY" in field[2]:
-        #    continue
+        for field in table[1]:
 
-        if "NOT NULL" in field[2]:
-            required.append(field[0])
+            if table_type == "POST":
+                if "PRIMARY KEY" in field[2]:
+                    continue
+                elif any(x in field[0] for x in ["eta", "incoming_timestamp", "active_timestamp", "completed_timestamp"] ):
+                    continue
+                elif table[0].startswith("case") and field[0] == "case_id":
+                    continue
+                elif table[0] == "clinicians" and field[0] == "id":
+                    continue
 
-        field_template = "      {}:\n        type: '{}'\n"
+            if "NOT NULL" in field[2]:
+                required.append(field[0])
 
-        if 'varchar' in field[1] or "text" in field[1] or "decimal" in field[1]:
-            field[1] = "string"
-        elif field[1] == "int" or field[1] == "tinyint":
-            field[1] = "integer"
-        elif field[1] == "float":
-            field[1] = "number"
-        elif field[1] == "bool":
-            field[1] = "boolean"
-        elif field[1] == 'timestamp':
-            field[1] = "string"
-            field_template += "        format: 'date-time'\n"
-        elif field[1] == 'date':
-            field[1] = "string"
-            field_template += "        format: 'date'\n"
-        elif "enum" in field[1]:
-            choices = re.findall(r"'(.*?)'", field[1])
-            field[1] = "string"
-            field_template += """        enum: {}\n""".format(str(choices))
+            field_template = "      {}:\n        type: '{}'\n"
 
-        field_strings.append(field_template.format(field[0], field[1]))
+            if 'varchar' in field[1] or "text" in field[1] or "decimal" in field[1]:
+                field[1] = "string"
+            elif field[1] == "int" or field[1] == "tinyint":
+                field[1] = "integer"
+            elif field[1] == "float":
+                field[1] = "number"
+            elif field[1] == "bool":
+                field[1] = "boolean"
+            elif field[1] == 'timestamp':
+                field[1] = "string"
+                field_template += "        format: 'date-time'\n"
+            elif field[1] == 'date':
+                field[1] = "string"
+                field_template += "        format: 'date'\n"
+            elif "enum" in field[1]:
+                choices = re.findall(r"'(.*?)'", field[1])
+                field[1] = "string"
+                field_template += """        enum: {}\n""".format(str(choices))
 
-    if len(required) > 0:
-        main_template += "    required:\n"
-        required_str = ["      - {}".format(f) for f in required]
-        main_template += "\n".join(required_str)
-        main_template += "\n"
+            field_strings.append(field_template.format(field[0], field[1]))
 
-    main_template += "    properties:\n"
-    for field_string in field_strings:
-        main_template += field_string
+        if len(required) > 0:
+            main_template += "    required:\n"
+            required_str = ["      - {}".format(f) for f in required]
+            main_template += "\n".join(required_str)
+            main_template += "\n"
+
+        main_template += "    properties:\n"
+        for field_string in field_strings:
+            main_template += field_string
 
 with open("../docs/api.yaml", "w+") as outfile:
     outfile.write(main_template)

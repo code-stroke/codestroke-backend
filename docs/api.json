@@ -1,11 +1,11 @@
 {
-  "swagger": "2.0",
+  "swagger": "3.0",
   "info": {
     "description": "This API documentation details the resources for the Code Stroke Backend.",
-    "version": "$VERSION",
+    "version": 0.2,
     "title": "Code Stroke Backend"
   },
-  "host": "$HOST",
+  "host": "HOST",
   "basePath": "/",
   "tags": [
     {
@@ -54,7 +54,45 @@
             "description": "Basic clinician details.",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CLINICIANS"
+              "type": "object",
+              "required": [
+                "username",
+                "role",
+                "email"
+              ],
+              "properties": {
+                "first_name": {
+                  "type": "string"
+                },
+                "last_name": {
+                  "type": "string"
+                },
+                "username": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "paramedic",
+                    "ed_clinician",
+                    "radiographer",
+                    "stroke_team",
+                    "radiologist",
+                    "stroke_ward",
+                    "neuroint",
+                    "angio_nurse",
+                    "anaesthetist",
+                    "other",
+                    "admin"
+                  ]
+                },
+                "email": {
+                  "type": "string"
+                },
+                "phone": {
+                  "type": "string"
+                }
+              }
             }
           }
         ],
@@ -93,6 +131,9 @@
         "summary": "Returns a secret the first time it is called.",
         "description": "When a clinician is registered and receives their QR code, they are required to send the information contained in the QR code to this resource. If it is the first time that clinician calls this resource, then a shared secret will be returned - otherwise, this will return an error.",
         "operationId": "pairClinician",
+        "consumes": [
+          "application/json"
+        ],
         "produces": [
           "application/json"
         ],
@@ -196,6 +237,9 @@
         "summary": "Sets the clinician's initial password.",
         "description": "Sets the clinician's initial password after the pairing step. This will only work the first time it is called.",
         "operationId": "setPassword",
+        "consumes": [
+          "application/json"
+        ],
         "produces": [
           "application/json"
         ],
@@ -369,6 +413,9 @@
         "summary": "Add a new case.",
         "description": "Add a new case to the database.",
         "operationId": "addCase",
+        "consumes": [
+          "application/json"
+        ],
         "produces": [
           "application/json"
         ],
@@ -487,6 +534,9 @@
         "summary": "Acknowledge an incoming case notification",
         "description": "Acknowledges that a notification for an incoming case has been seen, and will broadcast this acknowledgement and an ETA (if location data is provided) as a new notification.",
         "operationId": "acknowledgeCase",
+        "consumes": [
+          "application/json"
+        ],
         "produces": [
           "application/json"
         ],
@@ -781,7 +831,7 @@
                 "result": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/CASE_HISTORIES"
+                    "$ref": "#/definitions/CASE_HISTORIES_GET"
                   }
                 }
               }
@@ -809,6 +859,9 @@
         "summary": "Edit case history information.",
         "operationId": "editCaseHistory",
         "description": "Edits the medical history information for a case.",
+        "consumes": [
+          "application/json"
+        ],
         "produces": [
           "application/json"
         ],
@@ -826,7 +879,7 @@
             "required": true,
             "description": "New details for the case.",
             "schema": {
-              "$ref": "#/definitions/CASE_HISTORIES"
+              "$ref": "#/definitions/CASE_HISTORIES_POST"
             }
           }
         ],
@@ -914,7 +967,7 @@
                 "result": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/CASE_ASSESSMENTS"
+                    "$ref": "#/definitions/CASE_ASSESSMENTS_GET"
                   }
                 }
               }
@@ -942,6 +995,9 @@
         "summary": "Edit case assessment information.",
         "operationId": "editCaseAssessments",
         "description": "Edits the medical assessment information for a case.",
+        "consumes": [
+          "application/json"
+        ],
         "produces": [
           "application/json"
         ],
@@ -959,7 +1015,7 @@
             "required": true,
             "description": "New details for the case.",
             "schema": {
-              "$ref": "#/definitions/CASE_ASSESSMENTS"
+              "$ref": "#/definitions/CASE_ASSESSMENTS_POST"
             }
           }
         ],
@@ -1047,7 +1103,7 @@
                 "result": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/CASE_EDS"
+                    "$ref": "#/definitions/CASE_EDS_GET"
                   }
                 }
               }
@@ -1075,6 +1131,9 @@
         "summary": "Edit case ED information.",
         "operationId": "editCaseEDs",
         "description": "Edits the ED department information for a case.",
+        "consumes": [
+          "application/json"
+        ],
         "produces": [
           "application/json"
         ],
@@ -1092,7 +1151,7 @@
             "required": true,
             "description": "New details for the case.",
             "schema": {
-              "$ref": "#/definitions/CASE_EDS"
+              "$ref": "#/definitions/CASE_EDS_POST"
             }
           }
         ],
@@ -1180,7 +1239,7 @@
                 "result": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/CASE_RADIOLOGIES"
+                    "$ref": "#/definitions/CASE_RADIOLOGIES_GET"
                   }
                 }
               }
@@ -1208,6 +1267,9 @@
         "summary": "Edit case Radiology information.",
         "operationId": "editCaseRadiologies",
         "description": "Edits the Radiology department information for a case.",
+        "consumes": [
+          "application/json"
+        ],
         "produces": [
           "application/json"
         ],
@@ -1225,7 +1287,7 @@
             "required": true,
             "description": "New details for the case.",
             "schema": {
-              "$ref": "#/definitions/CASE_RADIOLOGIES"
+              "$ref": "#/definitions/CASE_RADIOLOGIES_POST"
             }
           }
         ],
@@ -1313,7 +1375,7 @@
                 "result": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/CASE_MANAGEMENTS"
+                    "$ref": "#/definitions/CASE_MANAGEMENTS_GET"
                   }
                 }
               }
@@ -1341,6 +1403,9 @@
         "summary": "Edit case management information.",
         "operationId": "editCaseManagements",
         "description": "Edits the management information for a case.",
+        "consumes": [
+          "application/json"
+        ],
         "produces": [
           "application/json"
         ],
@@ -1358,7 +1423,7 @@
             "required": true,
             "description": "New details for the case.",
             "schema": {
-              "$ref": "#/definitions/CASE_MANAGEMENTS"
+              "$ref": "#/definitions/CASE_MANAGEMENTS_POST"
             }
           }
         ],
@@ -1416,11 +1481,13 @@
   },
   "securityDefinitions": {
     "requiresClinician": {
-      "type": "basic",
+      "type": "https",
+      "scheme": "basic",
       "description": "This is the standard 2FA method for a clinician. The time-based token based on the shared secret should be concatenated onto the password with a colon i.e. `password:token` - if using the headers directly, the whole string should be of the form `username:password:token` before being base64 encoded."
     },
     "requiresAdmin": {
-      "type": "basic",
+      "type": "https",
+      "scheme": "basic",
       "description": "This route requires administrator credentials, which are just a standard username and password. These resources should not generally be called from the ordinary frontend clients and may be deprecated in the future."
     }
   },
@@ -1440,19 +1507,15 @@
         }
       }
     },
-    "CLINICIANS": {
+    "CLINICIANS_POST": {
       "type": "object",
       "required": [
-        "id",
         "username",
         "pwhash",
         "email",
         "pairing_code"
       ],
       "properties": {
-        "id": {
-          "type": "integer"
-        },
         "first_name": {
           "type": "string"
         },
@@ -1500,7 +1563,79 @@
         }
       }
     },
-    "ADMINS": {
+    "CLINICIANS_GET": {
+      "type": "object",
+      "required": [
+        "id",
+        "username",
+        "pwhash",
+        "email",
+        "pairing_code"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "pwhash": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "pairing_code": {
+          "type": "string"
+        },
+        "is_paired": {
+          "type": "boolean"
+        },
+        "shared_secret": {
+          "type": "string"
+        },
+        "is_password_set": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ADMINS_POST": {
+      "type": "object",
+      "required": [
+        "username",
+        "pwhash"
+      ],
+      "properties": {
+        "first_name": {
+          "type": "string"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "pwhash": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      }
+    },
+    "ADMINS_GET": {
       "type": "object",
       "required": [
         "id",
@@ -1528,15 +1663,9 @@
         }
       }
     },
-    "CASES": {
+    "CASES_POST": {
       "type": "object",
-      "required": [
-        "case_id"
-      ],
       "properties": {
-        "case_id": {
-          "type": "integer"
-        },
         "first_name": {
           "type": "string"
         },
@@ -1577,10 +1706,6 @@
         "initial_location_long": {
           "type": "string"
         },
-        "eta": {
-          "type": "string",
-          "format": "date-time"
-        },
         "status": {
           "type": "string",
           "enum": [
@@ -1588,6 +1713,57 @@
             "active",
             "completed"
           ]
+        }
+      }
+    },
+    "CASES_GET": {
+      "type": "object",
+      "required": [
+        "case_id"
+      ],
+      "properties": {
+        "case_id": {
+          "type": "integer"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "dob": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "gender": {
+          "type": "string"
+        },
+        "last_well": {
+          "type": "string"
+        },
+        "nok": {
+          "type": "string"
+        },
+        "nok_phone": {
+          "type": "string"
+        },
+        "medicare_no": {
+          "type": "string"
+        },
+        "initial_location_lat": {
+          "type": "string"
+        },
+        "initial_location_long": {
+          "type": "string"
+        },
+        "eta": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string"
         },
         "incoming_timestamp": {
           "type": "string",
@@ -1603,15 +1779,9 @@
         }
       }
     },
-    "CASE_HISTORIES": {
+    "CASE_HISTORIES_POST": {
       "type": "object",
-      "required": [
-        "case_id"
-      ],
       "properties": {
-        "case_id": {
-          "type": "integer"
-        },
         "pmhx": {
           "type": "string"
         },
@@ -1642,7 +1812,7 @@
         }
       }
     },
-    "CASE_ASSESSMENTS": {
+    "CASE_HISTORIES_GET": {
       "type": "object",
       "required": [
         "case_id"
@@ -1651,6 +1821,32 @@
         "case_id": {
           "type": "integer"
         },
+        "pmhx": {
+          "type": "string"
+        },
+        "meds": {
+          "type": "string"
+        },
+        "anticoags": {
+          "type": "string"
+        },
+        "anticoags_last_dose": {
+          "type": "string"
+        },
+        "hopc": {
+          "type": "string"
+        },
+        "weight": {
+          "type": "number"
+        },
+        "last_meal": {
+          "type": "string"
+        }
+      }
+    },
+    "CASE_ASSESSMENTS_POST": {
+      "type": "object",
+      "properties": {
         "facial_droop": {
           "type": "string",
           "enum": [
@@ -1796,7 +1992,143 @@
         }
       }
     },
-    "CASE_EDS": {
+    "CASE_ASSESSMENTS_GET": {
+      "type": "object",
+      "required": [
+        "case_id"
+      ],
+      "properties": {
+        "case_id": {
+          "type": "integer"
+        },
+        "facial_droop": {
+          "type": "string"
+        },
+        "arm_drift": {
+          "type": "string"
+        },
+        "weak_grip": {
+          "type": "string"
+        },
+        "speech_difficulty": {
+          "type": "string"
+        },
+        "bp_systolic": {
+          "type": "integer"
+        },
+        "bp_diastolic": {
+          "type": "integer"
+        },
+        "heart_rate": {
+          "type": "integer"
+        },
+        "heart_rhythm": {
+          "type": "string"
+        },
+        "rr": {
+          "type": "integer"
+        },
+        "o2sats": {
+          "type": "integer"
+        },
+        "temp": {
+          "type": "integer"
+        },
+        "gcs": {
+          "type": "integer"
+        },
+        "blood_glucose": {
+          "type": "integer"
+        },
+        "facial_palsy_race": {
+          "type": "integer"
+        },
+        "arm_motor_impair": {
+          "type": "integer"
+        },
+        "leg_motor_impair": {
+          "type": "integer"
+        },
+        "head_gaze_deviate": {
+          "type": "integer"
+        },
+        "hemiparesis": {
+          "type": "string"
+        },
+        "cannula": {
+          "type": "string"
+        },
+        "conscious_level": {
+          "type": "integer"
+        },
+        "month_age": {
+          "type": "integer"
+        },
+        "blink_squeeze": {
+          "type": "integer"
+        },
+        "horizontal_gaze": {
+          "type": "integer"
+        },
+        "visual_fields": {
+          "type": "integer"
+        },
+        "facial_palsy_nihss": {
+          "type": "integer"
+        },
+        "left_arm_drift": {
+          "type": "integer"
+        },
+        "right_arm_drift": {
+          "type": "integer"
+        },
+        "left_leg_drift": {
+          "type": "integer"
+        },
+        "right_leg_drift": {
+          "type": "integer"
+        },
+        "limb_ataxia": {
+          "type": "integer"
+        },
+        "sensation": {
+          "type": "integer"
+        },
+        "aphasia": {
+          "type": "integer"
+        },
+        "dysarthria": {
+          "type": "integer"
+        },
+        "neglect": {
+          "type": "integer"
+        },
+        "rankin_conscious": {
+          "type": "integer"
+        },
+        "likely_lvo": {
+          "type": "boolean"
+        }
+      }
+    },
+    "CASE_EDS_POST": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "type": "string"
+        },
+        "registered": {
+          "type": "boolean"
+        },
+        "triaged": {
+          "type": "boolean"
+        },
+        "primary_survey": {
+          "type": "boolean"
+        }
+      }
+    },
+    "CASE_EDS_GET": {
       "type": "object",
       "required": [
         "case_id"
@@ -1819,7 +2151,36 @@
         }
       }
     },
-    "CASE_RADIOLOGIES": {
+    "CASE_RADIOLOGIES_POST": {
+      "type": "object",
+      "properties": {
+        "ct_available": {
+          "type": "boolean"
+        },
+        "ct_available_loc": {
+          "type": "string"
+        },
+        "arrived_to_ct": {
+          "type": "boolean"
+        },
+        "ct_complete": {
+          "type": "boolean"
+        },
+        "ich_found": {
+          "type": "boolean"
+        },
+        "do_cta_ctp": {
+          "type": "boolean"
+        },
+        "cta_ctp_complete": {
+          "type": "boolean"
+        },
+        "large_vessel_occlusion": {
+          "type": "boolean"
+        }
+      }
+    },
+    "CASE_RADIOLOGIES_GET": {
       "type": "object",
       "required": [
         "case_id"
@@ -1854,15 +2215,9 @@
         }
       }
     },
-    "CASE_MANAGEMENTS": {
+    "CASE_MANAGEMENTS_POST": {
       "type": "object",
-      "required": [
-        "case_id"
-      ],
       "properties": {
-        "case_id": {
-          "type": "integer"
-        },
         "thrombolysis": {
           "type": "boolean"
         },
@@ -1929,7 +2284,124 @@
         }
       }
     },
-    "EVENT_LOG": {
+    "CASE_MANAGEMENTS_GET": {
+      "type": "object",
+      "required": [
+        "case_id"
+      ],
+      "properties": {
+        "case_id": {
+          "type": "integer"
+        },
+        "thrombolysis": {
+          "type": "boolean"
+        },
+        "new_trauma_haemorrhage": {
+          "type": "boolean"
+        },
+        "uncontrolled_htn": {
+          "type": "boolean"
+        },
+        "history_ich": {
+          "type": "boolean"
+        },
+        "known_intracranial": {
+          "type": "boolean"
+        },
+        "active_bleed": {
+          "type": "boolean"
+        },
+        "endocarditis": {
+          "type": "boolean"
+        },
+        "bleeding_diathesis": {
+          "type": "boolean"
+        },
+        "abnormal_blood_glucose": {
+          "type": "boolean"
+        },
+        "rapidly_improving": {
+          "type": "boolean"
+        },
+        "recent_trauma_surgery": {
+          "type": "boolean"
+        },
+        "recent_active_bleed": {
+          "type": "boolean"
+        },
+        "seizure_onset": {
+          "type": "boolean"
+        },
+        "recent_arterial_puncture": {
+          "type": "boolean"
+        },
+        "recent_lumbar_puncture": {
+          "type": "boolean"
+        },
+        "post_acs_pericarditis": {
+          "type": "boolean"
+        },
+        "pregnant": {
+          "type": "boolean"
+        },
+        "thrombolysis_time_given": {
+          "type": "string"
+        },
+        "ecr": {
+          "type": "boolean"
+        },
+        "surgical_rx": {
+          "type": "boolean"
+        },
+        "conservative_rx": {
+          "type": "boolean"
+        }
+      }
+    },
+    "EVENT_LOG_POST": {
+      "type": "object",
+      "required": [
+        "event_type"
+      ],
+      "properties": {
+        "event_type": {
+          "type": "string"
+        },
+        "event_data": {
+          "type": "string"
+        },
+        "signoff_first_name": {
+          "type": "string"
+        },
+        "signoff_last_name": {
+          "type": "string"
+        },
+        "signoff_role": {
+          "type": "string",
+          "enum": [
+            "paramedic",
+            "ed_clinician",
+            "radiographer",
+            "stroke_team",
+            "radiologist",
+            "stroke_ward",
+            "neuroint",
+            "angio_nurse",
+            "anaesthetist",
+            "other",
+            "admin"
+          ]
+        },
+        "signoff_username": {
+          "type": "string"
+        },
+        "event_timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "EVENT_LOG_GET": {
       "type": "object",
       "required": [
         "id",
@@ -1955,20 +2427,7 @@
           "type": "string"
         },
         "signoff_role": {
-          "type": "string",
-          "enum": [
-            "paramedic",
-            "ed_clinician",
-            "radiographer",
-            "stroke_team",
-            "radiologist",
-            "stroke_ward",
-            "neuroint",
-            "angio_nurse",
-            "anaesthetist",
-            "other",
-            "admin"
-          ]
+          "type": "string"
         },
         "signoff_username": {
           "type": "string"
