@@ -265,7 +265,7 @@ paths:
               result:
                 type: array
                 items:
-                  $ref: '#/definitions/CASES'
+                  $ref: '#/definitions/CASES_GET'
         '401':
           description: Authentication failed.
           schema:
@@ -289,7 +289,7 @@ paths:
           required: true
           description: Case details.
           schema:
-            $ref: '#/definitions/CASES'
+            $ref: '#/definitions/CASES_POST'
       responses:
         '200':
           description: OK
