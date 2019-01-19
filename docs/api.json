@@ -385,7 +385,7 @@
                 "result": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/CASES"
+                    "$ref": "#/definitions/CASES_GET"
                   }
                 }
               }
@@ -426,7 +426,7 @@
             "required": true,
             "description": "Case details.",
             "schema": {
-              "$ref": "#/definitions/CASES"
+              "$ref": "#/definitions/CASES_POST"
             }
           }
         ],
