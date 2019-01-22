@@ -190,17 +190,17 @@ def package_message(case_id, args):
         info["initials"] = (
             case_info["first_name"][0].upper() + case_info["last_name"][0].upper()
         )
-    except AttributeError:
+    except Exception:
         info["initials"] = "Full Name Unknown"
     try:
         info["age"] = (
             datetime.now() - datetime.combine(case_info["dob"], datetime.min.time())
         ).days // 365
-    except TypeError:  # handle dob being None
+    except Exception:  # handle dob being None
         info["age"] = ""
     try:
         info["gender"] = case_info["gender"].upper()
-    except AttributeError:
+    except Exception:
         info["gender"] = "U"
     # TODO Be exclusive with which arguments are provided based on notification type
     if args:

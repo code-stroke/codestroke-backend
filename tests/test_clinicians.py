@@ -43,6 +43,7 @@ def client_registered(client):
     )
     data = response.get_json()
 
+    assert response.status_code == 200
     assert data.get("qrstring") is not None
 
     app.config["QR_DATA"] = json.loads(data.get("qrstring"))
@@ -59,6 +60,7 @@ def client_paired(client_registered):
 
     data = response.get_json()
 
+    assert response.status_code == 200
     assert data.get("success")
     assert data.get("shared_secret") is not None
 
@@ -95,6 +97,7 @@ def client_set(client_paired):
 
     data = response.get_json()
 
+    assert response.status_code == 200
     assert data.get("success")
 
     app.config["TEST_TOTP"] = totp

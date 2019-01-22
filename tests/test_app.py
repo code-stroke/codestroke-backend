@@ -12,6 +12,7 @@ def test_no_auth_error(client):
     response = client.get("/")
     data = json.loads(response.data)
 
+    assert response.status_code == 401
     assert data.get("error_type") == "auth"
 
 
@@ -21,6 +22,7 @@ def test_version(client):
     response = client.get("/version/")
     data = json.loads(response.data)
 
+    assert response.status_code == 200
     assert data.get("version") == app.config.get("VERSION")
 
 def test_auth(client_set):
@@ -29,4 +31,5 @@ def test_auth(client_set):
     response = client_set.get("/", headers=get_header())
     data = json.loads(response.data)
 
+    assert response.status_code == 200
     assert data.get("success")
