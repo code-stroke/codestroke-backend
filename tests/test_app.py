@@ -1,6 +1,7 @@
 import pytest
 import json
 import MySQLdb
+import pyotp
 from base64 import b64encode
 from quick_setup import make_database, drop_database, add_admin
 from app import app
@@ -35,7 +36,7 @@ def client():
 
 
 @pytest.fixture
-def client_cred(client):
+def client_registered(client):
     """ Registers a clinician with the client and returns new client."""
 
     app.config["TEST_CLIN_FIRST"] = "John"
@@ -43,6 +44,8 @@ def client_cred(client):
     app.config["TEST_CLIN_ROLE"] = "ed_clinician"
     app.config["TEST_CLIN_USERNAME"] = "john"
     app.config["TEST_CLIN_EMAIL"] = "test@email.com"
+
+    ## REGISTER CLINICIAN (TEMP)
 
     credentials = "{}:{}".format(
         app.config["TEST_ADMIN_USERNAME"], app.config["TEST_ADMIN_PASSWORD"]
@@ -53,8 +56,6 @@ def client_cred(client):
             "Basic " + b64encode(bytes(credentials, "UTF-8")).decode("UTF-8")
         )
     }
-
-    print(headers)
 
     post_data = {
         "first_name": app.config["TEST_CLIN_FIRST"],
@@ -72,10 +73,61 @@ def client_cred(client):
     assert data.get("qrstring") is not None
 
     app.config["QR_DATA"] = json.loads(data.get("qrstring"))
-    print(app.config["QR_DATA"])
 
-    return client_cred
+    yield client
 
+@pytest.fixture
+def client_paired(client_registered):
+    """ Pairs a clinician to get a shared secret and returns new client. """
+
+    response = client_registered.post(
+        "/clinicians/pair/", json=app.config["QR_DATA"]
+    )
+
+    data = response.get_json()
+
+    assert data.get("success")
+    assert data.get("shared_secret") is not None
+
+    app.config["TEST_SHARED_SECRET"] = data.get("shared_secret")
+
+    yield client_registered
+
+@pytest.fixture
+def client_set(client_paired):
+    """ Sets a paired clinicians password and returns new client. """
+
+    app.config["TEST_CLINICIAN_USERNAME"] = app.config["QR_DATA"]["username"]
+    app.config["TEST_CLINICIAN_PASSWORD"] = "Password123"
+
+    totp = pyotp.TOTP(app.config["TEST_SHARED_SECRET"], interval=300)
+
+    credentials = "{}:{}:{}".format(
+        app.config["TEST_CLINICIAN_USERNAME"],
+        app.config["QR_DATA"]["password"], # temporary password
+        totp.now()
+    )
+
+    headers = {
+         "Authorization": (
+            "Basic " + b64encode(bytes(credentials, "UTF-8")).decode("UTF-8")
+        )
+
+    }
+
+    post_data = {"new_password": app.config["TEST_CLINICIAN_PASSWORD"]}
+
+    response = client_paired.post(
+        "/clinicians/set_password/", json=post_data, headers=headers
+    )
+
+    data = response.get_json()
+
+    assert data.get("success")
+
+    app.config["TEST_TOTP"] = totp
+
+    yield client
 
 def test_no_auth_error(client):
     """ Check API returns error message on accessing route without auth."""
@@ -95,6 +147,14 @@ def test_version(client):
     assert data.get("version") == app.config.get("VERSION")
 
 
-def test_register(client_cred):
-    """ Sanity check that client_cred (i.e. client registration) passes."""
+def test_register(client_registered):
+    """ Sanity check that client_registered passes."""
+    assert 1
+
+def test_pair(client_paired):
+    """ Sanity check that client_paired passes."""
+    assert 1
+
+def test_set(client_set):
+    """ Sanity check that client_set passes."""
     assert 1
