@@ -131,7 +131,7 @@ def get_all_case_info_(case_id):
     cursor.execute("show tables")
     result = cursor.fetchall()
     tables_list = [
-        item["Tables_in_{}".format(app.config.get("DATABASE_NAME"))] for item in result
+        item["Tables_in_{}".format(app.config.get("DATABASE_NAME").lower())] for item in result
     ]
     case_info_tables = filter(lambda x: x.startswith("case_"), tables_list)
     query = (

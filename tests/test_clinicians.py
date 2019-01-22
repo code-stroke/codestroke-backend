@@ -70,13 +70,12 @@ def client_paired(client_registered):
 def client_set(client_paired):
     """ Sets a paired clinicians password and returns new client. """
 
-    app.config["TEST_CLINICIAN_USERNAME"] = app.config["QR_DATA"]["username"]
-    app.config["TEST_CLINICIAN_PASSWORD"] = "Password123"
+    app.config["TEST_CLIN_PASSWORD"] = "Password123"
 
     totp = pyotp.TOTP(app.config["TEST_SHARED_SECRET"], interval=300)
 
     credentials = "{}:{}:{}".format(
-        app.config["TEST_CLINICIAN_USERNAME"],
+        app.config["TEST_CLIN_USERNAME"],
         app.config["QR_DATA"]["password"], # temporary password
         totp.now()
     )
@@ -88,7 +87,7 @@ def client_set(client_paired):
 
     }
 
-    post_data = {"new_password": app.config["TEST_CLINICIAN_PASSWORD"]}
+    post_data = {"new_password": app.config["TEST_CLIN_PASSWORD"]}
 
     response = client_paired.post(
         "/clinicians/set_password/", json=post_data, headers=headers
@@ -119,8 +118,8 @@ def get_header():
     """ Helper which uses app config to make credentials for header."""
 
     credentials = "{}:{}:{}".format(
-        app.config["TEST_CLINICIAN_USERNAME"],
-        app.config["TEST_CLINICIAN_PASSWORD"], # temporary password
+        app.config["TEST_CLIN_USERNAME"],
+        app.config["TEST_CLIN_PASSWORD"], # temporary password
         app.config["TEST_TOTP"].now()
     )
 
