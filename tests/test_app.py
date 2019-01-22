@@ -25,6 +25,18 @@ def test_version(client):
     assert response.status_code == 200
     assert data.get("version") == app.config.get("VERSION")
 
+def test_registered_nopair():
+    """ Checks that unpaired clinician is not authenticated. """
+
+    # TODO
+    pass
+
+def test_paired_noset():
+    """ Checks that unset_password clinician is not authenticated."""
+
+    # TODO
+    pass
+
 def test_auth(client_set):
     """ Check that API returns success on root with auth. """
 
