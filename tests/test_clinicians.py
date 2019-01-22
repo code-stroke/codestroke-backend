@@ -114,3 +114,21 @@ def test_pair(client_paired):
 def test_set(client_set):
     """ Sanity check that client_set passes."""
     assert 1
+
+def get_header():
+    """ Helper which uses app config to make credentials for header."""
+
+    credentials = "{}:{}:{}".format(
+        app.config["TEST_CLINICIAN_USERNAME"],
+        app.config["TEST_CLINICIAN_PASSWORD"], # temporary password
+        app.config["TEST_TOTP"].now()
+    )
+
+    headers = {
+         "Authorization": (
+            "Basic " + b64encode(bytes(credentials, "UTF-8")).decode("UTF-8")
+        )
+
+    }
+
+    return headers
