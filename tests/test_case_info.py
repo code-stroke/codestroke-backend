@@ -29,6 +29,7 @@ def test_put_cases(client_set):
     assert response.status_code == 200
     assert data.get("success")
 
+
 def test_get_cases(client_set):
     """ Tests the successful viewing of single case with auth."""
 

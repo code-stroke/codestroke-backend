@@ -21,8 +21,12 @@ def client_registered(client):
     app.config["TEST_CLIN_EMAIL"] = "test@email.com"
 
 
+    # TEST NETWORK
     app.config["OS_APP_ID"]=base_config.OS_APP_ID
     app.config["OS_REST_API_KEY"]=base_config.OS_REST_API_KEY
+    #app.config["SMTP_SERVER"]=base_config.SMTP_SERVER
+    #app.config["EMAIL_USER"]=base_config.EMAIL_USER
+    #app.config["EMAIL_PASSWORD"]=base_config.EMAIL_PASSWORD
 
     ## REGISTER CLINICIAN (TEMP)
 
@@ -48,6 +52,12 @@ def client_registered(client):
         "/clinicians/register_TEMP/", json=post_data, headers=headers
     )
     data = response.get_json()
+
+    # Sanity check - should not give errors.
+    #sanity_response = client.post(
+    #    "/clinicians/register/", json=post_data, headers=headers
+    #)
+    #sanity_data = sanity_response.get_json()
 
     assert response.status_code == 200
     assert data.get("qrstring") is not None

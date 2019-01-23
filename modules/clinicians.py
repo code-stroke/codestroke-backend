@@ -198,16 +198,12 @@ def register_clinician():
 				<br>
 				The registration process is almost complete! Please scan the QR code attached with your phone to complete the registration process.
 				<br>
-				DEBUG ONLY: {}
-				<br>
 				<br>
 				Codestroke Team
 				</p>
 			</body>
 		</html>
-		""".format(
-            qrstring
-        )
+		"""
         html = MIMEText(contents, "html")
         msg.attach(html)
         # print(buffer.getvalue())
