@@ -3,10 +3,12 @@
 import pytest
 import json
 import pyotp
+import imp
 from base64 import b64encode
 from app import app
 from tests.test_admins import client
 
+base_config = imp.load_source("config", "./app.conf")
 
 @pytest.fixture
 def client_registered(client):
@@ -17,6 +19,10 @@ def client_registered(client):
     app.config["TEST_CLIN_ROLE"] = "ed_clinician"
     app.config["TEST_CLIN_USERNAME"] = "john"
     app.config["TEST_CLIN_EMAIL"] = "test@email.com"
+
+
+    app.config["OS_APP_ID"]=base_config.OS_APP_ID
+    app.config["OS_REST_API_KEY"]=base_config.OS_REST_API_KEY
 
     ## REGISTER CLINICIAN (TEMP)
 

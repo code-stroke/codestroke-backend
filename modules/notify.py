@@ -127,10 +127,15 @@ def add_message(notify_type, case_id, args=None):
         "contents": {"en": msg},
     }
 
-    if targets == None:
-        payload["included_segments"] = ["All"]
-    else:
-        payload["filters"] = filterize(targets)
+
+    # SELECTIVE FILTERING - STILL EO TBE TESTED
+    #if targets == None:
+        #payload["included_segments"] = ["All"]
+    #else:
+        #payload["filters"] = filterize(targets)
+
+    # NON-SELECTIVE NOTIFICATIONS
+    payload["included_segments"] = ["All"]
 
     try:
         req = requests.post(
@@ -139,7 +144,7 @@ def add_message(notify_type, case_id, args=None):
             data=json.dumps(payload),
             timeout=4,
         )
-        # print(req.reason, req.text, req.json()) # debugging
+    #print(req.reason, req.text, req.json()) # debugging
     except Exception as e:
         return False
 
