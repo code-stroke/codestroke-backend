@@ -13,7 +13,7 @@ from modules.case_info import case_info
 from modules.admins import admins
 from modules.clinicians import clinicians, requires_clinician
 from modules.event_log import event_log, log_event
-from modules.extensions import mysql
+from modules.extensions import mysql, check_database_
 
 
 app = Flask(__name__)
@@ -34,7 +34,7 @@ def index(user_info):
     """ Default endpoint.
 
     """
-    if ext.check_database_():
+    if check_database_():
         return jsonify({"success": True})
     else:
         return jsonify({"success": False, "error_type": "database"}), 500

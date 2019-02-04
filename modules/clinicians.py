@@ -313,11 +313,12 @@ def check_clinician(username, password, token):
             return False, None, None
         totp = pyotp.TOTP(shared_secret, interval=300)
         # print(datetime.datetime.now())
-        # print(totp.now())
+        print("REQUIRED TOKEN {}".format(totp.now()))
+        print("SUBMITTED TOKEN {}".format(token))
         # print(pbkdf2_sha256.hash(password))
-        if pbkdf2_sha256.verify(password, pwhash) and totp.verify(
-            token, valid_window=2
-        ):
+        # TODO UNSAFE, MUST EDIT FOR DEPLOYMENT
+        #if pbkdf2_sha256.verify(password, pwhash) and totp.verify(token, valid_window=2):
+        if pbkdf2_sha256.verify(password, pwhash):
             query = (
                 "select first_name, last_name, role from clinicians where username = %s"
             )
