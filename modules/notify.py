@@ -122,7 +122,7 @@ def add_message(notify_type, case_id, args=None):
 
     payload = {
         "app_id": app.config["OS_APP_ID"],
-        "data": {"case_id": case_id},
+        "data": {"case_id": case_id, "notify_type": notify_type},
         "headings": {"en": title},
         "contents": {"en": msg},
     }
