@@ -1057,6 +1057,7 @@ definitions:
         type: 'string'
       role:
         type: 'string'
+        enum: ['paramedic', 'ed_clinician', 'radiographer', 'stroke_team', 'radiologist', 'stroke_ward', 'neuroint', 'angio_nurse', 'anaesthetist', 'admin']
       email:
         type: 'string'
       phone:
@@ -1148,12 +1149,15 @@ definitions:
         type: 'string'
       dob:
         type: 'string'
+        format: 'date'
       address:
         type: 'string'
       gender:
         type: 'string'
+        enum: ['f', 'm', 'u']
       last_well:
         type: 'string'
+        format: 'date-time'
       nok:
         type: 'string'
       nok_phone:
@@ -1169,6 +1173,7 @@ definitions:
         format: 'date-time'
       status:
         type: 'string'
+        enum: ['incoming', 'active', 'completed']
       incoming_timestamp:
         type: 'string'
         format: 'date-time'
@@ -1211,14 +1216,17 @@ definitions:
         type: 'string'
       anticoags:
         type: 'string'
+        enum: ['no', 'yes', 'unknown']
       anticoags_last_dose:
         type: 'string'
+        format: 'date-time'
       hopc:
         type: 'string'
       weight:
         type: 'number'
       last_meal:
         type: 'string'
+        format: 'date-time'
   CASE_ASSESSMENTS_POST:
     type: 'object'
     properties:
@@ -1310,12 +1318,16 @@ definitions:
         type: 'integer'
       facial_droop:
         type: 'string'
+        enum: ['no', 'yes', 'unknown']
       arm_drift:
         type: 'string'
+        enum: ['no', 'yes', 'unknown']
       weak_grip:
         type: 'string'
+        enum: ['no', 'yes', 'unknown']
       speech_difficulty:
         type: 'string'
+        enum: ['no', 'yes', 'unknown']
       bp_systolic:
         type: 'integer'
       bp_diastolic:
@@ -1324,6 +1336,7 @@ definitions:
         type: 'integer'
       heart_rhythm:
         type: 'string'
+        enum: ['regular', 'irregular', 'unknown']
       rr:
         type: 'integer'
       o2sats:
@@ -1344,8 +1357,10 @@ definitions:
         type: 'integer'
       hemiparesis:
         type: 'string'
+        enum: ['left', 'right', 'unknown']
       cannula:
         type: 'string'
+        enum: ['no', 'yes', 'unknown']
       conscious_level:
         type: 'integer'
       month_age:
@@ -1537,6 +1552,7 @@ definitions:
         type: 'boolean'
       thrombolysis_time_given:
         type: 'string'
+        format: 'date-time'
       ecr:
         type: 'boolean'
       surgical_rx:
@@ -1563,7 +1579,7 @@ definitions:
         type: 'string'
       event_timestamp:
         type: 'string'
-        format: "date-time"
+        format: 'date-time'
   EVENT_LOG_GET:
     type: 'object'
     required:
@@ -1584,8 +1600,9 @@ definitions:
         type: 'string'
       signoff_role:
         type: 'string'
+        enum: ['paramedic', 'ed_clinician', 'radiographer', 'stroke_team', 'radiologist', 'stroke_ward', 'neuroint', 'angio_nurse', 'anaesthetist', 'other', 'admin']
       signoff_username:
         type: 'string'
       event_timestamp:
         type: 'string'
-        format: "date-time"
+        format: 'date-time'

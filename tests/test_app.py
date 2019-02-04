@@ -1,81 +1,10 @@
 import pytest
 import json
-import MySQLdb
 from base64 import b64encode
-from quick_setup import make_database, drop_database, add_admin
 from app import app
 
-
-@pytest.fixture
-def client():
-
-    app.config["DATABASE_NAME"] = "TEST_CODESTROKE"
-    app.config["TEST_ADMIN_USERNAME"] = "test_admin"
-    app.config["TEST_ADMIN_PASSWORD"] = "test_admin_password"
-    app.config["TESTING"] = True
-
-    # initialise a database for running tests
-    make_database(app.config["DATABASE_NAME"])
-
-    # initialise an admin user
-    test_admin = [
-        "TEST",
-        "ADMIN",
-        app.config["TEST_ADMIN_USERNAME"],
-        app.config["TEST_ADMIN_PASSWORD"],
-        "admin@test.com",
-    ]
-    add_admin(app.config["DATABASE_NAME"], test_admin)
-
-    client = app.test_client()
-
-    yield client
-
-    drop_database(app.config["DATABASE_NAME"])
-
-
-@pytest.fixture
-def client_cred(client):
-    """ Registers a clinician with the client and returns new client."""
-
-    app.config["TEST_CLIN_FIRST"] = "John"
-    app.config["TEST_CLIN_LAST"] = "Doctor"
-    app.config["TEST_CLIN_ROLE"] = "ed_clinician"
-    app.config["TEST_CLIN_USERNAME"] = "john"
-    app.config["TEST_CLIN_EMAIL"] = "test@email.com"
-
-    credentials = "{}:{}".format(
-        app.config["TEST_ADMIN_USERNAME"], app.config["TEST_ADMIN_PASSWORD"]
-    )
-
-    headers = {
-        "Authorization": (
-            "Basic " + b64encode(bytes(credentials, "UTF-8")).decode("UTF-8")
-        )
-    }
-
-    print(headers)
-
-    post_data = {
-        "first_name": app.config["TEST_CLIN_FIRST"],
-        "last_name": app.config["TEST_CLIN_LAST"],
-        "role": app.config["TEST_CLIN_ROLE"],
-        "email": app.config["TEST_CLIN_EMAIL"],
-        "username": app.config["TEST_CLIN_USERNAME"],
-    }
-
-    response = client.post(
-        "/clinicians/register_TEMP/", json=post_data, headers=headers
-    )
-    data = response.get_json()
-
-    assert data.get("qrstring") is not None
-
-    app.config["QR_DATA"] = json.loads(data.get("qrstring"))
-    print(app.config["QR_DATA"])
-
-    return client_cred
-
+from tests.test_admins import client
+from tests.test_clinicians import client_registered, client_paired, client_set, get_header
 
 def test_no_auth_error(client):
     """ Check API returns error message on accessing route without auth."""
@@ -83,6 +12,7 @@ def test_no_auth_error(client):
     response = client.get("/")
     data = json.loads(response.data)
 
+    assert response.status_code == 401
     assert data.get("error_type") == "auth"
 
 
@@ -92,9 +22,26 @@ def test_version(client):
     response = client.get("/version/")
     data = json.loads(response.data)
 
+    assert response.status_code == 200
     assert data.get("version") == app.config.get("VERSION")
 
+def test_registered_nopair():
+    """ Checks that unpaired clinician is not authenticated. """
 
-def test_register(client_cred):
-    """ Sanity check that client_cred (i.e. client registration) passes."""
-    assert 1
+    # TODO
+    pass
+
+def test_paired_noset():
+    """ Checks that unset_password clinician is not authenticated."""
+
+    # TODO
+    pass
+
+def test_auth(client_set):
+    """ Check that API returns success on root with auth. """
+
+    response = client_set.get("/", headers=get_header())
+    data = json.loads(response.data)
+
+    assert response.status_code == 200
+    assert data.get("success")

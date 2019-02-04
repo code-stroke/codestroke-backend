@@ -127,10 +127,15 @@ def add_message(notify_type, case_id, args=None):
         "contents": {"en": msg},
     }
 
-    if targets == None:
-        payload["included_segments"] = ["All"]
-    else:
-        payload["filters"] = filterize(targets)
+
+    # SELECTIVE FILTERING - STILL EO TBE TESTED
+    #if targets == None:
+        #payload["included_segments"] = ["All"]
+    #else:
+        #payload["filters"] = filterize(targets)
+
+    # NON-SELECTIVE NOTIFICATIONS
+    payload["included_segments"] = ["All"]
 
     try:
         req = requests.post(
@@ -139,7 +144,7 @@ def add_message(notify_type, case_id, args=None):
             data=json.dumps(payload),
             timeout=4,
         )
-        # print(req.reason, req.text, req.json()) # debugging
+    #print(req.reason, req.text, req.json()) # debugging
     except Exception as e:
         return False
 
@@ -190,17 +195,17 @@ def package_message(case_id, args):
         info["initials"] = (
             case_info["first_name"][0].upper() + case_info["last_name"][0].upper()
         )
-    except AttributeError:
+    except Exception:
         info["initials"] = "Full Name Unknown"
     try:
         info["age"] = (
             datetime.now() - datetime.combine(case_info["dob"], datetime.min.time())
         ).days // 365
-    except TypeError:  # handle dob being None
+    except Exception:  # handle dob being None
         info["age"] = ""
     try:
         info["gender"] = case_info["gender"].upper()
-    except AttributeError:
+    except Exception:
         info["gender"] = "U"
     # TODO Be exclusive with which arguments are provided based on notification type
     if args:

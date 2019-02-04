@@ -81,26 +81,28 @@ for table in all_tables:
 
             field_template = "      {}:\n        type: '{}'\n"
 
+            field_type = field[1]
+
             if "varchar" in field[1] or "text" in field[1] or "decimal" in field[1]:
-                field[1] = "string"
+                field_type = "string"
             elif field[1] == "int" or field[1] == "tinyint":
-                field[1] = "integer"
+                field_type = "integer"
             elif field[1] == "float":
-                field[1] = "number"
+                field_type = "number"
             elif field[1] == "bool":
-                field[1] = "boolean"
+                field_type = "boolean"
             elif field[1] == "timestamp":
-                field[1] = "string"
+                field_type = "string"
                 field_template += "        format: 'date-time'\n"
             elif field[1] == "date":
-                field[1] = "string"
+                field_type = "string"
                 field_template += "        format: 'date'\n"
             elif "enum" in field[1]:
                 choices = re.findall(r"'(.*?)'", field[1])
-                field[1] = "string"
+                field_type = "string"
                 field_template += """        enum: {}\n""".format(str(choices))
 
-            field_strings.append(field_template.format(field[0], field[1]))
+            field_strings.append(field_template.format(field[0], field_type))
 
         if len(required) > 0:
             main_template += "    required:\n"

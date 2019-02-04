@@ -99,3 +99,12 @@ The API documentation is written in the
 the API documentation (the definitions) are generated from
 `resources/schema.sql` using the `scripts/scan_schema.py` script and should be
 rerun if changes are made to the schema.
+
+# TODOs
+
+The following API changes are suggested for future releases. To avoid breaking
+the current API, they will be kept on hold for now.
+
+- Change all timestamp/date-time values to format `2012-04-23T18:25:43.511Z`
+  (currently takes string of form `2012-04-23T18:25:43`)
+ 

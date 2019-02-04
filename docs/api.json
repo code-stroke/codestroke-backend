@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "description": "This API documentation details the resources for the Code Stroke Backend.",
-    "version": 0.2,
+    "version": "0.2",
     "title": "Code Stroke Backend"
   },
   "host": "HOST",
@@ -1587,7 +1587,19 @@
           "type": "string"
         },
         "role": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "paramedic",
+            "ed_clinician",
+            "radiographer",
+            "stroke_team",
+            "radiologist",
+            "stroke_ward",
+            "neuroint",
+            "angio_nurse",
+            "anaesthetist",
+            "admin"
+          ]
         },
         "email": {
           "type": "string"
@@ -1730,16 +1742,23 @@
           "type": "string"
         },
         "dob": {
-          "type": "string"
+          "type": "string",
+          "format": "date"
         },
         "address": {
           "type": "string"
         },
         "gender": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "f",
+            "m",
+            "u"
+          ]
         },
         "last_well": {
-          "type": "string"
+          "type": "string",
+          "format": "date-time"
         },
         "nok": {
           "type": "string"
@@ -1761,7 +1780,12 @@
           "format": "date-time"
         },
         "status": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "incoming",
+            "active",
+            "completed"
+          ]
         },
         "incoming_timestamp": {
           "type": "string",
@@ -1826,10 +1850,16 @@
           "type": "string"
         },
         "anticoags": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "no",
+            "yes",
+            "unknown"
+          ]
         },
         "anticoags_last_dose": {
-          "type": "string"
+          "type": "string",
+          "format": "date-time"
         },
         "hopc": {
           "type": "string"
@@ -1838,7 +1868,8 @@
           "type": "number"
         },
         "last_meal": {
-          "type": "string"
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
@@ -2000,16 +2031,36 @@
           "type": "integer"
         },
         "facial_droop": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "no",
+            "yes",
+            "unknown"
+          ]
         },
         "arm_drift": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "no",
+            "yes",
+            "unknown"
+          ]
         },
         "weak_grip": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "no",
+            "yes",
+            "unknown"
+          ]
         },
         "speech_difficulty": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "no",
+            "yes",
+            "unknown"
+          ]
         },
         "bp_systolic": {
           "type": "integer"
@@ -2021,7 +2072,12 @@
           "type": "integer"
         },
         "heart_rhythm": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "regular",
+            "irregular",
+            "unknown"
+          ]
         },
         "rr": {
           "type": "integer"
@@ -2051,10 +2107,20 @@
           "type": "integer"
         },
         "hemiparesis": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "left",
+            "right",
+            "unknown"
+          ]
         },
         "cannula": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "no",
+            "yes",
+            "unknown"
+          ]
         },
         "conscious_level": {
           "type": "integer"
@@ -2343,7 +2409,8 @@
           "type": "boolean"
         },
         "thrombolysis_time_given": {
-          "type": "string"
+          "type": "string",
+          "format": "date-time"
         },
         "ecr": {
           "type": "boolean"
@@ -2425,7 +2492,20 @@
           "type": "string"
         },
         "signoff_role": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "paramedic",
+            "ed_clinician",
+            "radiographer",
+            "stroke_team",
+            "radiologist",
+            "stroke_ward",
+            "neuroint",
+            "angio_nurse",
+            "anaesthetist",
+            "other",
+            "admin"
+          ]
         },
         "signoff_username": {
           "type": "string"
