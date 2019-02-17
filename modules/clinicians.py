@@ -366,10 +366,12 @@ def process_auth(auth):
     app.logger.info("test")
     username = auth.username
     password_token = auth.password.split(":")
-    # TODO NOTE password must not contain colon character!
-    password = ":".join(password_token[0:-1])
-    # TODO CHeck if token can contain colon characters:
-    token = password_token[-1]
+    if len(password_token) > 1:
+        password = ":".join(password_token[0:-1])
+        token = password_token[-1]
+    else:
+        password = password_token[0]
+        token = None
     return username, password, token
 
 
@@ -393,6 +395,7 @@ def requires_clinician(f):
         print("CLIENT IP {}".format(ip))
         print("REMOTE ADDR {}".format(request.remote_addr))
         if False: # do not run in production until ready.
+        # if True: # FOR WEB APP TESTING ONLY
         #if ip.iptype() == "PRIVATE":
             username, password, none_token = process_auth(auth)
             auth_check = check_clinician_no_token(username, password)
