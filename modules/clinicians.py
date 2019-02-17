@@ -311,12 +311,11 @@ def check_clinician(username, password, token):
             return False, None, None
         totp = pyotp.TOTP(shared_secret, interval=300)
         # print(datetime.datetime.now())
-        print("REQUIRED TOKEN {}".format(totp.now()))
-        print("SUBMITTED TOKEN {}".format(token))
+        # print("REQUIRED TOKEN {}".format(totp.now()))
+        # print("SUBMITTED TOKEN {}".format(token))
         # print(pbkdf2_sha256.hash(password))
-        # TODO UNSAFE, MUST EDIT FOR DEPLOYMENT
-        #if pbkdf2_sha256.verify(password, pwhash) and totp.verify(token, valid_window=2):
-        if pbkdf2_sha256.verify(password, pwhash):
+        # print(pwhash)
+        if pbkdf2_sha256.verify(password, pwhash) and totp.verify(token, valid_window=2):
             query = (
                 "select first_name, last_name, role from clinicians where username = %s"
             )
@@ -370,7 +369,10 @@ def process_auth(auth):
     # TODO NOTE password must not contain colon character!
     password = password_token[0]
     # TODO CHeck if token can contain colon characters:
-    token = ":".join(password_token[1:])
+    try:
+        token = ":".join(password_token[1:])
+    except:
+        token = None
     return username, password, token
 
 
@@ -394,7 +396,7 @@ def requires_clinician(f):
         print("CLIENT IP {}".format(ip))
         print("REMOTE ADDR {}".format(request.remote_addr))
         if ip.iptype() == "PRIVATE":
-            username, password = process_auth_no_token(auth)
+            username, password, none_token = process_auth(auth)
             auth_check = check_clinician_no_token(username, password)
             print("USING SINGLE FACTOR AUTHENTICATION")
         else:

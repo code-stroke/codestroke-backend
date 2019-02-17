@@ -43,12 +43,12 @@ def edit_case_info(info_table, case_id, user_info):
     # Will be much easier to implement this hook as a PATCH request
     # as will not have to check the previous stored data
     prior = ext.select_query_result_({"case_id": case_id}, info_table)["result"][0]
-    print(prior)
+    #print(prior)
     prior_meta = ext.select_query_result_({"case_id": case_id}, "cases")["result"][0]
     qargs = {**qargs, **user_info}
-    print(qargs)
+    #print(qargs)
     qargs = hooks.put(info_table, case_id, qargs, prior)
-    print(qargs)
+    #print(qargs)
     if not qargs:
         # print("NO CHANGE")
         return jsonify({"success": True, "message": "no change"})
