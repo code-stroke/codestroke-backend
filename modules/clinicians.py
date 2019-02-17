@@ -27,6 +27,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 
+from IPy import IP
+
 import io
 import datetime
 import re
@@ -376,7 +378,6 @@ def requires_clinician(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
-        root_url = request.url_root
         # print(root_url)
         if not auth:
             return (
@@ -389,9 +390,13 @@ def requires_clinician(f):
                 ),
                 401,
             )
-        if re.match(r"http://\d+\.\d+\.\d+\.\d+/?", root_url):
+        ip = IP(request.environ['REMOTE_ADDR'])
+        print("CLIENT IP {}".format(ip))
+        print("REMOTE ADDR {}".format(request.remote_addr))
+        if ip.iptype() == "PRIVATE":
             username, password = process_auth_no_token(auth)
             auth_check = check_clinician_no_token(username, password)
+            print("USING SINGLE FACTOR AUTHENTICATION")
         else:
             username, password, token = process_auth(auth)
             auth_check = check_clinician(username, password, token)
