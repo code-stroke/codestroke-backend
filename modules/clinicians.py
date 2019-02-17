@@ -367,12 +367,9 @@ def process_auth(auth):
     username = auth.username
     password_token = auth.password.split(":")
     # TODO NOTE password must not contain colon character!
-    password = password_token[0]
+    password = ":".join(password_token[0:-1])
     # TODO CHeck if token can contain colon characters:
-    try:
-        token = ":".join(password_token[1:])
-    except:
-        token = None
+    token = password_token[-1]
     return username, password, token
 
 
