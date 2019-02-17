@@ -392,7 +392,8 @@ def requires_clinician(f):
         ip = IP(request.environ['REMOTE_ADDR'])
         print("CLIENT IP {}".format(ip))
         print("REMOTE ADDR {}".format(request.remote_addr))
-        if ip.iptype() == "PRIVATE":
+        if False: # do not run in production until ready.
+        #if ip.iptype() == "PRIVATE":
             username, password, none_token = process_auth(auth)
             auth_check = check_clinician_no_token(username, password)
             print("USING SINGLE FACTOR AUTHENTICATION")
