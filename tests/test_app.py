@@ -6,14 +6,15 @@ from app import app
 from tests.test_admins import client
 from tests.test_clinicians import client_registered, client_paired, client_set, get_header
 
-def test_no_auth_error(client):
-    """ Check API returns error message on accessing route without auth."""
+# Deprecated in favour of static HTML page.
+# def test_no_auth_error(client):
+#     """ Check API returns error message on accessing route without auth."""
 
-    response = client.get("/")
-    data = json.loads(response.data)
+#     response = client.get("/")
+#     data = json.loads(response.data)
 
-    assert response.status_code == 401
-    assert data.get("error_type") == "auth"
+#     assert response.status_code == 401
+#     assert data.get("error_type") == "auth"
 
 
 def test_version(client):
@@ -37,11 +38,11 @@ def test_paired_noset():
     # TODO
     pass
 
-def test_auth(client_set):
+def test_index(client):
     """ Check that API returns success on root with auth. """
 
-    response = client_set.get("/", headers=get_header())
-    data = json.loads(response.data)
+    response = client.get("/")
+    #data = json.loads(response.data)
 
     assert response.status_code == 200
-    assert data.get("success")
+    #assert data.get("success")

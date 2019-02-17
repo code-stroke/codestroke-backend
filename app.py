@@ -5,7 +5,7 @@ This app also exposes routes which are registered under
 
 """
 
-from flask import Flask, jsonify, request, redirect, url_for, session, flash
+from flask import Flask, jsonify, request, redirect, url_for, session, flash, send_from_directory
 from flask_cors import CORS
 
 from modules.cases import cases
@@ -16,7 +16,7 @@ from modules.event_log import event_log, log_event
 from modules.extensions import mysql, check_database_
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static")
 app.config.from_pyfile("app.conf")
 CORS(app)
 mysql.init_app(app)
@@ -29,15 +29,16 @@ app.register_blueprint(event_log, url_prefix="/event_log")
 
 
 @app.route("/")
-@requires_clinician
-def index(user_info):
+def index():
     """ Default endpoint.
 
     """
-    if check_database_():
-        return jsonify({"success": True})
-    else:
-        return jsonify({"success": False, "error_type": "database"}), 500
+    return app.send_static_file('noauth.html')
+    # Changed to HTML page
+    # if check_database_():
+    #     return jsonify({"success": True})
+    # else:
+    #     return jsonify({"success": False, "error_type": "database"}), 500
 
 
 @app.route("/version/", methods=(["GET"]))
