@@ -5,7 +5,8 @@ stroke management.
 
 # API Documentation
 
-The API documentation is located in [API.md](API.md).
+The API documentation is located in [api.html](docs/api.html). Download and open
+the file on your computer to view it. 
 
 # Getting Started 
 
