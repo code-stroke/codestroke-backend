@@ -379,7 +379,8 @@ def requires_clinician(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
-        # print(root_url)
+        # print(root_url)      
+        host = request.environ["HTTP_HOST"]
         if not auth:
             return (
                 jsonify(
@@ -387,19 +388,20 @@ def requires_clinician(f):
                         "success": False,
                         "error_type": "auth",
                         "debugmsg": "You cannot access this page directly. If you think this is an error, please contact your systems administrator.",
+                        "debugging_host": host,
                     }
                 ),
                 401,
             )
-        ip = IP(request.environ['REMOTE_ADDR'])
-        print("CLIENT IP {}".format(ip))
-        print("REMOTE ADDR {}".format(request.remote_addr))
-        if False: # do not run in production until ready.
+        #print("CLIENT IP {}".format(ip))
+        #print("REMOTE ADDR {}".format(request.remote_addr))
+        # if False: # do not run in production until ready.
         # if True: # FOR WEB APP TESTING ONLY
-        #if ip.iptype() == "PRIVATE":
+        # if ip.iptype() == "PRIVATE":
+        if (host == "172.27.10.5"):
             username, password, none_token = process_auth(auth)
             auth_check = check_clinician_no_token(username, password)
-            print("USING SINGLE FACTOR AUTHENTICATION")
+            #print("USING SINGLE FACTOR AUTHENTICATION")
         else:
             username, password, token = process_auth(auth)
             auth_check = check_clinician(username, password, token)
@@ -509,4 +511,4 @@ def set_password(user_info):
 @clinicians.route("/profile/", methods=["GET"])
 @requires_clinician
 def user_verify(user_info):
-    return jsonify({"success": True, "user_info": user_info})
+    return jsonify({"success": True, "user_info": user_info, "onesignal_app_id": app.config.get("OS_APP_ID")})
