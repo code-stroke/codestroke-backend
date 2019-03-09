@@ -44,11 +44,10 @@ def valid_table_(table):
         item["Tables_in_{}".format(app.config.get("DATABASE_NAME").lower())]
         for item in result
     ]
-    if table in tables_list:
-        return True
-    else:
-        return False
-
+    print(tables_list)
+    print("*****")
+    print(table)
+    return table in tables_list
 
 def select_query_result_(qargs, table):
     if not valid_table_(table):
@@ -98,6 +97,15 @@ def update_(d):
     return clause, tup
 
 
+def insert_(d, tbl):
+    """ Generates a MySQL insert statement from a query dictionary and table name.
+    """
+    x = get_cols_(tbl)
+    y = get_args_(x, d)
+    p = add_(y)[0]
+    q = add_(y)[1]
+    return "insert into {} {}".format(tbl, p), (q)
+    
 def add_(d):
     """ Generates list of insert arguments and values.
         Must be preceded by "insert into <table> "

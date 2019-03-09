@@ -88,7 +88,52 @@ notify_types = {
         "targets": ["stroke_team", "stroke_ward"],
         "msg_base": "CASE COMPLETED",
     },
+    "chat_message_incoming": {
+        "targets": [
+            "ed_clinician",
+            "radiologist",
+            "stroke_team",
+            "stroke_ward",
+            "neuroint",
+            "angio_nurse",
+            "radiographer",
+            "anaesthetist",
+        ],
+        "msg_base": "NEW MESSAGE",
+    }
 }
+
+def send_notification(payload):
+    header = {
+        "Content-Type": "application/json; charset=utf-8",
+        "Authorization": "Basic {}".format(app.config["OS_REST_API_KEY"]),
+    }
+    try:
+        req = requests.post(
+            "https://onesignal.com/api/v1/notifications",
+            headers=header,
+            data=json.dumps(payload),
+            timeout=4,
+        )
+        #print(req.reason, req.text, req.json()) # debugging
+    except Exception as e:
+        return False
+    return True
+
+def add_chat_message(username, message, case_id):
+    packaged = package_message(case_id, None)
+    title = "MSG from {}".format(username) + " RE: {initials} {age}{gender}".format(**packaged)
+
+    targets = notify_types["chat_message_incoming"]["targets"]
+
+    payload = {
+        "app_id": app.config["OS_APP_ID"],
+        "data": {"case_id": case_id, "notify_type": "chat_message_incoming"},
+        "headings": {"en": title},
+        "contents": {"en": message}
+    }
+    payload["included_segments"] = ["All"]
+    return send_notification(payload)
 
 
 def add_message(notify_type, case_id, args=None):
@@ -100,10 +145,12 @@ def add_message(notify_type, case_id, args=None):
         args: dictionary of arguments for packaging with package_message.
     """
 
+    '''
     header = {
         "Content-Type": "application/json; charset=utf-8",
         "Authorization": "Basic {}".format(app.config["OS_REST_API_KEY"]),
     }
+    '''
 
     # TODO Handle if required args not present
     msg_prefix = "{initials} {age}{gender} -- "
@@ -137,31 +184,20 @@ def add_message(notify_type, case_id, args=None):
     # NON-SELECTIVE NOTIFICATIONS
     payload["included_segments"] = ["All"]
 
-    try:
-        req = requests.post(
-            "https://onesignal.com/api/v1/notifications",
-            headers=header,
-            data=json.dumps(payload),
-            timeout=4,
-        )
-    #print(req.reason, req.text, req.json()) # debugging
-    except Exception as e:
-        return False
+    if send_notification(payload):
+        # Pager Notification
+        pager_server_ip = app.config.get("PAGER_SERVER_IP")
+        pager_server_port = app.config.get("PAGER_SERVER_PORT")
+        pager_number = app.config.get("PAGER_NUMBER")
+        if pager_server_ip and pager_server_port and pager_number:
+            pager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            pager_socket.connect((pager_server_ip, int(pager_server_port)))
+            pager_socket.sendall(pager_format(msg, pager_number))
+            data = pager_socket.receive(8)
+            # print(data)
+            pager_socket.close()
 
-    # Pager Notification
-    pager_server_ip = app.config.get("PAGER_SERVER_IP")
-    pager_server_port = app.config.get("PAGER_SERVER_PORT")
-    pager_number = app.config.get("PAGER_NUMBER")
-    if pager_server_ip and pager_server_port and pager_number:
-        pager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        pager_socket.connect((pager_server_ip, int(pager_server_port)))
-        pager_socket.sendall(pager_format(msg, pager_number))
-        data = pager_socket.receive(8)
-        # print(data)
-        pager_socket.close()
-
-    return True
-
+        return True
 
 def pager_format(message, pager_number_string):
     prefix = "m04"
@@ -216,6 +252,8 @@ def package_message(case_id, args):
             "signoff_first_name",
             "signoff_last_name",
             "signoff_role",
+            "message",
+            "username"
         ]:
             info[field] = args[field] if field in args.keys() else None
     return info
