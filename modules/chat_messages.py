@@ -14,32 +14,39 @@ from modules.extensions import mysql
 from modules.event_log import log_event
 import modules.notify as notify
 import modules.hooks as hooks
+from flask_mysqldb import MySQL
 
 chat_messages = Blueprint("chat_messages", __name__)
 
 @chat_messages.route("/view/<int:case_id>", methods=(["GET"]))
 def get_chat_messages(case_id):
-    result = ext.select_query_result_({"case_id":case_id}, "chat_messages")
-    result["success"] = True
-    return jsonify(result)
+    try:
+        result = ext.select_query_result_({"case_id":case_id},
+                                          "chat_messages")
+        result["success"] = True
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({"success": False, "debug_info": str(e)}), 500
 
 @chat_messages.route("/add/", methods=(["POST"]))
 def add_chat_message():
     try:
         json = request.get_json()
         cursor = ext.connect_()
-        tbl = "chat_messages"
-        cols = ext.get_cols_(tbl)
-        args = ext.get_args_(cols, json)
-        clause = ext.add_(args)[0]
-        vals = ext.add_(args)[1]
-        cursor.execute("insert into chat_messages " + clause, vals)
+        cursor.execute("""insert into 
+        chat_messages(case_id, username, message) 
+        values (%s,%s,%s)""",
+        (json["case_id"], json["username"], json["message"])) 
 
-        case_id = json["case_id"]
+        case_id = cursor.lastrowid 
+        ext.mysql.connection.commit()
         args_event = {"message":json["message"],
                       "username":json["username"]}
         
-        notified = notify.add_chat_message(json["username"], json["message"], case_id)
+        notify_type = "chat_message_incoming"
+        notified = notify.add_chat_message(_event)
         if not notified:
             return jsonify(
                 {
@@ -48,7 +55,7 @@ def add_chat_message():
                     "debugmsg": "Notification not sent.",
                 }
             )
-        return jsonify({"success": True})
+        return jsonify({"success": True, "case_id":case_id})
     except Exception as e:
         import traceback
         print(traceback.format_exc())

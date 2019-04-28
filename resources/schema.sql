@@ -166,4 +166,11 @@ CREATE TABLE IF NOT EXISTS `event_log` (
   `signoff_role` enum('paramedic', 'ed_clinician', 'radiographer', 'stroke_team', 'radiologist', 'stroke_ward', 'neuroint', 'angio_nurse', 'anaesthetist', 'other', 'admin') DEFAULT NULL,
   `signoff_username` text DEFAULT NULL,
   `event_timestamp` timestamp DEFAULT CURRENT_TIMESTAMP
-)
+);
+
+CREATE TABLE IF NOT EXISTS `chat_messages` (
+  `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `case_id` int NOT NULL,
+  `username` varchar(20) NOT NULL,
+  `message` text NOT NULL
+);
