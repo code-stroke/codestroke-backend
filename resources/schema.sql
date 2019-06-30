@@ -172,5 +172,6 @@ CREATE TABLE IF NOT EXISTS `chat_messages` (
   `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `case_id` int NOT NULL,
   `username` varchar(20) NOT NULL,
-  `message` text NOT NULL
+  `message` text NOT NULL,
+  `message_timestamp` timestamp NULL DEFAULT NULL
 );
