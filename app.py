@@ -16,11 +16,16 @@ from modules.event_log import event_log, log_event
 from modules.extensions import mysql, check_database_
 from modules.chat_messages import chat_messages
 
+import os
 
 app = Flask(__name__, static_folder="static")
 app.config.from_pyfile("app.conf")
 CORS(app)
 mysql.init_app(app)
+
+#UPLOAD_FOLDER = '/protected'
+UPLOAD_FOLDER = os.path.join(app.instance_path, 'protected')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 app.register_blueprint(cases)
 app.register_blueprint(case_info, url_prefix="/case<info_table>")
@@ -59,6 +64,14 @@ def get_version():
             ),
             500,
         )
+
+@app.route('/protected/<path:filename>')
+@requires_clinician
+def protected(filename):
+    return send_from_directory(
+        os.path.join(app.instance_path, 'protected'),
+        filename
+    )
 
 
 if __name__ == "__main__":
