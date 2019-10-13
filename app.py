@@ -23,7 +23,6 @@ app.config.from_pyfile("app.conf")
 CORS(app)
 mysql.init_app(app)
 
-#UPLOAD_FOLDER = '/protected'
 UPLOAD_FOLDER = os.path.join(app.instance_path, 'protected')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
