@@ -27,7 +27,7 @@ def allowed_file(filename):
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @chat_messages.route("/view/<int:case_id>", methods=(["GET"]))
-@requires_clinician
+#@requires_clinician
 def get_chat_messages(case_id):
     try:
         result = ext.select_query_result_({"case_id":case_id},
@@ -38,7 +38,7 @@ def get_chat_messages(case_id):
         return jsonify({"success": False, "debug_info":str(e)}), 500
 
 @chat_messages.route("/image/add/", methods=(["POST"]))
-@requires_clinician
+#@requires_clinician
 def upload_image():
     if 'file' not in request.files:
         return jsonify({"success":False, debug_info:"No file"}), 404
@@ -57,7 +57,7 @@ def upload_image():
     return jsonify({"success":False})
 
 @chat_messages.route("/add/", methods=(["POST"]))
-@requires_clinician
+#@requires_clinician
 def add_chat_message():
     json = request.get_json()
     return _db_add_chat_message(json["case_id"], json["username"], json["message"])
