@@ -73,11 +73,8 @@ def _db_add_chat_message(case_id, username, message):
 
         case_id = cursor.lastrowid
         ext.mysql.connection.commit()
-        args_event = {"message":message,
-                      "username":username}
 
-        notify_type = "chat_message_incoming"
-        notified = notify.add_chat_message(args_event)
+        notified = notify.add_chat_message(username, message, case_id)
         if not notified:
             return jsonify(
                 {
